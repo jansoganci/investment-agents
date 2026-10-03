@@ -16,6 +16,7 @@ okur, araştırır, analiz eder, önerir. **Kararı ve alım-satımı her zaman 
 - Gider: 50–75 bin TL/ay · Acil durum fonu: 3 aylık gider
 - Hedef: nominal ~30 milyon TL / 800 bin–1 milyon $ (bugünün parasıyla ~10–15 milyon TL)
 - Piyasalar: ABD + Hong Kong + Çin A-hisseleri (İş Bankası üzerinden) · 5–10 hisse + ETF
+- **1. sürüm sadece ABD borsası** (NYSE, NASDAQ; ADR'ler dahil). Hong Kong / Çin A-hisseleri sistem oturunca **ek** olarak gelir.
 
 **Neden bu sistem:** Spekülatif al-sat değil, uzun vadeli yatırım. Ajanlar benim elle yaptığım işi
 (hesap, veri kontrolü, haber takibi) kurallara göre yapar → haftalık harcadığım süre azalır.
@@ -82,6 +83,8 @@ Her hisse `hisseler` tablosunda tek satırdır:
 | `durum` | **aday** (2. ajan puanladı, kartı açıldı) · **takipte** (3. ajan karnesini tutar) · **arşivde** (karne durur, yeni analiz yok) | aday: 2. ajan · takipte / arşivde: **sadece ben** |
 | `sinif` | sağlam · orta · zayıf · belirsiz (son karneden) | 3. ajan |
 | `portfoyde` | evet / hayır | **sadece ben** (sistem aracı kuruma bağlanmaz, bilemez) |
+| `borsa` | hissenin alınıp satıldığı yer: NYSE, NASDAQ (ileride HKEX, SSE, SZSE) | eşleme (1. ajan) |
+| `ulke` | şirketin merkezi (örn. Alibaba: borsa NYSE, ülke Çin → ADR) | eşleme (1. ajan) |
 
 - **Yeşil liste** ayrı bir durum değil: `durum = takipte` ve `sinif = sağlam` olan hisseler. Sağlam çıkan hisse **otomatik** girer, Telegram'dan haber gelir.
 - `durum` ve `portfoyde` asıl olarak veritabanında tutulur; kod aynı anda karnenin üst bilgi kartını günceller ve karnenin sonuna tarihli not ekler (örn. `2026-10-10 · Portföye eklendi`).
@@ -130,10 +133,12 @@ Hiçbiri uymazsa model "diğer" yazar; Pazar özetinde "Yeni alt sektör eklensi
 1. Kod sayar, yapay zekâ yok, maliyet sıfır. 2. ajandan hemen önce çalışır; Hermes'e "bu hafta en çok ne geçti?" diye de sorulabilir.
 2. **Kayan pencere:** her çalışmada o günden geriye son 7 gün; sayım birikmez, her seferinde sıfırdan. 30 günlük sayı bilgi olarak yanında.
 3. Bir hisse aynı yazıda kaç kez geçerse geçsin **1** sayılır (farklı yazı sayısı). Sektörler ve emtialar da ayrıca sayılır.
-4. **Kartı olan hisse sıralamaya girmez** (tekrar puanlanmaz). Ama Pazar özetinde bir satır: "Kartı olup bu hafta çok
+4. **Puanlama sırasına sadece ABD borsasındaki hisseler girer** (ADR dahil). ABD dışı hisseler de sayılır ama Pazar
+   özetinde sadece bilgi satırı olarak görünür: "ABD dışı çok geçenler" (Çin eki gelince veri hazır olur).
+5. **Kartı olan hisse sıralamaya girmez** (tekrar puanlanmaz). Ama Pazar özetinde bir satır: "Kartı olup bu hafta çok
    geçenler: XYZ (12 yazı)" — tekrar puanlanıp puanlanmayacağına ben karar veririm.
 
-### 2. ajan (Araştırma) kuralları (kısmi karar: 2026-10-03 — puan kuralları henüz açık)
+### 2. ajan (Araştırma) kuralları (karar: 2026-10-03)
 
 1. **Haftada bir** (Pazar sabahı), Sayaç listesinin en üstünden **en çok 10 hisse**. Gerekçe: uzun vadeli yatırım;
    kontrol bende kalsın. Bütçe / kota sıkışırsa sayı düşer.
@@ -147,7 +152,50 @@ Hiçbiri uymazsa model "diğer" yazar; Pazar özetinde "Yeni alt sektör eklensi
    etkileyen emtia haberi Pazar özetinde görünür.
 5. **Kart burada doğar:** Drive'da `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md` açılır; ilk kayıt araştırma
    kaydıdır (puan, neden, haber özetleri). Hisse **aday** olur.
-6. **Puan kuralları:** açık (9. bölüm).
+6. **Puan:** aşağıda.
+
+### Puan kuralları (karar: 2026-10-03)
+
+5 kriter × 0–2 = **10 puan**. Puan = **sıralama**, AL değil; her kriterin yanında zorunlu "neden" cümlesi.
+İlke: **hesabı kod yapar**; yapay zekâ sadece etiket koyar (alıntıyla), puanı etiketlerden kod hesaplar.
+Eşikler başlangıç değeri; ilk haftalarda sonuçlara bakıp ayarlanır.
+
+| Kriter | Kim / veri | 0 puan | 1 puan | 2 puan |
+|---|---|---|---|---|
+| **1. Bahsedilme** | Kod · Sayaç (son 7 gün, farklı yazı) | 1–2 yazı | 3–5 yazı | 6+ yazı |
+| **2. Ton** | Pahalı model her yazıya olumlu / olumsuz / nötr + alıntı; kod: net = olumlu − olumsuz | net ≤ −2 | net −1…+1 ("karışık") | net ≥ +2 |
+| **3. Sektör rüzgârı** | Kod · Yahoo fiyatları (ücretsiz, yapay zekâ / web araması yok) | — | aşağıdaki 2 maddeden biri | ikisi de |
+| **4. Son 1 yıl haber akışı** | Pahalı model + web araması; her olay kaynaklı, "şirkete özel / genel risk cümlesi" ayrımı | en az bir **ciddi olumsuz** olay | ciddi olumsuz yok | ciddi olumsuz yok **ve** en az bir önemli olumlu (büyük sözleşme, yeni ürün, beklenti yükseltme…) |
+| **5. Hızlı sağlık** | Kod · SEC (ücretsiz) | 0–2 kontrol geçti | 3–4 geçti | 5'i de geçti |
+
+**3. Sektör rüzgârı — 2 madde (her biri +1):**
+- Hissenin **sektör fonu** (11 ana sektörün ABD fonu, örn. XLE enerji, XLK teknoloji) bugün **40 haftalık ortalamasının üstünde** (son ~9 ayda genel yükseliş = rüzgâr arkadan).
+- **Bağlı emtia, şirketin rolüne göre lehte:** üreticiyse emtia fiyatı 40 haftalık ortalamanın üstünde; kullanıcıysa altında
+  (petrol yükselişi üreticiye iyi, havayoluna kötü). Bağlı emtia yoksa / fiyat verisi yoksa: sektör fonu son 13 haftada S&P 500'den iyi.
+
+**4. Ciddi olumsuz olay listesi (sabit):** muhasebe / denetçi sorunu · iflas riski / borç yapılandırması · şirkete özel
+resmî soruşturma · kâr uyarısı + beklenti düşürme · CEO / CFO'nun ani ayrılışı.
+
+**5. Hızlı sağlık — amaç:** "Temel analize para harcamaya değer mi?" ön elemesi; derin analiz 3. ajanda. Eşikler **bilerek
+gevşek** (eski sistem fazla sıkıydı, hiçbir hisse yeşile girmedi). SEC'ten 7 rakam: gelir, faaliyet kârı, işletme nakit akışı,
+yatırım harcaması, nakit, borç (cari kısım + convertible dahil), hisse sayısı.
+
+| Kontrol | Geçer, eğer… |
+|---|---|
+| Kâr | son yıl faaliyet kârı > 0 |
+| Nakit | serbest nakit akışı (işletme nakdi − yatırım harcaması) son 3 yılın en az 2'sinde > 0 |
+| Küçülme | gelir 3 yılda yıllık ortalama > %0 büyümüş |
+| Borç | net borç / serbest nakit akışı < 4 yıl, ya da borçtan fazla nakit |
+| Sulanma | hisse sayısı 3 yılda %10'dan fazla **artmamış** (yeni hisse basılınca ortağın payı küçülür) |
+
+**Veri yoksa — "belirsiz":** hesaplanamayan kontrol kaldı sayılmaz, hesaba katılmaz ("veri eksik ≠ kötü"). 3'ten az kontrol
+hesaplanabildiyse sonuç **belirsiz → nötr 1 puan** ("ne ödül ne ceza"); kartta ve Pazar özetinde açıkça yazar
+(örn. "Sağlık: belirsiz — serbest nakit akışı bulunamadı"). Aday aşamasında benden veri istenmez.
+
+**SEC verisi:** ücretsiz, anahtar yok (istekte e-posta), saniyede 10 istek sınırı. ABD şirketleri 10-K (yıllık) + 10-Q
+(çeyreklik); ADR'ler çoğunlukla sadece 20-F (yıllık) → ADR kartı yılda bir güncellenir. Şirketler aynı rakamı farklı isimle
+raporlayabilir (ADR'lerde IFRS isimleri): kodda her rakam için olası isimler listesi; ilk bulunan kullanılır, yeni isim
+görülünce listeye eklenir. ABD tarafı eski projede hazır (taşınacak).
 
 ### Para harcamayı önleyen kurallar
 
@@ -159,7 +207,7 @@ Hiçbiri uymazsa model "diğer" yazar; Pazar özetinde "Yeni alt sektör eklensi
 
 Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes ajanları çalıştırır, sonuçları okur.
 
-- **Mesaj ne zaman gelir:** Pazar günü tek özet (yeni adaylar, karnede değişenler, kartı olup bu hafta çok geçenler, yeni alt sektör önerileri, teknik durum) · **hemen:** portföyümdeki hissenin sınıfı düşerse · **hemen:** bir ajan hata verirse · sağlam çıkıp yeşil listeye giren hisse. 1. ajanın günlük çıktısı Telegram'a gelmez, sadece `Gelen/`.
+- **Mesaj ne zaman gelir:** Pazar günü tek özet (yeni adaylar, karnede değişenler, kartı olup bu hafta çok geçenler, ABD dışı çok geçenler, "belirsiz" kalan veriler, yeni alt sektör önerileri, teknik durum) · **hemen:** portföyümdeki hissenin sınıfı düşerse · **hemen:** bir ajan hata verirse · sağlam çıkıp yeşil listeye giren hisse. 1. ajanın günlük çıktısı Telegram'a gelmez, sadece `Gelen/`.
 - **Yapabildikleri:** soru cevaplamak (veritabanı + karneleri okur: "XYZ'nin karnesi ne diyor?", "bu ay ne harcadık?") ve **tanımlı komut listesinden** komut çalıştırmak ("XYZ'yi takibe al", "ABC'yi portföye ekledim", "XYZ'yi şimdi analiz et", "XYZ'deki U1 uyarısını kapat, çünkü …"). Komut listesi uygulama planında yazılır.
 - **Yapmadıkları:** veritabanı / dosyaları serbestçe değiştirmez (sadece komut listesi) · kod veya kural değiştirmez (o iş geliştirme Mac'inde) · işlem yapmaz.
 - Hermes'le sohbet Codex aboneliğini kullanır: ek ücret yok, ama çok konuşma kotayı doldurabilir.
@@ -188,7 +236,7 @@ Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes aj
 
 SQLite her gece Drive'a **yedek kopya** olarak atılır.
 
-Tablolar: `hisseler`, `haberler` (tam metin dahil), `etiketler` (eşleme: tür, karşılık, ana sektör, alt sektör), `emtia_bagi`, `puanlar`, `finansallar`, `fiyatlar`, `sinyaller`, `calismalar` (harcanan $ dahil).
+Tablolar: `hisseler`, `haberler` (tam metin dahil), `etiketler` (eşleme: tür, karşılık, borsa, ülke, ana sektör, alt sektör), `emtia_bagi`, `puanlar`, `finansallar`, `fiyatlar`, `sinyaller`, `calismalar` (harcanan $ dahil).
 
 ```text
 Yatirim/                                   (Drive)
@@ -240,15 +288,15 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 1. ~~Genel çerçeve~~ ✅ (2026-10-03: karne = kart, çalışma ilkesi, site izni, geliştirme / çalıştırma ayrımı)
 2. ~~Mimari~~ ✅ (2026-10-03: 3. bölüm — akış, hisse durumları, portföyde, olayla çalışma, Telegram / Hermes)
 3. ~~1. ajan (Göz)~~ ✅ (2026-10-03: 3. bölüm, "1. ajan kuralları")
-4. **2. ajan** — ✅ kısmen (2026-10-03: Sayaç, sektör listesi, okuma, emtia bağı, kartın doğuşu — 3. bölüm). **Kalan: puan kuralları**
+4. ~~2. ajan~~ ✅ (2026-10-03: Sayaç, sektör listesi, okuma, emtia bağı, kartın doğuşu, puan kuralları — 3. bölüm)
 5. **3. ajan** — metrikler, sağlam / orta / zayıf ölçütü, karne formatı
 6. **4. ajan** — teknik kurallar
 7. **Uygulama planı** — model / bütçe dağılımı, Air kurulumu, kodlama sırası
 
 Konu notları:
 
-- **2. ajan puan kuralları.** Taslak (her biri 0–2, toplam 10): bahsedilme, ton, sektör rüzgârı, son 1 yıl haber akışı, hızlı sağlık kontrolü (SEC'ten, kodla).
-- **Karne formatı.** Hangi metrikler, hangi kontroller, "neden" bölümü nasıl yazılır. Temel analiz sonucu 3 sınıf: **sağlam / orta / zayıf**; sadece sağlam olanlar teknik analize (yeşil liste) gider.
+- ~~**2. ajan puan kuralları.**~~ ✅ 3. bölüm, "Puan kuralları".
+- **Karne formatı.** Hangi metrikler, hangi kontroller, "neden" bölümü nasıl yazılır. Temel analiz sonucu 3 sınıf: **sağlam / orta / zayıf**; sadece sağlam olanlar teknik analize (yeşil liste) gider. **3. ajanda konuşulacak:** eksik veri olursa Hermes'in Telegram'dan benden veri istemesi (ben bulup veririm, ajan hesaba devam eder) — kontrol bende, iş ajanda.
 - **4. ajan kuralları.** Backtest sonucu: günlük 5-8-13, 24 hissenin 24'ünde al-tut'un gerisinde kaldı. Mevcut öneri: yeşil liste + piyasa filtresi (SPY 40 haftalık ortalamanın üstünde); çıkış = hisse yeşil listeden düşerse.
 - ~~**Site kullanım şartları.**~~ ✅ Site sahibi izin verdi (bkz. 4. bölüm, Site okuma).
-- **HK / A-hisse verisi.** PDF'den hangi rakamlar elle / yapay zekâyla alınacak. Not: ABD için PDF / OCR gerekmez (SEC rakamları hazır tablo). HK / A PDF'lerinin çoğu metin içerir → ücretsiz Python kütüphanesiyle okunur; OCR sadece taranmış (resim) PDF'te, o da bilgisayarda ücretsiz.
+- **HK / A-hisse verisi** (⏸ ertelendi — 1. sürüm sadece ABD). PDF'den hangi rakamlar elle / yapay zekâyla alınacak. Not: ABD için PDF / OCR gerekmez (SEC rakamları hazır tablo). HK / A PDF'lerinin çoğu metin içerir → ücretsiz Python kütüphanesiyle okunur; OCR sadece taranmış (resim) PDF'te, o da bilgisayarda ücretsiz.

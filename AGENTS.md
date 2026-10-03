@@ -72,11 +72,13 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   3. sıra **1. ajan (Göz)** kapandı (yol haritası 3. bölüm, "1. ajan kuralları"): günde 3 tur, yavaş tarama
   (~20 dk / tur, engel cevabında dur), tam metin okunur + ucuz modelle tek tarafsız cümle, tam metin
   `haberler`'e kaydedilir, etiket eşleme tablosu (şirket / emtia / sektör), sözlük yazıları alınmaz.
-  4. sıra **2. ajan** kısmen kapandı (yol haritası 3. bölüm): 1B Sayaç (kod, kayan 7 gün, kartı olan
+  4. sıra **2. ajan** kapandı (yol haritası 3. bölüm): 1B Sayaç (kod, kayan 7 gün, kartı olan
   sıralamaya girmez), 2 seviyeli sabit sektör listesi (GICS 11 + onaylı alt sektör), 2. ajan haftada bir
   en çok 10 hisse, siteye gitmez, alıntılı okuma, emtia bağı (şirket → emtia, rol), kart 2. ajanda doğar,
-  Drive düz yapı `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md`.
-- **Sıradaki:** 2. ajanın **puan kuralları** (taslak: yol haritası 9. bölüm).
+  Drive düz yapı `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md`, **puan kuralları** (5 kriter × 0–2,
+  eşikli; veri yoksa belirsiz = 1 puan). **1. sürüm sadece ABD borsası (ADR dahil)**; HK / A sonra ek.
+- **Sıradaki:** 5. sıra **3. ajan (Analiz)** — metrikler, sağlam / orta / zayıf / belirsiz ölçütü, karne formatı
+  (taslak: `docs/BAGLAM.md` 7. bölüm), eksik veri için Telegram'dan kullanıcıdan veri isteme.
   Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.
 - **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.
