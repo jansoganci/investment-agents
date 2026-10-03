@@ -179,3 +179,30 @@ yayinla: hayir
 2. **Değerleme bölümü** — öneri: şimdilik yok. İleride en fazla 2 betimleyici rakam (serbest nakit akışı verimi, F/K'nın kendi 5 yıllık aralığındaki yeri); "ucuz / pahalı" yargısı yok.
 3. **Uyarı kapatma** — öneri: karnenin sonuna tarihli kullanıcı notu (`2026-11-06 · Kullanıcı: U1 kapatıldı, çünkü …`); ajan sonraki çalışmada okur, koşul değişmedikçe tekrar açmaz.
 4. **İlk tezi kim yazar** — öneri: yapay zekâ 3 maddelik taslak, kullanıcı düzeltip onaylar; sonraki karneler tezi değiştirmez, sadece kontrol eder.
+
+## 8. 3. ajan araştırma notları (2026-10-03)
+
+Büyük yatırımcılar neye bakıyor (kaynaklar: Berkshire satın alma kriterleri, Fundsmith Owner's Manual, *One Up on Wall Street*,
+Piotroski F-Score, AQR "Quality Minus Junk"):
+
+| Kim | Neye bakıyor | Neden |
+|---|---|---|
+| Buffett / Munger | Yıllardır tutarlı kâr (tahmin ve "toparlanacak" şirket yok) · az borçla yüksek özkaynak getirisi · basit iş · yönetim · "sahip kazancı" | Geçmiş tutarlılık kanıttır, tahmin umut; borç zayıf işi güçlü gösterebilir. Buffett kesin eşik yayınlamaz; "ROE > %15" gibi rakamlar onun hakkındaki kitapların yorumudur |
+| Terry Smith (Fundsmith) | Yüksek sermaye getirisi (nakit bazında) · yüksek brüt marj · nakde dönüşüm · faiz karşılama · az borç; "iyi şirket al, fazla ödeme, hiçbir şey yapma" | Yüksek getiriyle yeniden yatırım bileşik büyür; brüt marj fiyat gücünü gösterir. İnternette dolaşan kesin eşikler (brüt marj > %50 vb.) üçüncü taraf yorumu |
+| Peter Lynch | Önce şirket türü (6 tür) · 2 dakikalık hikâye · **PEG** = F/K ÷ kâr büyümesi (≈1 makul, < 1 cazip, > 2 pahalı) · düşük borç / özkaynak · net nakit · stok satıştan hızlı artıyorsa kırmızı bayrak · hisse geri alımı | Her şirkete aynı cetvel uygulanmaz (döngüsel şirket zirvede ucuz görünür) |
+| Fisher | Uzun büyüme alanı, Ar-Ge, yönetim dürüstlüğü | Bileşik büyüme için alan gerekir |
+| Nick Sleep | Ölçek kazancını müşteriyle paylaşan (Costco, Amazon) | Düşük marj her zaman kötü değil |
+| Piotroski | 9 evet / hayır muhasebe sorusu | Tamamen kodla hesaplanır; ucuz hisselerde kazananı ayırdı |
+| AQR | Kalite = kârlı + büyüyen + güvenli + ödeme yapan | Kalitenin uzun veride ölçülmüş tanımı |
+| Graham / Klarman / Marks | Fiyat ve güvenlik payı | Değerleme konusu (açık) |
+| Ray Dalio | Ekonominin bütünü: borç döngüleri, faiz, enflasyon | Karneye değil; ileride piyasa geneli / Pazar özeti notu |
+
+Kullanıcının kendi kuralları: anlamadığı işe yatırım yapmaz · borç az diye almaz, borcun iyi kullanılması önemli (faiz karşılama,
+sermaye getirisi > borç maliyeti) · zor ortamda (yüksek faiz, petrol, savaş) brüt marjı korumak çok iyi işaret · zarar her zaman
+kötü değil (Amazon).
+
+SEC verisi denendi (Apple, Amazon, Cloudflare, Visa, Coca-Cola, Novo Nordisk): 2021–2025 yıllık rakamlar hepsinde var. Bulunan
+sorunlar: Coca-Cola borç ismini 2024'te değiştirmiş · Cloudflare borcu sadece convertible isimleriyle (2025: 1,97 + 1,29 = 3,26
+milyar $) · Apple 2023'ten sonra faiz giderini ayrı vermiyor · Amazon brüt kârı raporlamıyor (gelir − maliyet ile hesaplanır) ·
+Visa satış maliyeti yok (brüt marj hesaplanamaz) ve çok sınıflı hisse yüzünden standart hisse sayısı ismi yok · Novo Nordisk
+(20-F) IFRS isimleri, sadece yıllık.

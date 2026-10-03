@@ -197,6 +197,69 @@ hesaplanabildiyse sonuç **belirsiz → nötr 1 puan** ("ne ödül ne ceza"); ka
 raporlayabilir (ADR'lerde IFRS isimleri): kodda her rakam için olası isimler listesi; ilk bulunan kullanılır, yeni isim
 görülünce listeye eklenir. ABD tarafı eski projede hazır (taşınacak).
 
+### 3. ajan (Analiz) kuralları (kısmi karar: 2026-10-03 — eşikler ve sınıf kuralı açık)
+
+**Yaklaşım — kalite önce, yapı Lynch'ten:**
+
+1. **Önce şirketin türü** (Peter Lynch): hızlı büyüyen · istikrarlı dev · yavaş büyüyen · döngüsel. Toparlanan ve varlık
+   zengini 1. sürümde kapsam dışı → "belirsiz". Türü kod rakamlardan tahmin eder (büyüme hızı, kâr dalgalanması),
+   yapay zekâ işin tarifinden doğrular, ben düzeltebilirim.
+2. **Kapsam dışı (iş modeline göre, GICS sektörüne göre değil):** banka, sigorta. Visa / Mastercard gibi ödeme şirketleri
+   kapsam **içinde** (Visa GICS'te "Finans" ama banka değil).
+3. **Kod ölçer ve soru işaretler, hüküm vermez:** örn. "zarar var" → "bu zarar neden?". Yapay zekâ nedenini yıllık rapordan
+   **alıntıyla** yazar (örn. "zarar yeni depo yatırımından; brüt kâr %30 büyüyor; işletme nakdi pozitif"). Rakam + neden
+   karnede yan yana; karar benim. (Amazon dersi: zarar tek başına zayıflık değildir.)
+4. **Anlamadığım işe yatırım yapmam:** kartın ilk satırı Lynch tarzı 2 cümlelik hikâye; anlamıyorsam takibe almam.
+
+**10 ölçü (hepsini Python hesaplar; her şirket için hesaplanır ve karnede görünür):**
+
+| # | Ölçü | Basitçe | Kimden |
+|---|---|---|---|
+| 1 | Gelir büyümesi | satışlar yılda % kaç büyüyor (5 yıl ort. + son yıl) | Lynch, Fisher |
+| 2 | Brüt marj ve istikrarı | 100 $ satıştan ürün maliyeti çıkınca kalan; son yıl 5 yıl ortalamasının altına düştü mü? **Brüt marj yoksa faaliyet marjının istikrarı.** Sadece şirketin kendi geçmişiyle kıyaslanır (şirketler "maliyet"i farklı tanımlar) | Smith, ben |
+| 3 | Faaliyet marjı | tüm işletme giderleri çıkınca 100 $'dan kalan | Buffett |
+| 4 | Sermaye getirisi | şirkete konan her 100 $ yılda kaç $ kazandırıyor | Buffett, Smith |
+| 5 | Nakde dönüşüm | kâğıttaki 100 $ kârın kaçı kasaya nakit giriyor | Smith, Piotroski |
+| 6 | Faiz karşılama | faaliyet kârı faizin kaç katı; **nakit > borç ise gerekmez** | ben, Smith |
+| 7 | Borcu kaç yılda öder | net borç ÷ yıllık serbest nakit (**⚠ araştırma maddesi**) | Buffett |
+| 8 | Hisse sayısı değişimi | sulanma mı, geri alım mı | Buffett, Lynch |
+| 9 | Brüt kâr büyümesi | zarar edende asıl iş büyüyor mu | Lynch |
+| 10 | Nakit kaç yıl yeter | nakit yakan şirkette eldeki para kaç yıl dayanır | Lynch |
+
+Formüller: sermaye getirisi = faaliyet kârı × (1 − vergi gideri ÷ vergi öncesi kâr) ÷ (özkaynak + borç − nakit − kısa vadeli
+yatırımlar) · faiz karşılama = faaliyet kârı ÷ faiz gideri · nakit yılı = (nakit + kısa vadeli yatırım) ÷ yıllık nakit yakma.
+
+**Türe göre belirleyici ölçüler (taslak — sınıf kuralında kesinleşir):** 10 ölçünün hepsi hesaplanır; sağlam / orta / zayıf
+kararında türe göre öne çıkanlar (futbol: forvet golüne, kaleci kurtarışına göre). İstikrarlı dev: 3, 4, 5, 2 · Hızlı büyüyen:
+1, 9, 2, 10, 8 · Yavaş büyüyen: 5, 7, 6 + temettü nakitle karşılanıyor mu · Döngüsel: 6, 7 + 4'ün 5–10 yıllık ortalaması.
+
+**SEC verisi — eş anlamlılar yöntemi:**
+
+- Rakamları **kod** çeker, yapay zekâ rakam üretmez. Tek istekle şirketin tüm geçmişi gelir (yıllık 10-K; ABD'de çeyreklik
+  10-Q da var, ADR'lerde yok).
+- İsimler serbest değil: SEC'in resmî sözlüğünden seçilir; şirketlerin özel isimleri bu servise gelmez.
+- Her rakam için **eş anlamlılar listesi** (rakama göre, şirkete göre değil). Kod **her yıl için ayrı ayrı** listeyi sırayla dener,
+  ilk bulunanı alır → isim değiştiren şirket kendiliğinden yakalanır (Coca-Cola: 2023 `LongTermDebt`, 2024
+  `LongTermDebtAndCapitalLeaseObligations`).
+- Borç = parçaların toplamı (uzun vade + cari kısım + kısa vade + convertible); parçalar örtüşebilir → **⚠ araştırma maddesi,
+  kabul testinde elle doğrulama şart.** Bayrak: borç bir yıldan ötekine birden sıfırlanırsa · borç toplam yükümlülükten büyükse.
+- **Tutarlılık kontrolleri:** brüt kâr = gelir − maliyet · marj %0–100 · ani sıfırlanma / 10 kat sıçrama → işaretlenir, kullanılmaz.
+- **İz:** karnede her rakamın hangi isimden, hangi rapordan alındığı yazar.
+- **Kayıt defteri:** bulunamayan rakam "hesaplanamadı" olur ve SQLite `eksik_veri` tablosuna yazılır (tarih, hisse, yıl,
+  rakam, denenen isimler, durum: açık / isim eklendi / gerçekten yok). Pazar özetinde tek satır; Hermes'e sorulabilir.
+  Liste haftalık bu defterden tamamlanır.
+- **Ölçüm (2026-10-03, 1.688 ABD şirketi, varlık ≥ 1 milyar $, faaliyet kârı raporlayan):** gelir %98 · işletme nakdi %98 ·
+  hisse sayısı %96 · faiz gideri %90 · yatırım harcaması %87 · borç (en az bir parça) %85 · brüt kâr %67 (eksiklerin çoğu
+  isim değil, şirket bu rakamı hiç raporlamıyor — Visa gibi).
+
+**Testler:** deneme setine **tuzak örnekler** de girer (bilerek zarar eden hızlı büyüyen → zayıf çıkmamalı; marjı yüksek ama
+küçülen → sağlam çıkmamalı; borcu yüksek ama iyi kullanan). **Kabul testi (UAT) en az 20 hisse**, rakamlar elle 10-K ile
+karşılaştırılır; onay ondan sonra.
+
+**Açık (3. ajan):** her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı · değerleme (Lynch PEG önerisi) ·
+REIT ve gelirsiz şirketler (örn. erken aşama biyoteknoloji) kapsam dışı mı · yapay zekâ denetçi (en son karar) · eksik veri
+için Telegram'dan benden veri isteme · karne formatının 4 açık sorusu (`BAGLAM.md` 7. bölüm).
+
 ### Para harcamayı önleyen kurallar
 
 1. 3. ajan takvimle değil **olayla** çalışır: haftada bir SEC'e "yeni 10-Q / 10-K var mı?" diye sorar (ücretsiz); yoksa hiçbir şey yapmaz. HK / A: `raporlar/` klasörüne yeni PDF koyduğumda.
@@ -236,7 +299,7 @@ Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes aj
 
 SQLite her gece Drive'a **yedek kopya** olarak atılır.
 
-Tablolar: `hisseler`, `haberler` (tam metin dahil), `etiketler` (eşleme: tür, karşılık, borsa, ülke, ana sektör, alt sektör), `emtia_bagi`, `puanlar`, `finansallar`, `fiyatlar`, `sinyaller`, `calismalar` (harcanan $ dahil).
+Tablolar: `hisseler`, `haberler` (tam metin dahil), `etiketler` (eşleme: tür, karşılık, borsa, ülke, ana sektör, alt sektör), `emtia_bagi`, `puanlar`, `eksik_veri` (kayıt defteri), `finansallar`, `fiyatlar`, `sinyaller`, `calismalar` (harcanan $ dahil).
 
 ```text
 Yatirim/                                   (Drive)
@@ -276,7 +339,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 | Adım | İş | Bitti sayılır, eğer… |
 |---|---|---|
 | **0. Kurulum** | Mac ayarları (uyku kapalı, ayrı kullanıcı, FileVault), Hermes, Codex girişi, OpenRouter limiti, Drive masaüstü, Telegram botu | Telegram'dan mesajlaşabiliyorum ve zamanlanmış bir deneme işi Drive'a dosya yazıyor |
-| **1. Analiz + karne** | `ortak/` + SQLite + 3. ajan, 3–5 ABD hissesi | 3 hissenin karnesi Drive'da; ikinci çalıştırma eski kaydı silmeden yeni tarihli kayıt ekliyor; **deneme seti testi geçiyor:** herkesin kaliteli kabul ettiği 3–5 şirket sağlam, zayıf olduğu bilinen 1–2 şirket sağlam **değil** çıkıyor (eski sistemde hiçbir hisse yeşile girememişti; kaliteliler sağlam çıkmıyorsa kurallar fazla sıkı, zayıflar sağlam çıkıyorsa fazla gevşek) |
+| **1. Analiz + karne** | `ortak/` + SQLite + 3. ajan, 3–5 ABD hissesi | **Kabul testi en az 20 hisse, rakamlar elle 10-K ile karşılaştırıldı;** 3 hissenin karnesi Drive'da; ikinci çalıştırma eski kaydı silmeden yeni tarihli kayıt ekliyor; **deneme seti testi geçiyor:** herkesin kaliteli kabul ettiği 3–5 şirket sağlam, zayıf olduğu bilinen 1–2 şirket sağlam **değil** çıkıyor, tuzak örnekler doğru sınıflanıyor (eski sistemde hiçbir hisse yeşile girememişti; kaliteliler sağlam çıkmıyorsa kurallar fazla sıkı, zayıflar sağlam çıkıyorsa fazla gevşek) |
 | **2. Göz** | Playwright ile iki site, günde 3 tur | 1 hafta boyunca her tur `haberler` doluyor (tek cümle + tam metin + eşlenmiş etiketler) ve site bir kez bile "çok istek" / engel cevabı vermiyor |
 | **3. Araştırma** | 1B Sayaç + 2. ajan: okuma + web araması + puan + neden + kart açma | Haftalık rapor Drive'da ve Telegram'da; aday hisselerin kartı Drive'da açılıyor |
 | **4. Teknik** | Haftalık durum + piyasa filtresi | Pazar günü Telegram'a yeşil liste özeti geliyor |
@@ -289,7 +352,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 2. ~~Mimari~~ ✅ (2026-10-03: 3. bölüm — akış, hisse durumları, portföyde, olayla çalışma, Telegram / Hermes)
 3. ~~1. ajan (Göz)~~ ✅ (2026-10-03: 3. bölüm, "1. ajan kuralları")
 4. ~~2. ajan~~ ✅ (2026-10-03: Sayaç, sektör listesi, okuma, emtia bağı, kartın doğuşu, puan kuralları — 3. bölüm)
-5. **3. ajan** — metrikler, sağlam / orta / zayıf ölçütü, karne formatı
+5. **3. ajan** — ✅ kısmen (2026-10-03: Lynch türleri, kapsam, 10 ölçü, SEC eş anlamlılar yöntemi, kayıt defteri, testler — 3. bölüm). **Kalan:** eşikler + sınıf kuralı, değerleme, karne formatı
 6. **4. ajan** — teknik kurallar
 7. **Uygulama planı** — model / bütçe dağılımı, Air kurulumu, kodlama sırası
 
