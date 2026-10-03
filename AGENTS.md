@@ -83,7 +83,9 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   Araştırma notları `docs/BAGLAM.md` 8. bölüm.
   3. ajanın **eşikleri, tür kuralları (+ "kârsız"), sınıf kuralı, fiyat satırı** yazıldı; 10 gerçek şirketle denendi
   (sonuçlar + öğrenilenler `BAGLAM.md` 9. bölüm). Deneme kodu scratchpad'deydi, projede değil.
-- **Sıradaki:** kullanıcı "başka bir şey" isteyecek. 3. ajanın kalanları: karne formatı (`BAGLAM.md` 7. bölüm), PEG büyüme
+  Dış inceleme promptu yazıldı: `docs/DIS_INCELEME_PROMPT.md` (kurallar + 10 şirket sonuç + ham veri + deneme kodu).
+- **Sıradaki:** kullanıcı promptu iki farklı modele verecek; cevaplar gelince birlikte değerlendirip doğru bulunanlar
+  kurallara işlenecek. 3. ajanın kalanları: karne formatı (`BAGLAM.md` 7. bölüm), PEG büyüme
   tavanı %25 önerisi, hisseyle ödenen maaş önerisi, eksik veri için Telegram'dan veri isteme. Yapay zekâ denetçi en son.
   Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.
