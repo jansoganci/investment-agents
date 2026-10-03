@@ -1,23 +1,23 @@
-# 3. ajan prototipi (deneme kodu)
+# Agent 3 prototype (trial code)
 
-**Üretim kodu değil.** 2026-10-03'te 3. ajanın kurallarını (10 ölçü, eşikler, tür, sınıf, fiyat satırı) 10 gerçek ABD
-şirketinde denemek için yazıldı. Kurallar: `docs/YOL_HARITASI_v2.md` 3. bölüm · sonuçlar ve öğrenilenler:
-`docs/BAGLAM.md` 9. bölüm · dış inceleme: `docs/DIS_INCELEME_PROMPT.md`. Asıl 3. ajan yazılırken buradan fikir alınır,
-olduğu gibi kopyalanmaz.
+**Not production code.** Written on 2026-10-03 to try agent 3's rules (10 measures, thresholds, type, grade, price line) on 10 real US
+companies. Rules: `docs/YOL_HARITASI_v2.md` section 3 · results and lessons:
+`docs/BAGLAM.md` section 9 · external review: `docs/DIS_INCELEME_PROMPT.md`. When the real agent 3 is written, take ideas from here.
+Do not copy it as it is.
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `indir.sh` | SEC verisini indirir (10 deneme şirketi + 5 örnek; `frames` ile tüm şirketler) |
-| `karne_deneme.py` | 10 ölçü, tür, sınıf — `python3 karne_deneme.py KO NVDA NKE ...` |
-| `fiyat.py` | Yahoo'dan fiyat; PEG ve serbest nakit akışı verimi |
-| `ek_uret.py` | Dış inceleme promptunun Ek A / Ek B tablolarını üretir + Yahoo bölünme sağlaması |
-| `etiket_kontrol.py` | Hangi XBRL isminin hangi şirkette kaç yıl bulunduğunu gösterir |
-| `kapsam_olcum.py` | Eş anlamlılar listesinin ~1.700 şirkette kapsamını ölçer |
+| `indir.sh` | Downloads SEC data (10 trial companies + 5 examples; `frames` for all companies) |
+| `karne_deneme.py` | 10 measures, type, grade — `python3 karne_deneme.py KO NVDA NKE ...` |
+| `fiyat.py` | Price from Yahoo; PEG and free-cash-flow yield |
+| `ek_uret.py` | Builds Appendix A / Appendix B of the external-review prompt + the Yahoo split check |
+| `etiket_kontrol.py` | Shows which XBRL name was found for which company, and for how many years |
+| `kapsam_olcum.py` | Measures how far the synonym list covers ~1,700 companies |
 
-Çalıştırma (bu klasörde):
+Run (from this folder):
 
 ```bash
-export SEC_UA="Ad Soyad eposta@ornek.com"   # SEC iletişim bilgisi ister
+export SEC_UA="Name Surname email@example.com"   # SEC requires a contact
 bash indir.sh
 python3 karne_deneme.py KO NVDA NKE SBUX PFE INTC BA SNAP DOW RIVN
 uv run --with yfinance python fiyat.py
@@ -25,4 +25,4 @@ python3 etiket_kontrol.py AAPL AMZN NET V KO NVO
 bash indir.sh frames && python3 kapsam_olcum.py
 ```
 
-Bilinen sınırlamalar: dış inceleme promptundaki "Bildiğimiz sınırlamalar" listesi.
+Known limitations: the "Known limitations and open questions" list in the external-review prompt.

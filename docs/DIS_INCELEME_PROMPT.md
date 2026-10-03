@@ -1,513 +1,531 @@
 ---
-belge: Dış inceleme promptu — 3. ajan (temel analiz) kuralları ve 10 hisselik deneme
-tarih: 2026-10-03
-durum: incelemeye gönderilecek
-yayinla: hayir
+doc: External review prompt — Agent 3 rules and the 10-company trial
+date: 2026-10-03
+status: to be sent for review
+publish: no
 ---
 
-# Dış inceleme promptu — 3. ajan
+# External review prompt — Agent 3
 
-**Kullanım (bana not):** Aşağıdaki `PROMPT BAŞLANGICI` satırından dosyanın sonuna kadar her şeyi kopyala, iki farklı
-modele **aynen** ver. İki cevap aynı tabloda geleceği için yan yana karşılaştırılabilir. Cevapları bu sohbete getir;
-birlikte değerlendirip doğru bulduklarımızı kurallara işleriz.
+**How to use (note to me):** Copy everything from `PROMPT START` to the end of this file and give it **unchanged** to two models (a new chat for each). The answers use the same table, so they can be compared side by side. Bring the answers back here; we judge them together and write what we accept into the rules.
+
+Names follow `docs/GLOSSARY.md`. Where a result is what the trial code printed, the code's label is in parentheses (`SAĞLAM`, `ORTA`, …). Appendix C is that code, unchanged.
+
+After this prompt was written, the roadmap decided two items the prompt still calls "not decided yet": cap PEG growth at 25%, and subtract stock comp from free cash. Leave those sentences as they are; that is the question the review was asked.
+
+`docs/reviews/review_prompt_v1_EN.md` is the earlier English wording. If a model was already given that file, do not swap this text in mid-review.
 
 ---
 
-## PROMPT BAŞLANGICI
+## PROMPT START
 
-### Rolün
+### Your role
 
-Deneyimli bir **hisse analisti** ve **finansal veri mühendisi** olarak çalış. Görevin, aşağıda anlatılan temel analiz
-kurallarımızı, hesaplama yöntemimizi ve 10 gerçek ABD şirketi üzerinde yaptığımız denemenin sonuçlarını **denetlemek**:
-hesap hatası, veri hatası, kod hatası, mantık hatası ve gözden kaçan riskleri bulmak.
+Act as an experienced **equity analyst** and **financial data engineer**. Your job is to **audit** the fundamental-analysis
+rules, the calculation method and the results of a trial we ran on 10 real US companies: find calculation errors, data
+errors, code errors, logic flaws and overlooked risks.
 
-Cevabını **Türkçe** ver. Teknik terimin İngilizcesini parantez içinde yazabilirsin.
+**Write your answer in Turkish** (the user reads Turkish). You may add the English term in parentheses.
 
-### Doğruluk için kurallar (lütfen dikkatle oku)
+### Rules for accuracy (please read carefully)
 
-1. **Veri tarihi: 2026-10-03.** Rakamlar SEC'ten bu tarihte çekildi; çoğu şirkette son mali yıl 2025 (Nvidia: Ocak 2026,
-   Nike: Mayıs 2026 biten mali yıl). Fiyatlar Yahoo'dan aynı gün alındı. **Bilgi kesim tarihin bundan eskiyse, bu yılların
-   rakamlarını hafızandan "düzeltmeye" çalışma.** Sadece erişebildiğin bir kaynakla (SEC EDGAR, şirketin 10-K'sı)
-   doğrulayabiliyorsan doğrula; doğrulayamıyorsan "doğrulayamadım" yaz.
-2. **Hata bulamazsan "hata bulamadım" de.** Zorla hata üretme. Bulduğun her sorunda kanıt göster: hangi rakam, hangi
-   formül, hangi satır.
-3. Her bulgu için **nasıl emin olduğunu** yaz: "kaynakla doğruladım" / "Ek B'deki ham veriden yeniden hesapladım" /
-   "akıl yürütme".
-4. **Kapsamı genişletme.** Sistemin ilkeleri aşağıda; bunlara aykırı büyük öneriler (ör. tam DCF modeli, bankaları eklemek)
-   yerine "1. sürüm için gerekli mi?" sorusunu cevapla. Bir öneri yapacaksan en basit hâlini öner.
-5. Öncelik sırası: **(a) yanlış sınıf üreten hatalar > (b) yanlış rakam üreten hatalar > (c) mantık zaafları > (d) iyileştirme.**
+1. **Data date: 2026-10-03.** Figures were pulled from SEC on this date; for most companies the latest fiscal year is 2025
+   (Nvidia: fiscal year ending January 2026, Nike: fiscal year ending May 2026). Prices were taken from Yahoo on the same
+   day. **If your knowledge cutoff is earlier than this, do not "correct" these years' figures from memory.** Verify only
+   against a source you can actually access (SEC EDGAR, the company's 10-K); otherwise write "could not verify".
+2. **If you find no error, say "no error found".** Do not invent problems. For every issue, show evidence: which figure,
+   which formula, which line.
+3. For every finding state **how you know**: "verified against source" / "recomputed from raw data in Appendix B" /
+   "reasoning only".
+4. **Do not expand scope.** The system's principles are below; instead of large proposals that contradict them (e.g. a full
+   DCF model, adding banks), answer "is this needed for version 1?". If you propose something, propose its simplest form.
+5. Priority: **(a) errors that produce a wrong grade > (b) errors that produce a wrong figure > (c) logic weaknesses >
+   (d) improvements.**
 
-### Sistem hakkında kısa bağlam
+### Short context about the system
 
-- Kişisel bir yatırım danışmanı sistemi. 4 yapay zekâ ajanı okur, araştırır, analiz eder, **öneri** verir;
-  **kararı ve alım-satımı her zaman kullanıcı yapar.** Sistem asla AL / SAT demez.
-- Kullanıcı yeni başlayan, uzun vadeli (10 yıl) bir yatırımcı; az işlem yapar; anlamadığı işe yatırım yapmaz.
-- Yapay zekâ bütçesi ayda en fazla 25–30 $. İlke: **basit tut, kur, dene, düzelt** ("think fast, iterate faster").
-- 1. sürüm **sadece ABD borsası** (NYSE, NASDAQ; ADR'ler dahil).
-- **3. ajan** (incelemeni istediğimiz kısım): kullanıcının takibe aldığı hisselerin finansal tablolarından bir "karne"
-  çıkarır ve şirkete bir sınıf verir: **SAĞLAM / ORTA / ZAYIF / BELİRSİZ**. Sağlam çıkanlar "yeşil liste"ye girer
-  (yeşil liste ≠ AL; sadece teknik analize bakılacak liste).
-- Yaklaşım: **kalite önce** (Buffett / Munger / Terry Smith), yapı **Peter Lynch**'ten (önce şirket türü, ölçüler türe
-  göre okunur). Hesapları **kod** yapar; yapay zekâ rakam üretmez, sadece "neden?" sorularını rapordan alıntıyla cevaplar.
-  Fiyat sınıfa **girmez**, ayrı satırda gösterilir.
+- A personal investment-advisor system. 4 AI agents read, research, analyse and give **suggestions**; **the user always
+  makes the decision and places the trades.** The system never says BUY / SELL.
+- The user is a beginner, long-term (10-year) investor; trades rarely; does not invest in businesses they don't understand.
+- AI budget at most USD 25–30 / month. Principle: **keep it simple, build, test, fix** ("think fast, iterate faster").
+- Version 1 covers **US exchanges only** (NYSE, NASDAQ; ADRs included).
+- **Agent 3** (what we want you to review): builds a card from the financial statements of stocks the user
+  is watching, and assigns a grade: **solid (`SAĞLAM`) / mid (`ORTA`) / weak (`ZAYIF`) / unclear (`BELİRSİZ`)**.
+  Solid ones enter a "green list" (green list ≠ buy; it is only the list the technical-analysis agent looks at).
+- Approach: **quality first** (Buffett / Munger / Terry Smith), structure from **Peter Lynch** (first the company type, then
+  metrics are read according to the type). **Code** does all calculations; AI never produces numbers, it only answers
+  "why?" questions with quotes from the annual report. Price does **not** enter the grade; it is shown on a separate line.
 
-### Veri kaynakları ve yöntem
+### Data sources and method
 
-**SEC (finansal rakamlar):** `https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json` (ücretsiz, anahtar yok).
-Sadece `us-gaap` sözlüğündeki isimler kullanıldı (deneme şirketlerinin hepsi us-gaap raporluyor).
+**SEC (financial figures):** `https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json` (free, no key). Only the
+`us-gaap` taxonomy was used (all trial companies report in us-gaap).
 
-- **Yıllık (dönem) rakamlar:** form `10-K` veya `10-K/A`; dönem uzunluğu 350–380 gün; bitiş tarihine göre anahtarlanır;
-  aynı bitiş tarihi için birden çok kayıt varsa **en son dosyalanan** alınır (sonraki raporlardaki düzeltmeler yakalansın).
-- **Anlık (bilanço) rakamlar:** form 10-K, başlangıç tarihi olmayan kayıtlar; bitiş tarihine göre; en son dosyalanan.
-- **Mali yıl sonları:** gelir ve faaliyet kârı isimlerinde görülen bitiş tarihlerinin birleşimi; son 6 tanesi.
-- **Eş anlamlılar yöntemi:** her rakam için bir isim listesi var; kod **her yıl için ayrı ayrı** listeyi sırayla dener,
-  ilk bulunanı alır (şirket yıllar içinde isim değiştirebiliyor; örn. Coca-Cola borcu 2023'te `LongTermDebt`, 2024'te
-  `LongTermDebtAndCapitalLeaseObligations`). Listeler:
+- **Annual (duration) values:** form `10-K` or `10-K/A`; period length 350–380 days; keyed by end date; if several facts
+  share an end date, the **latest filed** one wins (to pick up later restatements).
+- **Instant (balance-sheet) values:** form 10-K, facts without a start date; keyed by end date; latest filed wins.
+- **Fiscal year ends:** union of end dates seen in the revenue and operating-income tags; the last 6.
+- **Synonym-list method:** each figure has a list of XBRL names; for **each year separately** the code tries the list in
+  order and takes the first one found (companies rename tags over time; e.g. Coca-Cola reported debt as `LongTermDebt`
+  until 2023 and as `LongTermDebtAndCapitalLeaseObligations` from 2024). Lists:
 
-| Rakam | Denenen XBRL isimleri (sırayla) |
+| Figure | XBRL names tried (in order) |
 |---|---|
-| Gelir | Revenues · RevenueFromContractWithCustomerExcludingAssessedTax · RevenueFromContractWithCustomerIncludingAssessedTax · SalesRevenueNet |
-| Satış maliyeti | CostOfRevenue · CostOfGoodsAndServicesSold · CostOfGoodsSold |
-| Brüt kâr | GrossProfit; yoksa gelir − satış maliyeti |
-| Faaliyet kârı | OperatingIncomeLoss; **yoksa vergi öncesi kâr + faiz gideri** (Nike, Pfizer, Dow faaliyet kârı raporlamıyor) |
-| Vergi öncesi kâr | IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest · IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments |
-| Vergi gideri | IncomeTaxExpenseBenefit |
-| Net kâr | NetIncomeLoss |
-| Faiz gideri | InterestExpense · InterestExpenseNonoperating · InterestExpenseDebt · InterestAndDebtExpense · InterestPaidNet (son seçenek nakit olarak ödenen faiz) |
-| İşletme nakdi | NetCashProvidedByUsedInOperatingActivities |
-| Yatırım harcaması | PaymentsToAcquirePropertyPlantAndEquipment · PaymentsToAcquireProductiveAssets |
-| Nakit | CashAndCashEquivalentsAtCarryingValue · CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents |
-| Kısa vadeli yatırım | MarketableSecuritiesCurrent · ShortTermInvestments · AvailableForSaleSecuritiesDebtSecuritiesCurrent |
-| Özkaynak | StockholdersEquity · StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest (sadece bilgi; formüllerde kullanılmıyor) |
-| Toplam varlık / kısa vadeli yükümlülük | Assets / LiabilitiesCurrent |
-| Hisse sayısı | WeightedAverageNumberOfDilutedSharesOutstanding |
-| Ödenen temettü | PaymentsOfDividends · PaymentsOfDividendsCommonStock · PaymentsOfOrdinaryDividends |
+| Revenue | Revenues · RevenueFromContractWithCustomerExcludingAssessedTax · RevenueFromContractWithCustomerIncludingAssessedTax · SalesRevenueNet |
+| Cost of revenue | CostOfRevenue · CostOfGoodsAndServicesSold · CostOfGoodsSold |
+| Gross profit | GrossProfit; otherwise revenue − cost of revenue |
+| Operating income | OperatingIncomeLoss; **otherwise pre-tax income + interest expense** (Nike, Pfizer, Dow do not report operating income) |
+| Pre-tax income | IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest · IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments |
+| Income tax | IncomeTaxExpenseBenefit |
+| Net income | NetIncomeLoss |
+| Interest expense | InterestExpense · InterestExpenseNonoperating · InterestExpenseDebt · InterestAndDebtExpense · InterestPaidNet (last option = cash interest paid) |
+| Operating cash flow | NetCashProvidedByUsedInOperatingActivities |
+| Capital expenditure | PaymentsToAcquirePropertyPlantAndEquipment · PaymentsToAcquireProductiveAssets |
+| Cash | CashAndCashEquivalentsAtCarryingValue · CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents |
+| Short-term investments | MarketableSecuritiesCurrent · ShortTermInvestments · AvailableForSaleSecuritiesDebtSecuritiesCurrent |
+| Equity | StockholdersEquity · StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest (information only; not used in formulas) |
+| Total assets / current liabilities | Assets / LiabilitiesCurrent |
+| Share count | WeightedAverageNumberOfDilutedSharesOutstanding |
+| Dividends paid | PaymentsOfDividends · PaymentsOfDividendsCommonStock · PaymentsOfOrdinaryDividends |
 
-- **Borç:** uzun vadeli kısım için şu gruplardan **ilk bulunan grup** alınır ve grubun bulunan üyeleri toplanır:
+- **Debt:** for the long-term part, the **first group found** among these is used and its found members are summed:
   (1) LongTermDebt → (2) LongTermDebtNoncurrent + LongTermDebtCurrent → (3) LongTermDebtAndCapitalLeaseObligations +
   LongTermDebtAndCapitalLeaseObligationsCurrent → (4) ConvertibleDebtNoncurrent + ConvertibleDebtCurrent +
-  ConvertibleNotesPayable + LongTermNotesPayable. Buna varsa **CommercialPaper** ve **ShortTermBorrowings** eklenir.
-  Kiralama yükümlülükleri (operating lease) dahil değil. Borç bizde "araştırma maddesi": parçaların örtüşme ihtimali var.
-- **Likit varlık** = nakit + kısa vadeli yatırım. **Serbest nakit (FCF)** = işletme nakdi − yatırım harcaması.
-- **Hisse sayısı düzeltmeleri:** bir yıldan ötekine 2, 3, 4, 5, 8, 10 veya 20 kat (±%6) sıçrama **bölünme (split)** sayılır ve
-  eski yıllar düzeltilir. Halka arz yılı atlanır (o yılın ağırlıklı ortalama hisse sayısı yanıltıcı).
-- **Yahoo (fiyat):** son fiyat, piyasa değeri, F/K (trailing P/E). Kuralımıza göre bölünmeler Yahoo'nun bölünme geçmişiyle
-  **sağlanacak**. Denemede yapılan sağlama: Nvidia için Yahoo 2021'de ×4 ve 2024'te ×10 gösteriyor; kod sadece ×10'u
-  düzeltti çünkü SEC'in son raporları ×4'ü eski yıllarda zaten düzeltmiş. Pfizer için Yahoo 2020'de "×1,054" gösteriyor;
-  bu bölünme değil, Viatris ayrılmasının fiyat düzeltmesi.
-- **Sektör:** denemede GICS ana sektörü **elle** atandı.
+  ConvertibleNotesPayable + LongTermNotesPayable. **CommercialPaper** and **ShortTermBorrowings** are added if present.
+  Operating lease liabilities are not included. Debt is an open "research item" for us: components may overlap.
+- **Liquid assets** = cash + short-term investments. **Free cash flow (FCF)** = operating cash flow − capital expenditure.
+- **Share-count adjustments:** a year-over-year jump of 2, 3, 4, 5, 8, 10 or 20× (±6%) is treated as a **stock split** and
+  earlier years are adjusted. The IPO year is skipped (that year's weighted-average share count is misleading).
+- **Yahoo (prices):** last price, market cap, trailing P/E. Our rule says splits must be **cross-checked** against Yahoo's
+  split history. Cross-check done in the trial: for Nvidia Yahoo shows ×4 (2021) and ×10 (2024); the code only adjusted ×10
+  because SEC's later filings had already restated ×4 in earlier years. For Pfizer Yahoo shows "×1.054" in 2020; this is
+  not a split but the price adjustment for the Viatris spin-off.
+- **Sector:** in the trial the GICS sector was assigned **by hand**.
 
-### 10 ölçü — tanım ve formül
+### The 10 metrics — definitions and formulas
 
-Hepsi her şirket için hesaplanır. "3y / 5y ort." = son 3 / 5 mali yıl.
+All are computed for every company. "3y / 5y avg" = last 3 / 5 fiscal years.
 
-| # | Ölçü | Formül |
+| # | Metric | Formula |
 |---|---|---|
-| 1 | Gelir büyümesi | son 3 yılın yıllık bileşik büyümesi (CAGR): (gelir_son ÷ gelir_3 yıl önce)^(1/3) − 1 |
-| 2 | Marj istikrarı | (son yıl marjı − son 5 yılın marj ortalaması [son yıl dahil]) × 100 → **puan**. Marj = brüt marj; brüt marj 3 yıldan az bulunursa **faaliyet marjı** |
-| 3 | Faaliyet marjı | faaliyet kârı ÷ gelir (son yıl) |
-| 4 | Sermaye getirisi (Terry Smith tarzı, ROCE) | 5 yıl ortalaması: faaliyet kârı × (1 − vergi oranı) ÷ (toplam varlık − kısa vadeli yükümlülük − likit). Vergi oranı = vergi ÷ vergi öncesi kâr, 0–%35 aralığına sıkıştırılır; vergi öncesi kâr ≤ 0 ise %21. Payda ≤ 0 olan yıl atlanır; en az 3 yıl gerekir |
-| 5 | Nakde dönüşüm | son 3 yılın serbest nakit toplamı ÷ son 3 yılın net kâr toplamı; net kâr toplamı ≤ 0 ise hesaplanmaz |
-| 6 | Faiz karşılama | likit ≥ borç ise "nakit > borç" (✅); değilse faaliyet kârı ÷ faiz gideri (son yıl) |
-| 7 | Borcu kaç yılda öder | net borç = borç − likit; ≤ 0 ise "nakit > borç" (✅); serbest nakitin 3 yıl ortalaması ≤ 0 ise "işinden nakit üretmiyor, borcu var" (❌); değilse net borç ÷ 3 yıl ort. serbest nakit |
-| 8 | Hisse sayısı değişimi | (son yıl ÷ ilk yıl) − 1; en fazla 5 yıllık aralık; bölünme düzeltmeli |
-| 9 | Brüt kâr büyümesi | brüt kârın 3 yıllık CAGR'ı; 3 yıl önce ≤ 0 ve şimdi > 0 ise "zarardan kâra yeni döndü" (➖) |
-| 10 | Kasadaki para kaç yıl yeter | 3 yıl ort. serbest nakit ≥ 0 ise "nakit üretiyor" (✅); değilse likit ÷ (−3 yıl ort. serbest nakit) |
-| T | Temettü nakitle karşılanıyor mu | son 5 yılın serbest nakit toplamı ≥ son 5 yılın ödenen temettü toplamı |
+| 1 | Revenue growth | 3-year CAGR: (revenue_last ÷ revenue_3 years earlier)^(1/3) − 1 |
+| 2 | Margin stability | (last-year margin − average margin of the last 5 years [last year included]) × 100 → **percentage points**. Margin = gross margin; if gross margin is found for fewer than 3 years, **operating margin** is used |
+| 3 | Operating margin | operating income ÷ revenue (last year) |
+| 4 | Return on capital (Terry Smith style, ROCE) | 5-year average of: operating income × (1 − tax rate) ÷ (total assets − current liabilities − liquid assets). Tax rate = income tax ÷ pre-tax income, clamped to 0–35%; 21% if pre-tax income ≤ 0. Years with denominator ≤ 0 are skipped; at least 3 years required |
+| 5 | Cash conversion | sum of FCF over last 3 years ÷ sum of net income over last 3 years; not computed if net-income sum ≤ 0 |
+| 6 | Interest coverage | if liquid assets ≥ debt → "cash > debt" (✅); otherwise operating income ÷ interest expense (last year) |
+| 7 | Years to repay debt | net debt = debt − liquid assets; if ≤ 0 → "cash > debt" (✅); if the 3-year average FCF ≤ 0 → "does not generate cash from its business, has debt" (❌); otherwise net debt ÷ 3-year average FCF |
+| 8 | Share-count change | (last year ÷ first year) − 1; window at most 5 years; split-adjusted |
+| 9 | Gross-profit growth | 3-year CAGR of gross profit; if it was ≤ 0 three years ago and is > 0 now → "just turned from loss to profit" (➖) |
+| 10 | Years of cash runway | if 3-year average FCF ≥ 0 → "generates cash" (✅); otherwise liquid assets ÷ (−3-year average FCF) |
+| T | Dividend covered by cash | sum of FCF over last 5 years ≥ sum of dividends paid over last 5 years |
 
-### Eşikler
+### Thresholds
 
-| # | Ölçü | ✅ iyi | ➖ orta | ❌ zayıf |
+| # | Metric | ✅ good | ➖ mid | ❌ weak |
 |---|---|---|---|---|
-| 1 | Gelir büyümesi | ≥ %15 | %8–15 | < %8 |
-| 2 | Marj istikrarı | düşüş ≤ 1 puan | 1–3 puan düşüş | > 3 puan düşüş |
-| 3 | Faaliyet marjı | ≥ %15 | %5–15 | < %5 |
-| 4 | Sermaye getirisi | ≥ %15 | %8–15 | < %8 |
-| 5 | Nakde dönüşüm | ≥ %80 | %50–80 | < %50 |
-| 6 | Faiz karşılama | ≥ 8 kat veya nakit > borç | 3–8 kat | < 3 kat |
-| 7 | Borcu öder | ≤ 3 yıl veya nakit > borç | 3–5 yıl | > 5 yıl veya nakit üretmiyor + borç var |
-| 8 | Hisse sayısı | ≤ %0 | %0–10 | > %10 |
-| 9 | Brüt kâr büyümesi | ≥ %20 | %10–20 | < %10 |
-| 10 | Kasadaki para | ≥ 3 yıl veya nakit üretiyor | 1,5–3 yıl | < 1,5 yıl |
-| 10* | Aynısı, **hızlı büyüyen + 3 yıl ort. serbest nakit < 0** | ≥ 5 yıl | 3–5 yıl | < 3 yıl |
-| T | Temettü | karşılanıyor | — | karşılanmıyor |
+| 1 | Revenue growth | ≥ 15% | 8–15% | < 8% |
+| 2 | Margin stability | drop ≤ 1 pt | drop 1–3 pt | drop > 3 pt |
+| 3 | Operating margin | ≥ 15% | 5–15% | < 5% |
+| 4 | Return on capital | ≥ 15% | 8–15% | < 8% |
+| 5 | Cash conversion | ≥ 80% | 50–80% | < 50% |
+| 6 | Interest coverage | ≥ 8× or cash > debt | 3–8× | < 3× |
+| 7 | Years to repay debt | ≤ 3 or cash > debt | 3–5 | > 5 or no cash generation + debt |
+| 8 | Share count | ≤ 0% | 0–10% | > 10% |
+| 9 | Gross-profit growth | ≥ 20% | 10–20% | < 10% |
+| 10 | Cash runway | ≥ 3 years or generates cash | 1.5–3 | < 1.5 |
+| 10* | Same, for **fast grower + 3-year avg FCF < 0** | ≥ 5 years | 3–5 | < 3 |
+| T | Dividend | covered | — | not covered |
 
-**Borç (sınıf kararında tek yargı):** 6'nın rengi esas alınır; 7 ❌ ise bir basamak düşürülür (✅→➖, ➖→❌). 6
-hesaplanamazsa 7'nin rengi. Mantık: "borç iyi kullanılıyorsa (faiz rahat ödeniyorsa) sorun değil."
+**Debt (a single judgement in the grade decision):** start from metric 6's mark; if metric 7 is ❌, downgrade one step
+(✅→➖, ➖→❌). If 6 cannot be computed, use 7's mark. Logic: "debt is fine if it is used well (interest is easily covered)."
 
-### Şirket türü (Lynch) — sırayla uygulanır
+### Company type (Lynch) — applied in order
 
-| Tür | Kural |
+| Type | Rule |
 |---|---|
-| Döngüsel | ana sektör Enerji veya Malzeme, **ya da** son 5 yılda faaliyet kârının hem artı hem eksi olduğu yıllar var |
-| Hızlı büyüyen | gelir büyümesi (ölçü 1) ≥ %15 |
-| Kârsız | son 5 yılın 4'ünden azında faaliyet kârı var (Lynch zarar edene "istikrarlı dev" demez) |
-| İstikrarlı dev | ölçü 1 ≥ %5 |
-| Yavaş büyüyen | geri kalan (< %5) |
+| `cyclical` | sector Energy or Materials, **or** the last 5 years contain both positive and negative operating income |
+| `fast_grower` | revenue growth (metric 1) ≥ 15% |
+| `unprofitable` | operating income positive in fewer than 4 of the last 5 years (Lynch would not call a loss-maker a "stalwart") |
+| `stalwart` | metric 1 ≥ 5% |
+| `slow_grower` | the rest (< 5%) |
 
-### Belirleyici ölçüler ve sınıf kuralı
+### Deciding metrics and grade rule
 
-Sınıf kararında sadece türün **belirleyici** ölçülerine bakılır (forvet golüne, kaleci kurtarışına göre değerlendirilir).
-Belirleyici olmayan bir ölçü ❌ alırsa karnede yapay zekâya "neden?" sorulur; sınıfı değiştirmez.
+The grade uses only the type's **deciding** metrics (a striker is judged by goals, a goalkeeper by saves). If a
+non-deciding metric is ❌, the card asks the AI "why?"; it does not change the grade.
 
-| Tür | Belirleyiciler |
+| Type | Deciding metrics |
 |---|---|
-| İstikrarlı dev | 2 · 3 · 4 · 5 |
-| Hızlı büyüyen | 1 · 9 · 2 · 10 · 8 |
-| Yavaş büyüyen | 2 · 4 · 5 · Borç · T |
-| Döngüsel | 4 · Borç · 8 |
-| Kârsız | 2 · 3 · 4 · 5 |
+| Stalwart | 2 · 3 · 4 · 5 |
+| Fast grower | 1 · 9 · 2 · 10 · 8 |
+| Slow grower | 2 · 4 · 5 · Debt · T |
+| Cyclical | 4 · Debt · 8 |
+| Unprofitable | 2 · 3 · 4 · 5 |
 
 ```text
-BELİRSİZ = belirleyicilerin yarısından azı hesaplanabildi (ya da şirket kapsam dışı)
-ZAYIF    = belirleyicilerden 2 veya daha fazlası ❌
-SAĞLAM   = hiçbiri ❌ değil  VE  ✅ sayısı ≥ belirleyici sayısının yarısı
-ORTA     = arada kalan
-Küçülme  = ölçü 1 (3 yıllık gelir büyümesi) eksiyse SAĞLAM olamaz → ORTA
+unclear (`BELİRSİZ`) = fewer than half of the deciding metrics could be computed (or the company is out of scope)
+weak (`ZAYIF`)       = 2 or more deciding metrics are ❌
+solid (`SAĞLAM`)     = none is ❌  AND  number of ✅ ≥ half of the deciding metrics
+mid (`ORTA`)         = everything in between
+shrink_rule          = if metric 1 (3-year revenue growth) is negative, the grade cannot be solid → mid (`shrink_rule: yes`)
 ```
 
-**Kapsam dışı (şimdilik):** banka, sigorta, gayrimenkul (REIT), henüz geliri olmayan şirketler, kamu hizmetleri;
-toparlanan ve "varlık zengini" şirketler. Visa / Mastercard gibi ödeme şirketleri kapsam içinde.
+**Out of scope (for now):** banks, insurers, real estate (REITs), companies with no revenue yet, utilities; turnarounds and
+"asset plays". Payment companies such as Visa / Mastercard are in scope.
 
-### Fiyat satırı (sınıfa girmez)
+### Price line (not part of the grade)
 
-- **PEG** = F/K (Yahoo trailing P/E) ÷ (net kârın 3 yıllık CAGR'ı × 100). Denemede hisse başı kâr değil **net kâr** büyümesi
-  kullanıldı. Kâr yoksa / düşüyorsa "hesaplanamaz". ≤ 1 cazip · 1–2 makul · > 2 pahalı.
-- **Serbest nakit akışı verimi** = son yıl serbest nakit ÷ piyasa değeri. ≥ %5 cazip · %2–5 makul · < %2 pahalı.
+- **PEG** = P/E (Yahoo trailing P/E) ÷ (3-year CAGR of net income × 100). The trial used **net income** growth, not EPS
+  growth. If there is no profit / profit is falling → "not computable". ≤ 1 attractive · 1–2 fair · > 2 expensive.
+- **FCF yield** = last-year FCF ÷ market cap. ≥ 5% attractive · 2–5% fair · < 2% expensive.
 
-### Denenen 10 şirket ve kullanıcının beklentisi
+### The 10 trial companies and the user's expectation
 
 Coca-Cola (KO), Nvidia (NVDA), Nike (NKE), Starbucks (SBUX), Pfizer (PFE), Intel (INTC), Boeing (BA), Snap (SNAP),
-Dow (DOW), Rivian (RIVN). 2 tanesinin sağlam, 8'inin orta / zayıf çıkması beklendi. Kullanıcı sonuçları şöyle
-değerlendirdi: Coca-Cola ORTA doğru (kural ona göre esnetilmesin), Nvidia SAĞLAM doğru, Intel / Boeing / Snap / Dow / Rivian
-ZAYIF doğru; Nike / Starbucks / Pfizer'ı **zayıf** görüyor ama şimdilik ORTA kabul ediyor. Sonuçlar **Ek A**'da, ham
-rakamlar **Ek B**'de, deneme kodu **Ek C**'de.
+Dow (DOW), Rivian (RIVN). 2 were expected to be solid, 8 mid / weak. The user's assessment of our results:
+Coca-Cola mid (`ORTA`) is right (do not bend the rules for it), Nvidia solid (`SAĞLAM`) is right, Intel / Boeing / Snap / Dow / Rivian weak (`ZAYIF`)
+are right; the user sees Nike / Starbucks / Pfizer as **weak** but accepts mid (`ORTA`) for now. Results in **Appendix A**, raw
+figures in **Appendix B**, trial code in **Appendix C**.
 
-### Bildiğimiz sınırlamalar ve açık sorular (bunlar hakkında da görüşünü istiyoruz)
+### Known limitations and open questions (we want your view on these too)
 
-1. Deneme kodu bir **prototip**; rakamlar henüz 10-K'larla elle karşılaştırılmadı (kabul testinde en az 20 hissede yapılacak).
-2. **Yatırım harcaması bulunamazsa 0 sayılıyor** → serbest nakit olduğundan yüksek çıkabilir.
-3. 3 yıllık serbest nakit ortalamasında eksik yıl 0 sayılıyor (3'e bölünüyor).
-4. **Dow:** son 3 yılın serbest nakiti 2,8 → 0 → −1,4 milyar $; ortalama artı olduğu için ölçü 10 "nakit üretiyor" diyor.
-   Ortalama kullanmak tek seferlik ödemeleri yumuşatıyor ama kötüleşen eğilimi gizleyebilir.
-5. Sermaye getirisinin paydasında şerefiye (goodwill) dahil; satın almayla büyüyen şirketlerde düşük çıkar (Coca-Cola %13,8).
-6. Faaliyet kârı yedeği (vergi öncesi kâr + faiz) olağandışı kalemleri de içerir; faiz için nakit ödenen faiz (InterestPaidNet)
-   kullanılabiliyor.
-7. Borç parçalarının örtüşme riski; kiralama yükümlülükleri hariç.
-8. **PEG:** Nvidia'da net kâr 3 yılda yıllık %202 büyüdüğü için PEG 0,15 çıkıyor (anlamsız). Öneri: büyüme en fazla %25
-   alınsın (Lynch: daha hızlısı sürmez). Henüz karar verilmedi.
-9. **Hisseyle ödenen maaş (stock-based compensation)** serbest nakitten düşülmüyor; Snap'in nakit verimi şişik görünüyor.
-   Öneri: düşülsün. Henüz karar verilmedi.
-10. Nakit veriminde son yıl serbest nakiti kullanılıyor; diğer ölçülerde 3 yıl ortalaması. Tutarlı olmalı mı?
-11. Tür eşikleri (%5 / %15) gelir büyümesine göre; Lynch türleri kâr büyümesine göre ayırıyordu. Coca-Cola %3,7 ile
-    "yavaş büyüyen" oldu (Lynch muhtemelen "istikrarlı dev" derdi).
-12. Mali yıl sonları farklı (Nvidia Ocak, Nike Mayıs, Starbucks Eylül); karşılaştırmalar takvim yılına göre hizalı değil.
+1. The trial code is a **prototype**; figures have not yet been checked by hand against the 10-Ks (to be done in acceptance
+   testing on at least 20 stocks).
+2. **If capital expenditure is not found it is treated as 0** → FCF may be overstated.
+3. In the 3-year FCF average a missing year counts as 0 (always divided by 3).
+4. **Dow:** FCF over the last 3 years 2.8 → 0 → −1.4 billion USD; the average is positive, so metric 10 says "generates
+   cash". Averaging smooths one-offs but can hide a deteriorating trend.
+5. The return-on-capital denominator includes goodwill; it comes out low for acquisitive companies (Coca-Cola 13.8%).
+6. The operating-income fallback (pre-tax income + interest) includes unusual items; the interest figure may be cash
+   interest paid (InterestPaidNet).
+7. Debt components may overlap; leases excluded.
+8. **PEG:** Nvidia's net income grew ~202% a year over 3 years, so PEG comes out 0.15 (meaningless). Proposal: cap growth at
+   25% (Lynch: faster growth does not last). Not decided yet.
+9. **Stock-based compensation** is not deducted from FCF; Snap's FCF yield looks inflated. Proposal: deduct it. Not decided.
+10. FCF yield uses last-year FCF; other metrics use the 3-year average. Should it be consistent?
+11. Type thresholds (5% / 15%) use revenue growth; Lynch classified by earnings growth. Coca-Cola (3.7%) became a "slow
+    grower" (Lynch would probably call it a stalwart).
+12. Fiscal year ends differ (Nvidia January, Nike May, Starbucks September); comparisons are not aligned to calendar years.
 
-### Senden istenenler
+### What we ask you to do
 
-1. **Hesap kontrolü:** Ek B'deki ham rakamlardan Ek A'daki ölçüleri yeniden hesapla (en az 4 şirket, mümkünse hepsi).
-   Tutmayanları listele.
-2. **Veri kontrolü:** Erişimin varsa en az 3 şirketin son yıl rakamlarını (gelir, faaliyet kârı, işletme nakdi, yatırım
-   harcaması, borç, hisse sayısı) şirketin 10-K'sıyla karşılaştır. Özellikle **borç** toplamına bak.
-3. **Kod kontrolü:** Ek C'deki kodda yukarıda yazılı kurallarla çelişen ya da hatalı bir yer var mı?
-4. **Kural mantığı:** Eşikler, tür kuralları, belirleyiciler ve sınıf kuralı finansal açıdan tutarlı mı? Buffett / Munger /
-   Smith / Lynch yaklaşımıyla çelişen bir yer var mı? Kuralın yanlış sınıf verebileceği **tuzak şirket tipleri** neler?
-5. **Sınıf sonuçları:** 10 şirketin her birinin sınıfına katılıyor musun? Katılmıyorsan **hangi kural** yüzünden ve nasıl
-   bir düzeltme önerirsin (tek bir şirket için kural esnetmek "geçmişe uydurma" olur; genel bir kural öner).
-6. **Açık sorular:** Yukarıdaki 12 maddenin her birine kısa görüş.
-7. **Gözden kaçanlar:** Sistemi yanıltabilecek en önemli 5 risk.
+1. **Calculation check:** recompute the metrics in Appendix A from the raw figures in Appendix B (at least 4 companies,
+   ideally all). List anything that does not match.
+2. **Data check:** if you have access, compare the last-year figures of at least 3 companies (revenue, operating income,
+   operating cash flow, capex, debt, share count) with the company's 10-K. Pay special attention to the **debt** total.
+3. **Code check:** does the code in Appendix C contradict any rule above, or contain a bug?
+4. **Rule logic:** are the thresholds, type rules, deciding metrics and grade rule financially consistent? Anything that
+   contradicts Buffett / Munger / Smith / Lynch? What **trap company types** could get the wrong grade?
+5. **Grade results:** do you agree with each of the 10 grades? If not, **which rule** causes it and what general fix would
+   you propose (bending a rule for a single company is "curve fitting"; propose a general rule).
+6. **Open questions:** a short view on each of the 12 items above.
+7. **Blind spots:** the 5 most important risks that could mislead the system.
 
-### Cevap formatı
+### Answer format (in Turkish)
 
-Önce şu tabloyu doldur (her bulgu bir satır):
+First fill in this table (one row per finding):
 
-| # | Tür (hesap / veri / kod / kural / sınıf / eksik) | Nerede (şirket, ölçü, satır) | Sorun | Kanıt | Önem (yüksek / orta / düşük) | Öneri (en basit hâli) | Nasıl emin oldun (kaynak / yeniden hesap / akıl yürütme) |
+| # | Type (calculation / data / code / rule / grade / missing) | Where (company, metric, line) | Issue | Evidence | Severity (high / medium / low) | Fix (simplest form) | How you know (source / recomputed / reasoning) |
 |---|---|---|---|---|---|---|---|
 
-Sonra:
+Then:
 
-- **10 şirket tablosu:** şirket · bizim sınıfımız · senin sınıfın · kısa gerekçe.
-- **Açık sorular:** 1–12 her biri için 1–3 cümle.
-- **En önemli 3 bulgu.**
-- **Hata bulamadığın alanlar** (ör. "eşik tablosu tutarlı", "Coca-Cola hesapları doğru").
+- **10-company table:** company · our grade · your grade · short reason.
+- **Open questions:** 1–3 sentences for each of 1–12.
+- **Top 3 findings.**
+- **Areas where you found no error** (e.g. "threshold table is consistent", "Coca-Cola calculations are correct").
 
-### Ek A — Sonuçlar (deneme kodunun çıktısı)
+### Glossary for the appendices (Turkish → English)
 
-**Kalın** = o şirketin türüne göre belirleyici ölçü. "—" = hesaplanamadı. Renkler: ✅ iyi · ➖ orta · ❌ zayıf · `·` hesaplanamadı / yok.
+Grades (what the code prints → locked name): SAĞLAM = solid · ORTA = mid · ZAYIF = weak · BELİRSİZ = unclear. Types: Hızlı büyüyen = fast_grower ·
+İstikrarlı dev = stalwart · Yavaş büyüyen = slow_grower · Döngüsel = cyclical · Kârsız = unprofitable. In the code:
+gelir = revenue · maliyet = cost of revenue · brut = gross profit · faal / faaliyet = operating income · vergi_oncesi / vo =
+pre-tax income · vergi = income tax · net = net income · faiz = interest expense · isletme_nakit / on = operating cash flow ·
+yatirim / yat = capex · nakit = cash · kv_yatirim = short-term investments · likit = liquid assets · ozkaynak / oz = equity ·
+varlik = total assets · kv_yukumluluk / kvy_ = current liabilities · borc = debt · hisse = diluted share count ·
+temettu / tem = dividends paid · fcf3 = 3-year average FCF · bolunme = split · ilk_10k = first 10-K fiscal year ·
+renk = mark · tur = lynch_type · sinif = grade · bel = deciding metrics · kuculme = shrink_rule · sert10 = stricter metric-10
+thresholds. "nakit üretiyor" = generates cash · "nakit > borç" = cash > debt · "hesaplanamadı" / "—" = not computable ·
+"puan" = percentage points.
 
-| Ölçü | Coca-Cola (KO) | Nvidia (NVDA) | Nike (NKE) | Starbucks (SBUX) | Pfizer (PFE) |
+### Appendix A — Results (output of the trial code)
+
+**Bold** = deciding metric for that company's type. "—" = not computable. Marks: ✅ good · ➖ mid · ❌ weak · `·` not computable / none.
+
+| Metric | Coca-Cola (KO) | Nvidia (NVDA) | Nike (NKE) | Starbucks (SBUX) | Pfizer (PFE) |
 |---|---|---|---|---|---|
-| 1. Gelir büyümesi (3y) | ❌ +3.7% | **✅ +100.0%** | ❌ -3.2% | ❌ +4.9% | ❌ -14.8% |
-| 2. Marj istikrarı | **✅ +1.5 puan** | **✅ +2.9 puan** | **➖ -1.0 puan** | **❌ -6.2 puan** | **✅ +7.8 puan** |
-| 3. Faaliyet marjı | ✅ 28.7% | ✅ 60.4% | ➖ 9.1% | ➖ 7.9% | ✅ 16.3% |
-| 4. Sermaye getirisi (5y, ROCE) | **➖ 13.8%** | ✅ 76.0% | **✅ 25.5%** | **✅ 21.5%** | **➖ 12.0%** |
-| 5. Nakde dönüşüm (3y) | **➖ 57.4%** | ✅ 82.9% | **✅ 100.3%** | **✅ 96.9%** | **✅ 132.3%** |
-| 6. Faiz karşılama (kat) | ✅ 8.3 | ✅ nakit > borç | ✅ 13.1 | ➖ 5.4 | ➖ 3.8 |
-| 7. Borcu öder (yıl) | ❌ 5.3 | ✅ nakit > borç | ✅ 0.1 | ➖ 4.0 | ❌ 6.9 |
-| 8. Hisse sayısı (5y) | ✅ -0.2% | **✅ -2.3%** | ✅ -8.0% | ✅ -3.6% | ➖ +1.4% |
-| 9. Brüt kâr büyümesi (3y) | ❌ +5.7% | **✅ +115.4%** | ❌ -3.7% | · — | ❌ -11.4% |
-| 10. Nakit yeter (yıl) | ✅ nakit üretiyor | **✅ nakit üretiyor** | ✅ nakit üretiyor | ✅ nakit üretiyor | ✅ nakit üretiyor |
-| Borç (6+7 birleşik) | **➖** | ✅ | **✅** | **➖** | **❌** |
-| T. Temettü (5y) | **✅** | ✅ | **✅** | **✅** | **✅** |
-| Serbest nakit 3y ort. (milyar $) | 6.59 | 61.52 | 4.02 | 3.15 | 7.90 |
-| **Tür → Sınıf** | Yavaş büyüyen → **ORTA** | Hızlı büyüyen → **SAĞLAM** | Yavaş büyüyen → **ORTA (küçülme kuralı)** | Yavaş büyüyen → **ORTA** | Yavaş büyüyen → **ORTA** |
-| Fiyat satırı | PEG 2.32 · nakit verimi 1.4% | PEG 0.15 · nakit verimi 1.7% | PEG hesaplanamaz · nakit verimi 4.3% | PEG hesaplanamaz · nakit verimi 2.3% | PEG hesaplanamaz · nakit verimi 5.7% |
+| 1. Revenue growth (3y) | ❌ +3.7% | **✅ +100.0%** | ❌ -3.2% | ❌ +4.9% | ❌ -14.8% |
+| 2. Margin stability | **✅ +1.5 pt** | **✅ +2.9 pt** | **➖ -1.0 pt** | **❌ -6.2 pt** | **✅ +7.8 pt** |
+| 3. Operating margin | ✅ 28.7% | ✅ 60.4% | ➖ 9.1% | ➖ 7.9% | ✅ 16.3% |
+| 4. Return on capital (5y, ROCE) | **➖ 13.8%** | ✅ 76.0% | **✅ 25.5%** | **✅ 21.5%** | **➖ 12.0%** |
+| 5. Cash conversion (3y) | **➖ 57.4%** | ✅ 82.9% | **✅ 100.3%** | **✅ 96.9%** | **✅ 132.3%** |
+| 6. Interest coverage (×) | ✅ 8.3 | ✅ cash > debt | ✅ 13.1 | ➖ 5.4 | ➖ 3.8 |
+| 7. Years to repay debt | ❌ 5.3 | ✅ cash > debt | ✅ 0.1 | ➖ 4.0 | ❌ 6.9 |
+| 8. Share count (≤5y) | ✅ -0.2% | **✅ -2.3%** | ✅ -8.0% | ✅ -3.6% | ➖ +1.4% |
+| 9. Gross-profit growth (3y) | ❌ +5.7% | **✅ +115.4%** | ❌ -3.7% | · — | ❌ -11.4% |
+| 10. Cash runway (years) | ✅ generates cash | **✅ generates cash** | ✅ generates cash | ✅ generates cash | ✅ generates cash |
+| Debt (6+7 combined) | **➖** | ✅ | **✅** | **➖** | **❌** |
+| T. Dividend covered (5y) | **✅** | ✅ | **✅** | **✅** | **✅** |
+| 3y avg FCF (bn USD) | 6.59 | 61.52 | 4.02 | 3.15 | 7.90 |
+| **Type → Grade** | slow_grower → **mid (`ORTA`)** | fast_grower → **solid (`SAĞLAM`)** | slow_grower → **mid (`ORTA`), shrink_rule** | slow_grower → **mid (`ORTA`)** | slow_grower → **mid (`ORTA`)** |
+| Price line | PEG 2.32 · FCF yield 1.4% | PEG 0.15 · FCF yield 1.7% | PEG not computable · FCF yield 4.3% | PEG not computable · FCF yield 2.3% | PEG not computable · FCF yield 5.7% |
 
-| Ölçü | Intel (INTC) | Boeing (BA) | Snap (SNAP) | Dow (DOW) | Rivian (RIVN) |
+| Metric | Intel (INTC) | Boeing (BA) | Snap (SNAP) | Dow (DOW) | Rivian (RIVN) |
 |---|---|---|---|---|---|
-| 1. Gelir büyümesi (3y) | ❌ -5.7% | ➖ +10.3% | ➖ +8.8% | ❌ -11.1% | **✅ +48.1%** |
-| 2. Marj istikrarı | ❌ -6.3 puan | ✅ +0.4 puan | **➖ -1.2 puan** | ❌ -6.2 puan | **✅ +222.9 puan** |
-| 3. Faaliyet marjı | ❌ -4.2% | ❌ 4.8% | **❌ -9.0%** | ❌ -4.1% | ❌ -66.5% |
-| 4. Sermaye getirisi (5y, ROCE) | **❌ 2.1%** | **❌ -6.2%** | **❌ -24.3%** | **❌ 6.1%** | ❌ -94.4% |
-| 5. Nakde dönüşüm (3y) | · — | · — | **· —** | · — | · — |
-| 6. Faiz karşılama (kat) | ❌ -2.0 | ❌ 1.5 | ❌ -4.4 | ❌ -1.9 | ✅ nakit > borç |
-| 7. Borcu öder (yıl) | ❌ nakit üretmiyor, borç var | ❌ nakit üretmiyor, borç var | ✅ 2.8 | ❌ 31.3 | ✅ nakit > borç |
-| 8. Hisse sayısı (5y) | **➖ +7.0%** | **❌ +34.1%** | ❌ +16.4% | **✅ -4.1%** | **❌ +29.9%** |
-| 9. Brüt kâr büyümesi (3y) | ❌ -11.9% | ❌ +6.7% | ❌ +5.4% | ❌ -33.4% | **➖ zarardan kâra döndü** |
-| 10. Nakit yeter (yıl) | ✅ 3.2 | ✅ 7.5 | ✅ nakit üretiyor | ✅ nakit üretiyor | **❌ 1.6** |
-| Borç (6+7 birleşik) | **❌** | **❌** | ❌ | **❌** | ✅ |
-| T. Temettü (5y) | ❌ | ❌ | · | ✅ | · |
-| Serbest nakit 3y ort. (milyar $) | -11.63 | -3.92 | 0.23 | 0.46 | -3.75 |
-| **Tür → Sınıf** | Döngüsel → **ZAYIF** | Döngüsel → **ZAYIF** | Kârsız → **ZAYIF** | Döngüsel → **ZAYIF** | Hızlı büyüyen → **ZAYIF** |
-| Fiyat satırı | PEG hesaplanamaz · nakit verimi -0.8% | PEG hesaplanamaz · nakit verimi -1.2% | PEG hesaplanamaz · nakit verimi 4.6% | PEG hesaplanamaz · nakit verimi -7.2% | PEG hesaplanamaz · nakit verimi -12.0% |
+| 1. Revenue growth (3y) | ❌ -5.7% | ➖ +10.3% | ➖ +8.8% | ❌ -11.1% | **✅ +48.1%** |
+| 2. Margin stability | ❌ -6.3 pt | ✅ +0.4 pt | **➖ -1.2 pt** | ❌ -6.2 pt | **✅ +222.9 pt** |
+| 3. Operating margin | ❌ -4.2% | ❌ 4.8% | **❌ -9.0%** | ❌ -4.1% | ❌ -66.5% |
+| 4. Return on capital (5y, ROCE) | **❌ 2.1%** | **❌ -6.2%** | **❌ -24.3%** | **❌ 6.1%** | ❌ -94.4% |
+| 5. Cash conversion (3y) | · — | · — | **· —** | · — | · — |
+| 6. Interest coverage (×) | ❌ -2.0 | ❌ 1.5 | ❌ -4.4 | ❌ -1.9 | ✅ cash > debt |
+| 7. Years to repay debt | ❌ no cash generation, has debt | ❌ no cash generation, has debt | ✅ 2.8 | ❌ 31.3 | ✅ cash > debt |
+| 8. Share count (≤5y) | **➖ +7.0%** | **❌ +34.1%** | ❌ +16.4% | **✅ -4.1%** | **❌ +29.9%** |
+| 9. Gross-profit growth (3y) | ❌ -11.9% | ❌ +6.7% | ❌ +5.4% | ❌ -33.4% | **➖ just turned to profit** |
+| 10. Cash runway (years) | ✅ 3.2 | ✅ 7.5 | ✅ generates cash | ✅ generates cash | **❌ 1.6** |
+| Debt (6+7 combined) | **❌** | **❌** | ❌ | **❌** | ✅ |
+| T. Dividend covered (5y) | ❌ | ❌ | · | ✅ | · |
+| 3y avg FCF (bn USD) | -11.63 | -3.92 | 0.23 | 0.46 | -3.75 |
+| **Type → Grade** | cyclical → **weak (`ZAYIF`)** | cyclical → **weak (`ZAYIF`)** | unprofitable → **weak (`ZAYIF`)** | cyclical → **weak (`ZAYIF`)** | fast_grower → **weak (`ZAYIF`)** |
+| Price line | PEG not computable · FCF yield -0.8% | PEG not computable · FCF yield -1.2% | PEG not computable · FCF yield 4.6% | PEG not computable · FCF yield -7.2% | PEG not computable · FCF yield -12.0% |
 
-### Ek B — Ham rakamlar (SEC, milyar $; hisse sayısı milyon, bölünme düzeltmesi **öncesi**)
+### Appendix B — Raw figures (SEC; billion USD; share count in millions, **before** split adjustment)
 
-Sütunlar mali yıl sonu tarihleri (yyyy-aa). "—" = eş anlamlılar listesinde bulunamadı.
+Columns are fiscal-year-end dates (yyyy-mm). "—" = not found by the synonym list.
 
-#### Coca-Cola (KO) — mali yıl sonları: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · tür: Yavaş büyüyen · sınıf: ORTA
+#### Coca-Cola (KO) — fiscal year ends: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · type: slow_grower · grade: mid (`ORTA`)
 
-| Kalem (milyar $) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
+| Item (bn USD) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
 |---|---|---|---|---|---|---|
-| Gelir | 33.01 | 38.66 | 43.00 | 45.75 | 47.06 | 47.94 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 19.58 | 23.30 | 25.00 | 27.23 | 28.74 | 29.54 |
-| Faaliyet kârı | 9.00 | 10.31 | 10.91 | 11.31 | 9.99 | 13.76 |
-| Vergi öncesi kâr | 9.75 | 12.43 | 11.69 | 12.95 | 13.09 | 16.00 |
-| Faiz gideri | 1.44 | 1.60 | 0.88 | 1.53 | 1.66 | 1.65 |
-| Net kâr | 7.75 | 9.77 | 9.54 | 10.71 | 10.63 | 13.11 |
-| İşletme nakdi | 9.84 | 12.62 | 11.02 | 11.60 | 6.80 | 7.41 |
-| Yatırım harcaması | 1.18 | 1.37 | 1.48 | 1.85 | 2.06 | 2.11 |
-| Serbest nakit | 8.67 | 11.26 | 9.53 | 9.75 | 4.74 | 5.30 |
-| Nakit + kısa vadeli yatırım | 9.14 | 9.68 | 9.52 | 9.37 | 10.83 | 10.27 |
-| Toplam varlık | 87.30 | 94.35 | 92.76 | 97.70 | 100.55 | 104.82 |
-| Kısa vadeli yükümlülük | 14.60 | 19.95 | 19.72 | 23.57 | 25.25 | 21.28 |
-| Özkaynak | 19.30 | 23.00 | 24.11 | 25.94 | 24.86 | 32.17 |
-| Borç (toplam) | 44.12 | 45.22 | 41.30 | 41.72 | 44.16 | 45.44 |
-| Ödenen temettü | 7.05 | 7.25 | 7.62 | 7.95 | 8.36 | 8.78 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 4,323 | 4,340 | 4,350 | 4,339 | 4,320 | 4,313 |
+| Revenue | 33.01 | 38.66 | 43.00 | 45.75 | 47.06 | 47.94 |
+| Gross profit (reported or revenue − cost) | 19.58 | 23.30 | 25.00 | 27.23 | 28.74 | 29.54 |
+| Operating income | 9.00 | 10.31 | 10.91 | 11.31 | 9.99 | 13.76 |
+| Pre-tax income | 9.75 | 12.43 | 11.69 | 12.95 | 13.09 | 16.00 |
+| Interest expense | 1.44 | 1.60 | 0.88 | 1.53 | 1.66 | 1.65 |
+| Net income | 7.75 | 9.77 | 9.54 | 10.71 | 10.63 | 13.11 |
+| Operating cash flow | 9.84 | 12.62 | 11.02 | 11.60 | 6.80 | 7.41 |
+| Capex | 1.18 | 1.37 | 1.48 | 1.85 | 2.06 | 2.11 |
+| Free cash flow | 8.67 | 11.26 | 9.53 | 9.75 | 4.74 | 5.30 |
+| Cash + short-term investments | 9.14 | 9.68 | 9.52 | 9.37 | 10.83 | 10.27 |
+| Total assets | 87.30 | 94.35 | 92.76 | 97.70 | 100.55 | 104.82 |
+| Current liabilities | 14.60 | 19.95 | 19.72 | 23.57 | 25.25 | 21.28 |
+| Equity | 19.30 | 23.00 | 24.11 | 25.94 | 24.86 | 32.17 |
+| Debt (total) | 44.12 | 45.22 | 41.30 | 41.72 | 44.16 | 45.44 |
+| Dividends paid | 7.05 | 7.25 | 7.62 | 7.95 | 8.36 | 8.78 |
+| Diluted weighted-avg shares (millions, raw) | 4,323 | 4,340 | 4,350 | 4,339 | 4,320 | 4,313 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebtAndCapitalLeaseObligations, LongTermDebtAndCapitalLeaseObligationsCurrent, CommercialPaper · faaliyet kârı kaynağı: OperatingIncomeLoss
+Last-year debt source (XBRL names): LongTermDebtAndCapitalLeaseObligations, LongTermDebtAndCapitalLeaseObligationsCurrent, CommercialPaper · operating income source: OperatingIncomeLoss
 
-#### Nvidia (NVDA) — mali yıl sonları: 2021-01-31, 2022-01-30, 2023-01-29, 2024-01-28, 2025-01-26, 2026-01-25 · tür: Hızlı büyüyen · sınıf: SAĞLAM
+#### Nvidia (NVDA) — fiscal year ends: 2021-01-31, 2022-01-30, 2023-01-29, 2024-01-28, 2025-01-26, 2026-01-25 · type: fast_grower · grade: solid (`SAĞLAM`)
 
-| Kalem (milyar $) | 2021-01 | 2022-01 | 2023-01 | 2024-01 | 2025-01 | 2026-01 |
+| Item (bn USD) | 2021-01 | 2022-01 | 2023-01 | 2024-01 | 2025-01 | 2026-01 |
 |---|---|---|---|---|---|---|
-| Gelir | 16.68 | 26.91 | 26.97 | 60.92 | 130.50 | 215.94 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 10.40 | 17.48 | 15.36 | 44.30 | 97.86 | 153.46 |
-| Faaliyet kârı | 4.53 | 10.04 | 4.22 | 32.97 | 81.45 | 130.39 |
-| Vergi öncesi kâr | 4.41 | 9.94 | 4.18 | 33.82 | 84.03 | 141.45 |
-| Faiz gideri | 0.18 | 0.24 | 0.26 | 0.26 | 0.25 | 0.26 |
-| Net kâr | 4.33 | 9.75 | 4.37 | 29.76 | 72.88 | 120.07 |
-| İşletme nakdi | 5.82 | 9.11 | 5.64 | 28.09 | 64.09 | 102.72 |
-| Yatırım harcaması | — | 0.98 | 1.83 | 1.07 | 3.24 | 6.04 |
-| Serbest nakit | 5.82 | 8.13 | 3.81 | 27.02 | 60.85 | 96.68 |
-| Nakit + kısa vadeli yatırım | 11.56 | 21.21 | 13.30 | 25.98 | 43.21 | 10.61 |
-| Toplam varlık | 28.79 | 44.19 | 41.18 | 65.73 | 111.60 | 206.80 |
-| Kısa vadeli yükümlülük | 3.92 | 4.33 | 6.56 | 10.63 | 18.05 | 32.16 |
-| Özkaynak | 16.89 | 26.61 | 22.10 | 42.98 | 79.33 | 157.29 |
-| Borç (toplam) | 6.96 | 10.95 | 10.95 | 9.71 | 8.46 | 8.47 |
-| Ödenen temettü | 0.40 | 0.40 | 0.40 | 0.40 | 0.83 | 0.97 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 2,510 | 2,535 | 25,070 | 24,940 | 24,804 | 24,514 |
+| Revenue | 16.68 | 26.91 | 26.97 | 60.92 | 130.50 | 215.94 |
+| Gross profit (reported or revenue − cost) | 10.40 | 17.48 | 15.36 | 44.30 | 97.86 | 153.46 |
+| Operating income | 4.53 | 10.04 | 4.22 | 32.97 | 81.45 | 130.39 |
+| Pre-tax income | 4.41 | 9.94 | 4.18 | 33.82 | 84.03 | 141.45 |
+| Interest expense | 0.18 | 0.24 | 0.26 | 0.26 | 0.25 | 0.26 |
+| Net income | 4.33 | 9.75 | 4.37 | 29.76 | 72.88 | 120.07 |
+| Operating cash flow | 5.82 | 9.11 | 5.64 | 28.09 | 64.09 | 102.72 |
+| Capex | — | 0.98 | 1.83 | 1.07 | 3.24 | 6.04 |
+| Free cash flow | 5.82 | 8.13 | 3.81 | 27.02 | 60.85 | 96.68 |
+| Cash + short-term investments | 11.56 | 21.21 | 13.30 | 25.98 | 43.21 | 10.61 |
+| Total assets | 28.79 | 44.19 | 41.18 | 65.73 | 111.60 | 206.80 |
+| Current liabilities | 3.92 | 4.33 | 6.56 | 10.63 | 18.05 | 32.16 |
+| Equity | 16.89 | 26.61 | 22.10 | 42.98 | 79.33 | 157.29 |
+| Debt (total) | 6.96 | 10.95 | 10.95 | 9.71 | 8.46 | 8.47 |
+| Dividends paid | 0.40 | 0.40 | 0.40 | 0.40 | 0.83 | 0.97 |
+| Diluted weighted-avg shares (millions, raw) | 2,510 | 2,535 | 25,070 | 24,940 | 24,804 | 24,514 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebt · faaliyet kârı kaynağı: OperatingIncomeLoss · hisse: bölünme düzeltildi (×10)
+Last-year debt source (XBRL names): LongTermDebt · operating income source: OperatingIncomeLoss · shares: split adjusted (×10)
 
-#### Nike (NKE) — mali yıl sonları: 2021-05-31, 2022-05-31, 2023-05-31, 2024-05-31, 2025-05-31, 2026-05-31 · tür: Yavaş büyüyen · sınıf: ORTA (küçülme kuralı)
+#### Nike (NKE) — fiscal year ends: 2021-05-31, 2022-05-31, 2023-05-31, 2024-05-31, 2025-05-31, 2026-05-31 · type: slow_grower · grade: mid (`ORTA`), shrink_rule
 
-| Kalem (milyar $) | 2021-05 | 2022-05 | 2023-05 | 2024-05 | 2025-05 | 2026-05 |
+| Item (bn USD) | 2021-05 | 2022-05 | 2023-05 | 2024-05 | 2025-05 | 2026-05 |
 |---|---|---|---|---|---|---|
-| Gelir | 44.54 | 46.71 | 51.22 | 51.36 | 46.31 | 46.40 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 19.96 | 21.48 | 22.29 | 22.89 | 19.79 | 19.91 |
-| Faaliyet kârı | 6.95 | 6.94 | 6.55 | 7.08 | 4.27 | 4.22 |
-| Vergi öncesi kâr | 6.66 | 6.65 | 6.20 | 6.70 | 3.88 | 3.90 |
-| Faiz gideri | 0.29 | 0.29 | 0.35 | 0.38 | 0.39 | 0.32 |
-| Net kâr | 5.73 | 6.05 | 5.07 | 5.70 | 3.22 | 3.11 |
-| İşletme nakdi | 6.66 | 5.19 | 5.84 | 7.43 | 3.70 | 2.87 |
-| Yatırım harcaması | 0.69 | 0.76 | 0.97 | 0.81 | 0.43 | 0.68 |
-| Serbest nakit | 5.96 | 4.43 | 4.87 | 6.62 | 3.27 | 2.18 |
-| Nakit + kısa vadeli yatırım | 13.48 | 8.57 | 7.44 | 9.86 | 7.46 | 7.56 |
-| Toplam varlık | 37.74 | 40.32 | 37.53 | 38.11 | 36.58 | 38.41 |
-| Kısa vadeli yükümlülük | 9.67 | 10.73 | 9.26 | 10.59 | 10.57 | 12.55 |
-| Özkaynak | 12.77 | 15.28 | 14.00 | 14.43 | 13.21 | 14.87 |
-| Borç (toplam) | 9.41 | 9.43 | 8.93 | 8.91 | 7.97 | 7.94 |
-| Ödenen temettü | 1.64 | 1.84 | 2.01 | 2.17 | 2.30 | 2.41 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 1,609 | 1,611 | 1,570 | 1,530 | 1,488 | 1,481 |
+| Revenue | 44.54 | 46.71 | 51.22 | 51.36 | 46.31 | 46.40 |
+| Gross profit (reported or revenue − cost) | 19.96 | 21.48 | 22.29 | 22.89 | 19.79 | 19.91 |
+| Operating income | 6.95 | 6.94 | 6.55 | 7.08 | 4.27 | 4.22 |
+| Pre-tax income | 6.66 | 6.65 | 6.20 | 6.70 | 3.88 | 3.90 |
+| Interest expense | 0.29 | 0.29 | 0.35 | 0.38 | 0.39 | 0.32 |
+| Net income | 5.73 | 6.05 | 5.07 | 5.70 | 3.22 | 3.11 |
+| Operating cash flow | 6.66 | 5.19 | 5.84 | 7.43 | 3.70 | 2.87 |
+| Capex | 0.69 | 0.76 | 0.97 | 0.81 | 0.43 | 0.68 |
+| Free cash flow | 5.96 | 4.43 | 4.87 | 6.62 | 3.27 | 2.18 |
+| Cash + short-term investments | 13.48 | 8.57 | 7.44 | 9.86 | 7.46 | 7.56 |
+| Total assets | 37.74 | 40.32 | 37.53 | 38.11 | 36.58 | 38.41 |
+| Current liabilities | 9.67 | 10.73 | 9.26 | 10.59 | 10.57 | 12.55 |
+| Equity | 12.77 | 15.28 | 14.00 | 14.43 | 13.21 | 14.87 |
+| Debt (total) | 9.41 | 9.43 | 8.93 | 8.91 | 7.97 | 7.94 |
+| Dividends paid | 1.64 | 1.84 | 2.01 | 2.17 | 2.30 | 2.41 |
+| Diluted weighted-avg shares (millions, raw) | 1,609 | 1,611 | 1,570 | 1,530 | 1,488 | 1,481 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebt · faaliyet kârı kaynağı: yaklaşık: vergi öncesi kâr + faiz
+Last-year debt source (XBRL names): LongTermDebt · operating income source: approx.: pre-tax income + interest
 
-#### Starbucks (SBUX) — mali yıl sonları: 2020-09-27, 2021-10-03, 2022-10-02, 2023-10-01, 2024-09-29, 2025-09-28 · tür: Yavaş büyüyen · sınıf: ORTA
+#### Starbucks (SBUX) — fiscal year ends: 2020-09-27, 2021-10-03, 2022-10-02, 2023-10-01, 2024-09-29, 2025-09-28 · type: slow_grower · grade: mid (`ORTA`)
 
-| Kalem (milyar $) | 2020-09 | 2021-10 | 2022-10 | 2023-10 | 2024-09 | 2025-09 |
+| Item (bn USD) | 2020-09 | 2021-10 | 2022-10 | 2023-10 | 2024-09 | 2025-09 |
 |---|---|---|---|---|---|---|
-| Gelir | 23.52 | 29.06 | 32.25 | 35.98 | 36.18 | 37.18 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | — | — | — | — | — | — |
-| Faaliyet kârı | 1.56 | 4.87 | 4.62 | 5.87 | 5.41 | 2.94 |
-| Vergi öncesi kâr | 1.16 | 5.36 | 4.23 | 5.40 | 4.97 | 2.51 |
-| Faiz gideri | 0.44 | 0.47 | 0.48 | 0.55 | 0.56 | 0.54 |
-| Net kâr | 0.93 | 4.20 | 3.28 | 4.12 | 3.76 | 1.86 |
-| İşletme nakdi | 1.60 | 5.99 | 4.40 | 6.01 | 6.10 | 4.75 |
-| Yatırım harcaması | 1.48 | 1.47 | 1.84 | 2.33 | 2.78 | 2.31 |
-| Serbest nakit | 0.11 | 4.52 | 2.56 | 3.68 | 3.32 | 2.44 |
-| Nakit + kısa vadeli yatırım | 4.63 | 6.62 | 3.18 | 3.95 | 3.54 | 3.47 |
-| Toplam varlık | 29.37 | 31.39 | 27.98 | 29.45 | 31.34 | 32.02 |
-| Kısa vadeli yükümlülük | 7.35 | 8.15 | 9.15 | 9.35 | 9.07 | 10.21 |
-| Özkaynak | -7.81 | -5.32 | -8.71 | -7.99 | -7.45 | -8.10 |
-| Borç (toplam) | 16.35 | 14.62 | 15.04 | 15.40 | 15.57 | 16.07 |
-| Ödenen temettü | 1.92 | 2.12 | 2.26 | 2.43 | 2.58 | 2.77 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 1,182 | 1,186 | 1,158 | 1,151 | 1,137 | 1,140 |
+| Revenue | 23.52 | 29.06 | 32.25 | 35.98 | 36.18 | 37.18 |
+| Gross profit (reported or revenue − cost) | — | — | — | — | — | — |
+| Operating income | 1.56 | 4.87 | 4.62 | 5.87 | 5.41 | 2.94 |
+| Pre-tax income | 1.16 | 5.36 | 4.23 | 5.40 | 4.97 | 2.51 |
+| Interest expense | 0.44 | 0.47 | 0.48 | 0.55 | 0.56 | 0.54 |
+| Net income | 0.93 | 4.20 | 3.28 | 4.12 | 3.76 | 1.86 |
+| Operating cash flow | 1.60 | 5.99 | 4.40 | 6.01 | 6.10 | 4.75 |
+| Capex | 1.48 | 1.47 | 1.84 | 2.33 | 2.78 | 2.31 |
+| Free cash flow | 0.11 | 4.52 | 2.56 | 3.68 | 3.32 | 2.44 |
+| Cash + short-term investments | 4.63 | 6.62 | 3.18 | 3.95 | 3.54 | 3.47 |
+| Total assets | 29.37 | 31.39 | 27.98 | 29.45 | 31.34 | 32.02 |
+| Current liabilities | 7.35 | 8.15 | 9.15 | 9.35 | 9.07 | 10.21 |
+| Equity | -7.81 | -5.32 | -8.71 | -7.99 | -7.45 | -8.10 |
+| Debt (total) | 16.35 | 14.62 | 15.04 | 15.40 | 15.57 | 16.07 |
+| Dividends paid | 1.92 | 2.12 | 2.26 | 2.43 | 2.58 | 2.77 |
+| Diluted weighted-avg shares (millions, raw) | 1,182 | 1,186 | 1,158 | 1,151 | 1,137 | 1,140 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebt · faaliyet kârı kaynağı: OperatingIncomeLoss
+Last-year debt source (XBRL names): LongTermDebt · operating income source: OperatingIncomeLoss
 
-#### Pfizer (PFE) — mali yıl sonları: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · tür: Yavaş büyüyen · sınıf: ORTA
+#### Pfizer (PFE) — fiscal year ends: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · type: slow_grower · grade: mid (`ORTA`)
 
-| Kalem (milyar $) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
+| Item (bn USD) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
 |---|---|---|---|---|---|---|
-| Gelir | 41.65 | 81.29 | 101.17 | 59.55 | 63.63 | 62.58 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 33.17 | 50.47 | 66.83 | 34.60 | 45.78 | 46.51 |
-| Faaliyet kârı | 8.48 | 25.60 | 35.97 | 3.27 | 11.11 | 10.19 |
-| Vergi öncesi kâr | 7.04 | 24.31 | 34.73 | 1.06 | 8.02 | 7.52 |
-| Faiz gideri | 1.45 | 1.29 | 1.24 | 2.21 | 3.09 | 2.67 |
-| Net kâr | 9.16 | 21.98 | 31.37 | 2.12 | 8.03 | 7.77 |
-| İşletme nakdi | 14.40 | 32.58 | 29.27 | 8.70 | 12.74 | 11.70 |
-| Yatırım harcaması | 2.23 | 2.71 | 3.24 | 3.91 | 2.91 | 2.63 |
-| Serbest nakit | 12.18 | 29.87 | 26.03 | 4.79 | 9.84 | 9.07 |
-| Nakit + kısa vadeli yatırım | 11.49 | 23.96 | 19.16 | 7.25 | 11.92 | 10.32 |
-| Toplam varlık | 154.23 | 181.48 | 197.21 | 226.50 | 213.40 | 208.16 |
-| Kısa vadeli yükümlülük | 25.92 | 42.67 | 42.14 | 47.79 | 42.99 | 36.98 |
-| Özkaynak | 63.24 | 77.20 | 95.66 | 89.01 | 88.20 | 86.48 |
-| Borç (toplam) | 4.56 | 37.83 | 35.44 | 71.76 | 63.60 | 64.64 |
-| Ödenen temettü | 8.44 | 8.73 | 8.98 | 9.25 | 9.51 | 9.77 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 5,632 | 5,708 | 5,733 | 5,709 | 5,700 | 5,713 |
+| Revenue | 41.65 | 81.29 | 101.17 | 59.55 | 63.63 | 62.58 |
+| Gross profit (reported or revenue − cost) | 33.17 | 50.47 | 66.83 | 34.60 | 45.78 | 46.51 |
+| Operating income | 8.48 | 25.60 | 35.97 | 3.27 | 11.11 | 10.19 |
+| Pre-tax income | 7.04 | 24.31 | 34.73 | 1.06 | 8.02 | 7.52 |
+| Interest expense | 1.45 | 1.29 | 1.24 | 2.21 | 3.09 | 2.67 |
+| Net income | 9.16 | 21.98 | 31.37 | 2.12 | 8.03 | 7.77 |
+| Operating cash flow | 14.40 | 32.58 | 29.27 | 8.70 | 12.74 | 11.70 |
+| Capex | 2.23 | 2.71 | 3.24 | 3.91 | 2.91 | 2.63 |
+| Free cash flow | 12.18 | 29.87 | 26.03 | 4.79 | 9.84 | 9.07 |
+| Cash + short-term investments | 11.49 | 23.96 | 19.16 | 7.25 | 11.92 | 10.32 |
+| Total assets | 154.23 | 181.48 | 197.21 | 226.50 | 213.40 | 208.16 |
+| Current liabilities | 25.92 | 42.67 | 42.14 | 47.79 | 42.99 | 36.98 |
+| Equity | 63.24 | 77.20 | 95.66 | 89.01 | 88.20 | 86.48 |
+| Debt (total) | 4.56 | 37.83 | 35.44 | 71.76 | 63.60 | 64.64 |
+| Dividends paid | 8.44 | 8.73 | 8.98 | 9.25 | 9.51 | 9.77 |
+| Diluted weighted-avg shares (millions, raw) | 5,632 | 5,708 | 5,733 | 5,709 | 5,700 | 5,713 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebtNoncurrent, LongTermDebtCurrent · faaliyet kârı kaynağı: yaklaşık: vergi öncesi kâr + faiz
+Last-year debt source (XBRL names): LongTermDebtNoncurrent, LongTermDebtCurrent · operating income source: approx.: pre-tax income + interest
 
-#### Intel (INTC) — mali yıl sonları: 2020-12-26, 2021-12-25, 2022-12-31, 2023-12-30, 2024-12-28, 2025-12-27 · tür: Döngüsel · sınıf: ZAYIF
+#### Intel (INTC) — fiscal year ends: 2020-12-26, 2021-12-25, 2022-12-31, 2023-12-30, 2024-12-28, 2025-12-27 · type: cyclical · grade: weak (`ZAYIF`)
 
-| Kalem (milyar $) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
+| Item (bn USD) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
 |---|---|---|---|---|---|---|
-| Gelir | 77.87 | 79.02 | 63.05 | 54.23 | 53.10 | 52.85 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 43.61 | 43.81 | 26.87 | 21.71 | 17.34 | 18.38 |
-| Faaliyet kârı | 23.68 | 19.46 | 2.33 | 0.09 | -11.68 | -2.21 |
-| Vergi öncesi kâr | 25.08 | 21.70 | 7.77 | 0.76 | -11.21 | 1.56 |
-| Faiz gideri | 0.63 | 0.60 | 0.50 | 0.88 | 1.03 | 1.09 |
-| Net kâr | 20.90 | 19.87 | 8.01 | 1.69 | -18.76 | -0.27 |
-| İşletme nakdi | 35.86 | 29.46 | 15.43 | 11.47 | 8.29 | 9.70 |
-| Yatırım harcaması | 14.26 | 18.73 | 24.84 | 25.75 | 23.94 | 14.65 |
-| Serbest nakit | 21.61 | 10.72 | -9.41 | -14.28 | -15.66 | -4.95 |
-| Nakit + kısa vadeli yatırım | 8.16 | 29.25 | 28.34 | 25.03 | 22.06 | 37.42 |
-| Toplam varlık | 153.09 | 168.41 | 182.10 | 191.57 | 196.49 | 211.43 |
-| Kısa vadeli yükümlülük | 24.75 | 27.46 | 32.16 | 28.05 | 35.67 | 31.57 |
-| Özkaynak | 81.04 | 95.39 | 101.42 | 105.59 | 99.27 | 114.28 |
-| Borç (toplam) | 36.40 | 38.10 | 42.01 | 49.27 | 50.01 | 46.59 |
-| Ödenen temettü | 5.57 | 5.64 | 6.00 | 3.09 | 1.60 | 0.00 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 4,232 | 4,090 | 4,123 | 4,212 | 4,280 | 4,530 |
+| Revenue | 77.87 | 79.02 | 63.05 | 54.23 | 53.10 | 52.85 |
+| Gross profit (reported or revenue − cost) | 43.61 | 43.81 | 26.87 | 21.71 | 17.34 | 18.38 |
+| Operating income | 23.68 | 19.46 | 2.33 | 0.09 | -11.68 | -2.21 |
+| Pre-tax income | 25.08 | 21.70 | 7.77 | 0.76 | -11.21 | 1.56 |
+| Interest expense | 0.63 | 0.60 | 0.50 | 0.88 | 1.03 | 1.09 |
+| Net income | 20.90 | 19.87 | 8.01 | 1.69 | -18.76 | -0.27 |
+| Operating cash flow | 35.86 | 29.46 | 15.43 | 11.47 | 8.29 | 9.70 |
+| Capex | 14.26 | 18.73 | 24.84 | 25.75 | 23.94 | 14.65 |
+| Free cash flow | 21.61 | 10.72 | -9.41 | -14.28 | -15.66 | -4.95 |
+| Cash + short-term investments | 8.16 | 29.25 | 28.34 | 25.03 | 22.06 | 37.42 |
+| Total assets | 153.09 | 168.41 | 182.10 | 191.57 | 196.49 | 211.43 |
+| Current liabilities | 24.75 | 27.46 | 32.16 | 28.05 | 35.67 | 31.57 |
+| Equity | 81.04 | 95.39 | 101.42 | 105.59 | 99.27 | 114.28 |
+| Debt (total) | 36.40 | 38.10 | 42.01 | 49.27 | 50.01 | 46.59 |
+| Dividends paid | 5.57 | 5.64 | 6.00 | 3.09 | 1.60 | 0.00 |
+| Diluted weighted-avg shares (millions, raw) | 4,232 | 4,090 | 4,123 | 4,212 | 4,280 | 4,530 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebt · faaliyet kârı kaynağı: OperatingIncomeLoss
+Last-year debt source (XBRL names): LongTermDebt · operating income source: OperatingIncomeLoss
 
-#### Boeing (BA) — mali yıl sonları: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · tür: Döngüsel · sınıf: ZAYIF
+#### Boeing (BA) — fiscal year ends: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · type: cyclical · grade: weak (`ZAYIF`)
 
-| Kalem (milyar $) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
+| Item (bn USD) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
 |---|---|---|---|---|---|---|
-| Gelir | 58.16 | 62.29 | 66.61 | 77.79 | 66.52 | 89.46 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | -5.68 | 3.05 | 3.53 | 7.72 | -1.99 | 4.29 |
-| Faaliyet kârı | -12.77 | -2.87 | -3.52 | -0.77 | -10.71 | 4.28 |
-| Vergi öncesi kâr | -14.48 | -5.03 | -5.02 | -2.00 | -12.21 | 2.63 |
-| Faiz gideri | 2.16 | 2.71 | 2.56 | 2.46 | 2.73 | 2.77 |
-| Net kâr | -11.87 | -4.20 | -4.93 | -2.22 | -11.82 | 2.23 |
-| İşletme nakdi | -18.41 | -3.42 | 3.51 | 5.96 | -12.08 | 1.06 |
-| Yatırım harcaması | 1.30 | 0.98 | 1.22 | 1.53 | 2.23 | 2.94 |
-| Serbest nakit | -19.71 | -4.40 | 2.29 | 4.43 | -14.31 | -1.88 |
-| Nakit + kısa vadeli yatırım | 25.59 | 16.24 | 17.22 | 15.96 | 26.28 | 29.40 |
-| Toplam varlık | 152.14 | 138.55 | 137.10 | 137.01 | 156.36 | 168.24 |
-| Kısa vadeli yükümlülük | 87.28 | 81.99 | 90.05 | 95.83 | 97.08 | 108.11 |
-| Özkaynak | -18.32 | -15.00 | -15.88 | -17.23 | -3.91 | 5.45 |
-| Borç (toplam) | 63.38 | 57.92 | 56.79 | 52.05 | 53.62 | 53.85 |
-| Ödenen temettü | 1.16 | — | — | — | — | 0.33 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 569 | 588 | 595 | 606 | 647 | 762 |
+| Revenue | 58.16 | 62.29 | 66.61 | 77.79 | 66.52 | 89.46 |
+| Gross profit (reported or revenue − cost) | -5.68 | 3.05 | 3.53 | 7.72 | -1.99 | 4.29 |
+| Operating income | -12.77 | -2.87 | -3.52 | -0.77 | -10.71 | 4.28 |
+| Pre-tax income | -14.48 | -5.03 | -5.02 | -2.00 | -12.21 | 2.63 |
+| Interest expense | 2.16 | 2.71 | 2.56 | 2.46 | 2.73 | 2.77 |
+| Net income | -11.87 | -4.20 | -4.93 | -2.22 | -11.82 | 2.23 |
+| Operating cash flow | -18.41 | -3.42 | 3.51 | 5.96 | -12.08 | 1.06 |
+| Capex | 1.30 | 0.98 | 1.22 | 1.53 | 2.23 | 2.94 |
+| Free cash flow | -19.71 | -4.40 | 2.29 | 4.43 | -14.31 | -1.88 |
+| Cash + short-term investments | 25.59 | 16.24 | 17.22 | 15.96 | 26.28 | 29.40 |
+| Total assets | 152.14 | 138.55 | 137.10 | 137.01 | 156.36 | 168.24 |
+| Current liabilities | 87.28 | 81.99 | 90.05 | 95.83 | 97.08 | 108.11 |
+| Equity | -18.32 | -15.00 | -15.88 | -17.23 | -3.91 | 5.45 |
+| Debt (total) | 63.38 | 57.92 | 56.79 | 52.05 | 53.62 | 53.85 |
+| Dividends paid | 1.16 | — | — | — | — | 0.33 |
+| Diluted weighted-avg shares (millions, raw) | 569 | 588 | 595 | 606 | 647 | 762 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebt · faaliyet kârı kaynağı: OperatingIncomeLoss
+Last-year debt source (XBRL names): LongTermDebt · operating income source: OperatingIncomeLoss
 
-#### Snap (SNAP) — mali yıl sonları: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · tür: Kârsız · sınıf: ZAYIF
+#### Snap (SNAP) — fiscal year ends: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · type: unprofitable · grade: weak (`ZAYIF`)
 
-| Kalem (milyar $) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
+| Item (bn USD) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
 |---|---|---|---|---|---|---|
-| Gelir | 2.51 | 4.12 | 4.60 | 4.61 | 5.36 | 5.93 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 1.32 | 2.37 | 2.79 | 2.49 | 2.89 | 3.26 |
-| Faaliyet kârı | -0.86 | -0.70 | -1.40 | -1.40 | -0.79 | -0.53 |
-| Vergi öncesi kâr | -0.93 | -0.47 | -1.40 | -1.29 | -0.67 | -0.45 |
-| Faiz gideri | 0.10 | 0.02 | 0.02 | 0.02 | 0.02 | 0.12 |
-| Net kâr | -0.94 | -0.49 | -1.43 | -1.32 | -0.70 | -0.46 |
-| İşletme nakdi | -0.17 | 0.29 | 0.18 | 0.25 | 0.41 | 0.66 |
-| Yatırım harcaması | 0.06 | 0.07 | 0.13 | 0.21 | 0.19 | 0.22 |
-| Serbest nakit | -0.23 | 0.22 | 0.06 | 0.03 | 0.22 | 0.44 |
-| Nakit + kısa vadeli yatırım | 2.54 | 3.69 | 3.94 | 3.54 | 3.38 | 2.94 |
-| Toplam varlık | 5.02 | 7.54 | 8.03 | 7.97 | 7.94 | 7.68 |
-| Kısa vadeli yükümlülük | 0.67 | 0.85 | 1.22 | 1.13 | 1.24 | 1.29 |
-| Özkaynak | 2.33 | 3.79 | 2.58 | 2.41 | 2.45 | 2.28 |
-| Borç (toplam) | 1.68 | 2.25 | 3.74 | 3.75 | 3.68 | 3.58 |
-| Ödenen temettü | — | — | — | — | — | — |
-| Seyreltilmiş ort. hisse (milyon, ham) | 1,456 | 1,559 | 1,608 | 1,613 | 1,659 | 1,695 |
+| Revenue | 2.51 | 4.12 | 4.60 | 4.61 | 5.36 | 5.93 |
+| Gross profit (reported or revenue − cost) | 1.32 | 2.37 | 2.79 | 2.49 | 2.89 | 3.26 |
+| Operating income | -0.86 | -0.70 | -1.40 | -1.40 | -0.79 | -0.53 |
+| Pre-tax income | -0.93 | -0.47 | -1.40 | -1.29 | -0.67 | -0.45 |
+| Interest expense | 0.10 | 0.02 | 0.02 | 0.02 | 0.02 | 0.12 |
+| Net income | -0.94 | -0.49 | -1.43 | -1.32 | -0.70 | -0.46 |
+| Operating cash flow | -0.17 | 0.29 | 0.18 | 0.25 | 0.41 | 0.66 |
+| Capex | 0.06 | 0.07 | 0.13 | 0.21 | 0.19 | 0.22 |
+| Free cash flow | -0.23 | 0.22 | 0.06 | 0.03 | 0.22 | 0.44 |
+| Cash + short-term investments | 2.54 | 3.69 | 3.94 | 3.54 | 3.38 | 2.94 |
+| Total assets | 5.02 | 7.54 | 8.03 | 7.97 | 7.94 | 7.68 |
+| Current liabilities | 0.67 | 0.85 | 1.22 | 1.13 | 1.24 | 1.29 |
+| Equity | 2.33 | 3.79 | 2.58 | 2.41 | 2.45 | 2.28 |
+| Debt (total) | 1.68 | 2.25 | 3.74 | 3.75 | 3.68 | 3.58 |
+| Dividends paid | — | — | — | — | — | — |
+| Diluted weighted-avg shares (millions, raw) | 1,456 | 1,559 | 1,608 | 1,613 | 1,659 | 1,695 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebt, ShortTermBorrowings · faaliyet kârı kaynağı: OperatingIncomeLoss
+Last-year debt source (XBRL names): LongTermDebt, ShortTermBorrowings · operating income source: OperatingIncomeLoss
 
-#### Dow (DOW) — mali yıl sonları: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · tür: Döngüsel · sınıf: ZAYIF
+#### Dow (DOW) — fiscal year ends: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · type: cyclical · grade: weak (`ZAYIF`)
 
-| Kalem (milyar $) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
+| Item (bn USD) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
 |---|---|---|---|---|---|---|
-| Gelir | 38.54 | 54.97 | 56.90 | 44.62 | 42.96 | 39.97 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 5.20 | 10.78 | 8.56 | 4.88 | 4.61 | 2.53 |
-| Faaliyet kârı | 2.90 | 8.88 | 6.75 | 1.40 | 2.41 | -1.65 |
-| Vergi öncesi kâr | 2.07 | 8.14 | 6.09 | 0.66 | 1.60 | -2.51 |
-| Faiz gideri | 0.83 | 0.73 | 0.66 | 0.75 | 0.81 | 0.86 |
-| Net kâr | — | — | — | — | — | — |
-| İşletme nakdi | 6.23 | 7.01 | 7.47 | 5.20 | 2.91 | 1.03 |
-| Yatırım harcaması | 1.25 | 1.50 | 1.82 | 2.36 | 2.94 | 2.48 |
-| Serbest nakit | 4.97 | 5.51 | 5.65 | 2.84 | -0.03 | -1.45 |
-| Nakit + kısa vadeli yatırım | 5.10 | 2.99 | 3.89 | 2.99 | 2.19 | 3.82 |
-| Toplam varlık | 61.47 | 62.99 | 60.60 | 57.97 | 57.31 | 58.54 |
-| Kısa vadeli yükümlülük | 11.11 | 13.23 | 11.33 | 9.96 | 10.29 | 9.18 |
-| Özkaynak | 12.44 | 18.16 | 20.72 | 18.61 | 17.36 | 16.01 |
-| Borç (toplam) | 17.11 | 14.67 | 15.42 | 15.09 | 16.21 | 18.07 |
-| Ödenen temettü | 2.07 | 2.07 | 2.01 | 1.97 | 1.97 | 1.49 |
-| Seyreltilmiş ort. hisse (milyon, ham) | 742 | 749 | 726 | 709 | 705 | 712 |
+| Revenue | 38.54 | 54.97 | 56.90 | 44.62 | 42.96 | 39.97 |
+| Gross profit (reported or revenue − cost) | 5.20 | 10.78 | 8.56 | 4.88 | 4.61 | 2.53 |
+| Operating income | 2.90 | 8.88 | 6.75 | 1.40 | 2.41 | -1.65 |
+| Pre-tax income | 2.07 | 8.14 | 6.09 | 0.66 | 1.60 | -2.51 |
+| Interest expense | 0.83 | 0.73 | 0.66 | 0.75 | 0.81 | 0.86 |
+| Net income | — | — | — | — | — | — |
+| Operating cash flow | 6.23 | 7.01 | 7.47 | 5.20 | 2.91 | 1.03 |
+| Capex | 1.25 | 1.50 | 1.82 | 2.36 | 2.94 | 2.48 |
+| Free cash flow | 4.97 | 5.51 | 5.65 | 2.84 | -0.03 | -1.45 |
+| Cash + short-term investments | 5.10 | 2.99 | 3.89 | 2.99 | 2.19 | 3.82 |
+| Total assets | 61.47 | 62.99 | 60.60 | 57.97 | 57.31 | 58.54 |
+| Current liabilities | 11.11 | 13.23 | 11.33 | 9.96 | 10.29 | 9.18 |
+| Equity | 12.44 | 18.16 | 20.72 | 18.61 | 17.36 | 16.01 |
+| Debt (total) | 17.11 | 14.67 | 15.42 | 15.09 | 16.21 | 18.07 |
+| Dividends paid | 2.07 | 2.07 | 2.01 | 1.97 | 1.97 | 1.49 |
+| Diluted weighted-avg shares (millions, raw) | 742 | 749 | 726 | 709 | 705 | 712 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebtAndCapitalLeaseObligations, LongTermDebtAndCapitalLeaseObligationsCurrent · faaliyet kârı kaynağı: yaklaşık: vergi öncesi kâr + faiz
+Last-year debt source (XBRL names): LongTermDebtAndCapitalLeaseObligations, LongTermDebtAndCapitalLeaseObligationsCurrent · operating income source: approx.: pre-tax income + interest
 
-#### Rivian (RIVN) — mali yıl sonları: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · tür: Hızlı büyüyen · sınıf: ZAYIF
+#### Rivian (RIVN) — fiscal year ends: 2020-12-31, 2021-12-31, 2022-12-31, 2023-12-31, 2024-12-31, 2025-12-31 · type: fast_grower · grade: weak (`ZAYIF`)
 
-| Kalem (milyar $) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
+| Item (bn USD) | 2020-12 | 2021-12 | 2022-12 | 2023-12 | 2024-12 | 2025-12 |
 |---|---|---|---|---|---|---|
-| Gelir | 0.00 | 0.06 | 1.66 | 4.43 | 4.97 | 5.39 |
-| Brüt kâr (doğrudan ya da gelir−maliyet) | 0.00 | -0.47 | -3.12 | -2.03 | -1.20 | 0.14 |
-| Faaliyet kârı | -1.02 | -4.22 | -6.86 | -5.74 | -4.69 | -3.58 |
-| Vergi öncesi kâr | -1.02 | -4.69 | -6.75 | -5.43 | -4.74 | -3.62 |
-| Faiz gideri | 0.01 | 0.03 | 0.10 | 0.22 | 0.32 | 0.27 |
-| Net kâr | -1.02 | -4.69 | -6.75 | -5.43 | -4.75 | -3.65 |
-| İşletme nakdi | -0.85 | -2.62 | -5.05 | -4.87 | -1.72 | -0.78 |
-| Yatırım harcaması | 0.91 | 1.79 | 1.37 | 1.03 | 1.14 | 1.71 |
-| Serbest nakit | -1.76 | -4.42 | -6.42 | -5.89 | -2.86 | -2.49 |
-| Nakit + kısa vadeli yatırım | 2.98 | 18.13 | 11.57 | 9.37 | 7.70 | 6.08 |
-| Toplam varlık | 4.60 | 22.29 | 17.88 | 16.78 | 15.41 | 14.86 |
-| Kısa vadeli yükümlülük | 0.61 | 1.31 | 2.42 | 2.49 | 2.25 | 3.69 |
-| Özkaynak | -1.38 | 19.51 | 13.80 | 9.14 | 6.56 | 4.59 |
-| Borç (toplam) | 0.07 | 1.23 | 1.23 | 4.43 | 4.44 | 4.44 |
-| Ödenen temettü | — | — | — | — | — | — |
-| Seyreltilmiş ort. hisse (milyon, ham) | 101 | 204 | 913 | 947 | 1,013 | 1,186 |
+| Revenue | 0.00 | 0.06 | 1.66 | 4.43 | 4.97 | 5.39 |
+| Gross profit (reported or revenue − cost) | 0.00 | -0.47 | -3.12 | -2.03 | -1.20 | 0.14 |
+| Operating income | -1.02 | -4.22 | -6.86 | -5.74 | -4.69 | -3.58 |
+| Pre-tax income | -1.02 | -4.69 | -6.75 | -5.43 | -4.74 | -3.62 |
+| Interest expense | 0.01 | 0.03 | 0.10 | 0.22 | 0.32 | 0.27 |
+| Net income | -1.02 | -4.69 | -6.75 | -5.43 | -4.75 | -3.65 |
+| Operating cash flow | -0.85 | -2.62 | -5.05 | -4.87 | -1.72 | -0.78 |
+| Capex | 0.91 | 1.79 | 1.37 | 1.03 | 1.14 | 1.71 |
+| Free cash flow | -1.76 | -4.42 | -6.42 | -5.89 | -2.86 | -2.49 |
+| Cash + short-term investments | 2.98 | 18.13 | 11.57 | 9.37 | 7.70 | 6.08 |
+| Total assets | 4.60 | 22.29 | 17.88 | 16.78 | 15.41 | 14.86 |
+| Current liabilities | 0.61 | 1.31 | 2.42 | 2.49 | 2.25 | 3.69 |
+| Equity | -1.38 | 19.51 | 13.80 | 9.14 | 6.56 | 4.59 |
+| Debt (total) | 0.07 | 1.23 | 1.23 | 4.43 | 4.44 | 4.44 |
+| Dividends paid | — | — | — | — | — | — |
+| Diluted weighted-avg shares (millions, raw) | 101 | 204 | 913 | 947 | 1,013 | 1,186 |
 
-Son yıl borç kaynağı (XBRL isimleri): LongTermDebtNoncurrent · faaliyet kârı kaynağı: OperatingIncomeLoss
+Last-year debt source (XBRL names): LongTermDebtNoncurrent · operating income source: OperatingIncomeLoss
 
-### Ek C — Deneme kodu (Python, prototip)
+### Appendix C — Trial code (Python, prototype; identifiers are Turkish — see the glossary above)
 
-`karne_deneme.py` — ölçüler, tür, sınıf:
+`karne_deneme.py` — metrics, type, grade. The code below is unchanged and still prints the Turkish labels:
 
 ```python
 """Deneme: 10 ölçü + tür + sınıf kuralı, gerçek SEC verisiyle. Projeye ait değil (scratchpad)."""
@@ -784,7 +802,7 @@ if __name__ == "__main__":
                    "hisse_son": r["hisse"].get(r["son"])} for t, r in out.items()}, open("ozet.json", "w"))
 ```
 
-`fiyat.py` — fiyat satırı (Yahoo, `yfinance`):
+`fiyat.py` — price line (Yahoo, `yfinance`):
 
 ```python
 import json, yfinance as yf
@@ -811,4 +829,4 @@ for t in ["KO","NVDA","NKE","SBUX","PFE","INTC","BA","SNAP","DOW","RIVN"]:
 json.dump(out, open("fiyat.json","w"))
 ```
 
-## PROMPT SONU
+## PROMPT END

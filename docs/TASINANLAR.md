@@ -1,10 +1,10 @@
-# Taşınanlar
+# Transferred files
 
-Eski projeden (`investment-intelligence`, etiket `v1-arsiv`) veya geçici çalışmalardan alınan dosyalar.
+Files taken from the old project (`investment-intelligence`, tag `v1-arsiv`) or from temporary work.
 
-| Tarih | Kaynak | Hedef | Neden |
+| Date | Source | Target | Why |
 |---|---|---|---|
-| 2026-10-03 | `/tmp/sma_backtest/backtest.py` (geçici çalışma) | `ajanlar/teknik/backtest/gunluk_5_8_13.py` | Günlük 5-8-13 backtest; 4. ajan kuralları için referans |
-| 2026-10-03 | `/tmp/sma_backtest/weekly.py` (geçici çalışma) | `ajanlar/teknik/backtest/haftalik.py` | Haftalık kurallar + piyasa filtresi backtest'i |
+| 2026-10-03 | `/tmp/sma_backtest/backtest.py` (temporary work) | `ajanlar/teknik/backtest/gunluk_5_8_13.py` | Daily 5-8-13 backtest; reference for Agent 4 (Technical) rules |
+| 2026-10-03 | `/tmp/sma_backtest/weekly.py` (temporary work) | `ajanlar/teknik/backtest/haftalik.py` | Weekly rules plus the market-filter backtest |
 
-Çalıştırma: `cd ajanlar/teknik/backtest && uv run --with yfinance --with pandas python haftalik.py`
+Run: `cd ajanlar/teknik/backtest && uv run --with yfinance --with pandas python haftalik.py`

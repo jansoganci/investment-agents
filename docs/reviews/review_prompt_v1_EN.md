@@ -7,9 +7,7 @@ yayinla: hayir
 
 # External review prompt (English) — Agent 3
 
-**Kullanım (bana not):** Türkçe ana kopya `DIS_INCELEME_PROMPT.md`; bu dosya modellere verilecek İngilizce çevirisi.
-`PROMPT START` satırından dosyanın sonuna kadar her şeyi kopyala, iki modele **aynen** ver (her birine yeni sohbette).
-Modeller cevabı **Türkçe** verecek.
+**How to use (note to me):** This is the earlier English wording, prepared to be given to the models unchanged. The answer is asked for in Turkish. The project master is now `DIS_INCELEME_PROMPT.md` (glossary names: solid / mid / weak / unclear). If a model was already given this file, leave this body as it is.
 
 ---
 

@@ -1,95 +1,100 @@
 # AGENTS.md — investment-agents
 
-Kişisel yatırım danışmanı sistemi: 4 ajan okur, araştırır, analiz eder, önerir.
-**Kararı ve alım-satımı her zaman kullanıcı verir / yapar.**
+A personal investment-advisor system: 4 agents read, research, analyze, and suggest.
+**The user always makes the decision and places the trades.**
 
-## Her oturumun başında
+Names of fields, tables, grades, and folders follow `docs/GLOSSARY.md`.
 
-1. `docs/YOL_HARITASI_v2.md` oku — amaç, kurallar, kararlar, adımlar, açık konular orada.
-2. Bu dosyanın sonundaki **Şu anki durum** bölümünü oku.
-   Profil, hedef hesabı, backtest sonuçları, eski sistemden dersler veya karne / puan / teknik kural konuşulurken `docs/BAGLAM.md` oku.
-3. Kullanıcıya süreci yeniden anlattırma; eksik bilgi varsa tek, net bir soru sor.
+## At the start of every session
 
-## Değişmez kurallar
+1. Read `docs/YOL_HARITASI_v2.md` — purpose, rules, decisions, steps, and open topics are there.
+2. Read the **Current status** section at the end of this file.
+   When the talk is about the profile, the goal math, backtest results, lessons from the old system, or a card / score / technical rule, also read `docs/BAGLAM.md`.
+3. Do not make the user explain the process again. If something is missing, ask one clear question.
 
-1. Ajanlar sadece **öneri** verir. Aracı kurum / banka şifresi sisteme asla girmez.
-2. Yeşil liste ≠ AL. Puan = sıralama; her puanın yanında zorunlu bir "neden" cümlesi olur.
-3. `karne.md` sadece sona eklenir; eski kayıt silinmez; her kayıt tarihlidir.
-   Tek istisna: üst bilgi kartı güncel durumu gösterir (`durum`, `portfoyde`, `tur`, `sinif`, `son_kayit`), sadece kod günceller; her değişiklik sona tarihli not olarak da eklenir.
-4. Ajanlar birbirini tanımaz; sadece dosya / SQLite üzerinden haberleşir.
-5. Yeni özellik ancak mevcut adım "bitti" sayıldıktan sonra eklenir.
+## Fixed rules
 
-## Çalışma şekli
+1. Agents only **suggest**. A broker or bank password never enters the system.
+2. Green list ≠ buy. A score is a ranking; every score has a required `reason` sentence next to it.
+3. `card.md` is append-only. Old entries are not deleted; every entry is dated.
+   One exception: the header shows the current state (`status`, `in_portfolio`, `lynch_type`, `grade`, `last_entry`) and only code updates it; every change is also appended as a dated note.
+4. Agents do not know each other; they communicate only through files / SQLite.
+5. A new feature is added only after the current step counts as "done".
 
-- Dil: **Türkçe**, sade, yeni başlayan biri için anlaşılır. Gereksiz teknik jargon yok.
-- Sadece istenen işi yap. Özellik ekleme / çıkarma, kapsam genişletme yok; emin değilsen sor.
-- Karar kullanıcınındır: seçenek varsa önerini belirt, kararı ona bırak.
-- Basitlik önce: bir şey karmaşık geliyorsa eklemeden önce sadeleştir.
-- "Think fast, iterate faster": kuralın 1. sürümü yeterince iyiyse ilerle; mükemmeli bekleme, kur ve düzelt.
-- Her ajan bağımsız modül; tekrar kullanılan kod `ortak/` altına.
-- Kod Hermes'i bilmez; her ajan elle de çalışabilmeli (`python -m ajanlar.<ajan>`).
-- Oturum sonunda **Şu anki durum** bölümünü güncelle.
+## How to work
 
-## Proje haritası
+- Speak to the user in **Turkish**, plain, so a beginner can follow. No needless jargon.
+- Documents, field names, and new code use the English names in `docs/GLOSSARY.md`.
+- Do only the work that was asked. Do not add or remove a feature, and do not widen the scope. If you are unsure, ask.
+- The decision is the user's: if there is a choice, state your recommendation and leave the decision to them.
+- Simplicity first: if something feels complicated, simplify it before adding it.
+- "Think fast, iterate faster": if version 1 of a rule is good enough, move on. Do not wait for perfect. Build it and fix it.
+- Each agent is its own module. Code used by more than one agent goes under `ortak/` (planned name `shared/`).
+- The code does not know Hermes. Each agent must also run by hand. Planned command: `python -m agents.<agent>`. Until the folders are renamed, the code that exists is under `ajanlar/`.
+- At the end of the session, update the **Current status** section.
+
+## Project map
+
+Today's folders. The locked future names are in `docs/GLOSSARY.md` (`agents/eye`, `shared/`, and the rest). Do not rename folders unless that is the task.
 
 ```text
-ajanlar/goz/        1. Göz — Emtia Defteri + Dragonomi okur, tek cümle yazar (günde 3 tur)
-ajanlar/sayac/      1B. Sayaç — son 7 gün hisse / sektör / emtia sayımı (kod, yapay zekâ yok)
-ajanlar/arastirma/  2. Araştırma — okuma + web araması + puan; kartı açar (haftalık, Pazar)
-ajanlar/analiz/     3. Analiz — SEC / PDF → karne.md (çeyreklik / yıllık); prototip/ = kural denemesi (üretim değil)
-ajanlar/teknik/     4. Teknik — haftalık durum + piyasa filtresi; backtest/ burada
-ortak/              yapay zekâ, SEC, fiyat, Drive yolları, SQLite
-ayarlar.yaml        modeller, bütçe, saatler, hisse listesi
-docs/               YOL_HARITASI_v2.md, BAGLAM.md, TASINANLAR.md
+ajanlar/goz/        1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
+ajanlar/sayac/      1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
+ajanlar/arastirma/  2. Research — reading + web search + score; opens the card (weekly, Sunday)
+ajanlar/analiz/     3. Analysis — SEC / PDF → card.md (quarterly / annual); prototip/ = a rule trial (not production)
+ajanlar/teknik/     4. Technical — weekly state + market filter; backtest/ is here
+ortak/              AI, SEC, price, Drive paths, SQLite
+ayarlar.yaml        models, budget, hours, stock list
+docs/               YOL_HARITASI_v2.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md; reviews/ (external reviews)
 ```
 
-## Teknik
+## Technical
 
-- Python, ortam yönetimi `uv`. Örnek: `uv run --with pytest pytest -q`
-- Geliştirme ana Mac'te; çalıştırma yedek MacBook Air'de (Hermes). Köprü GitHub; Air'de kod yazılmaz.
-- SQLite Mac diskinde durur, Drive klasörüne **konmaz** (senkron bozabilir); gece Drive'a yedeklenir.
-- Rapor / karne: Markdown + üst bilgi kartı (`hisse`, `sektor`, `tarih`, `yayinla: hayir`; karne formatı: yol haritası 3. bölüm "Karne formatı"; rakamlar sadece YAML veri bloğunda).
-- Telegram'da kullanıcının tek muhatabı Hermes; Hermes sadece tanımlı komut listesini çalıştırır, kod / kural değiştirmez.
-- Model ve bütçe ayarları tek yerde: `ayarlar.yaml`. Yapay zekâ bütçesi en fazla 25–30 $/ay.
-- Sırlar (API anahtarları) `.env` içinde; asla commit edilmez.
+- Python, environment managed with `uv`. Example: `uv run --with pytest pytest -q`
+- Development is on the main Mac. The system runs on the backup MacBook Air (Hermes). The bridge is GitHub. No code is written on the Air.
+- SQLite stays on the Mac disk. It does **not** go in the Drive folder (sync can corrupt it). A backup is copied to Drive at night.
+- Reports and the card are Markdown plus a header (`ticker`, `sector`, `opened`, `publish: no`). The format is roadmap section 3, "Card format". Figures live only in the YAML data block.
+- On Telegram the user's only counterpart is Hermes. Hermes runs only the defined command list. It does not change code or rules.
+- Model and budget settings live in one place: `ayarlar.yaml`. The AI budget is at most 25–30 $ / month.
+- Secrets (API keys) are in `.env`. They are never committed.
 
-## Eski proje
+## Old project
 
-`../investment-intelligence` (git etiketi `v1-arsiv`) sadece kaynak kütüphanesidir.
-Çalışma alanına ekleme; kurallarını / dokümanlarını bu projeye uygulama.
-Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/TASINANLAR.md`'ye satır ekle.
+`../investment-intelligence` (git tag `v1-arsiv`) is only a source library.
+Do not add it to the workspace. Do not apply its rules or documents to this project.
+If a file is needed, read it by its full path, copy only the piece that is needed, and add a line to `docs/TASINANLAR.md`.
 
-## Şu anki durum
+## Current status
 
-- **Son güncelleme:** 2026-10-03
-- **Yapıldı:** Proje açıldı; yol haritası + `BAGLAM.md` yazıldı; backtest betikleri taşındı.
-  Karar sırası belirlendi (yol haritası 9. bölüm) ve 1. sıra **genel çerçeve** kapandı:
-  karne = hisse kartı, "think fast, iterate faster", site sahibinden okuma izni alındı,
-  geliştirme ana Mac / çalıştırma Air ayrımı.
-  2. sıra **mimari** kapandı (yol haritası 3. bölüm): akış, hisse durumları (aday / takipte / arşivde,
-  sınıf, portföyde), takibe alma manuel, sağlam → yeşil liste otomatik, 3. ajan olayla çalışır,
-  Telegram'da tek muhatap Hermes + komut listesi, 3. ajan için deneme seti testi.
-  3. sıra **1. ajan (Göz)** kapandı (yol haritası 3. bölüm, "1. ajan kuralları"): günde 3 tur, yavaş tarama
-  (~20 dk / tur, engel cevabında dur), tam metin okunur + ucuz modelle tek tarafsız cümle, tam metin
-  `haberler`'e kaydedilir, etiket eşleme tablosu (şirket / emtia / sektör), sözlük yazıları alınmaz.
-  4. sıra **2. ajan** kapandı (yol haritası 3. bölüm): 1B Sayaç (kod, kayan 7 gün, kartı olan
-  sıralamaya girmez), 2 seviyeli sabit sektör listesi (GICS 11 + onaylı alt sektör), 2. ajan haftada bir
-  en çok 10 hisse, siteye gitmez, alıntılı okuma, emtia bağı (şirket → emtia, rol), kart 2. ajanda doğar,
-  Drive düz yapı `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md`, **puan kuralları** (5 kriter × 0–2,
-  eşikli; veri yoksa belirsiz = 1 puan). **1. sürüm sadece ABD borsası (ADR dahil)**; HK / A sonra ek.
-  5. sıra **3. ajan** kısmen kapandı (yol haritası 3. bölüm, "3. ajan kuralları"): kalite önce, Lynch türleri,
-  kapsam dışı (şimdilik) banka / sigorta / gayrimenkul / gelirsiz şirket / kamu hizmetleri, değerleme = Lynch PEG + serbest nakit akışı verimi (gizli varlık / gerçek değer hesabı şimdilik yok), kod ölçer + soru işaretler + yapay zekâ alıntıyla nedenini yazar, 10 ölçü,
-  SEC eş anlamlılar listesi (yıl yıl), `eksik_veri` kayıt defteri, borç ⚠ araştırma maddesi, UAT ≥ 20 hisse.
-  Araştırma notları `docs/BAGLAM.md` 8. bölüm.
-  3. ajanın **eşikleri, tür kuralları (+ "kârsız"), sınıf kuralı, fiyat satırı** yazıldı; 10 gerçek şirketle denendi
-  (sonuçlar + öğrenilenler `BAGLAM.md` 9. bölüm). Deneme kodu scratchpad'deydi, projede değil.
-  Dış inceleme promptu yazıldı: `docs/DIS_INCELEME_PROMPT.md` (Türkçe ana kopya) + `_EN.md` (modellere verilen İngilizce;
-  cevap Türkçe). Deneme kodu kalıcı: `ajanlar/analiz/prototip/` (SEC verisi git'e girmez, `indir.sh` ile iner).
-  Ek kararlar: PEG büyüme tavanı %25 + Lynch temettü düzeltmeli oranı (analist tahmini yok) · serbest nakitten hisseyle
-  ödenen maaş düşülür (SEC, yedek Yahoo) · karne formatı (YAML veri bloğu, sabit başlıklar; üst bilgiye `tur`, `sinif`,
-  `son_kayit`) · eksik veri Telegram'dan istenir ("analiz et" komutunda ve Pazar; anlaşılır mesaj).
-- **Sıradaki:** iki modelin dış inceleme cevapları gelince birlikte değerlendirilecek (testler sürüyor). Sonra: ilk tezi kim
-  yazar (tek soru), prototipi yeni kurallara göre güncelleme (hisseyle maaş, PEG tavanı), 6. sıra **4. ajan (Teknik)**,
-  7. sıra **uygulama planı**. Yapay zekâ denetçi en son.
-- **Bekleyen sorular:** Yok.
-- **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.
+- **Last update:** 2026-10-03
+- **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
+- **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
+- **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
+  The decision order was set (roadmap section 9) and item 1, **overall frame**, is closed:
+  the card is the stock card, "think fast, iterate faster", the site owner allowed reading,
+  development on the main Mac / running on the Air.
+  Item 2, **architecture**, is closed (roadmap section 3): flow, stock states (`candidate` / `watching` / `archived`,
+  grade, `in_portfolio`), starting to watch is manual, solid → green list is automatic, agent 3 runs on an event,
+  one counterpart on Telegram (Hermes) plus a command list, a trial-set test for agent 3.
+  Item 3, **agent 1 (Eye)**, is closed (roadmap section 3, "Agent 1 rules"): 3 passes a day, a slow scan
+  (~20 min / pass, stop on a block response), the full text is read and a cheap model writes one neutral sentence, the full text
+  is saved to `articles`, a tag-mapping table (company / commodity / sector), glossary posts are not taken.
+  Item 4, **agent 2**, is closed (roadmap section 3): 1B Counter (code, a rolling 7 days, a stock that already has a card
+  does not enter the ranking), a fixed 2-level sector list (GICS 11 + an approved subsector), agent 2 once a week,
+  at most 10 stocks, it does not visit the site, reading with quotes, a commodity link (company → commodity, role), the card is born in agent 2,
+  a flat Drive layout `Investing/Stocks/<TICKER> - <Company name>/card.md`, **score rules** (5 criteria × 0–2,
+  with thresholds; if the data is missing, `unclear` = 1 point). **Version 1 is US markets only (ADRs included)**; HK / A-shares are added later.
+  Item 5, **agent 3**, is partly closed (roadmap section 3, "Agent 3 rules"): quality first, Lynch types,
+  out of scope for now (`bank` / `insurance` / `reit` / `pre_revenue` / `utility`), valuation = Lynch PEG + free-cash-flow yield (no hidden-asset / intrinsic-value calculation for now), code measures and raises questions, the AI writes the reason with a quote, 10 measures,
+  an SEC synonym list (year by year), a `missing_data` ledger, debt is a ⚠ research item, UAT ≥ 20 stocks.
+  Research notes: `docs/BAGLAM.md` section 8.
+  Agent 3's **thresholds, type rules (plus `unprofitable`), grade rule, and price line** were written and tried on 10 real companies
+  (results and lessons: `BAGLAM.md` section 9). The trial code started in a scratchpad; it now lives in `ajanlar/analiz/prototip/`.
+  The external-review prompt was written: `docs/DIS_INCELEME_PROMPT.md` (English master) and `docs/reviews/review_prompt_v1_EN.md` (the earlier wording given to models;
+  the answer is in Turkish). SEC data is not committed; it is downloaded with `indir.sh`.
+  Further decisions: PEG growth capped at 25% plus Lynch's dividend-adjusted ratio (no analyst estimates) · stock comp is subtracted from free cash (SEC, Yahoo as fallback) · card format (a YAML data block, fixed headings; the header includes `lynch_type`, `grade`,
+  `last_entry`) · missing data is requested on Telegram (on the "analiz et" command and on Sunday; the message is plain).
+- **Next:** when the two models' external-review answers arrive, they will be judged together (the tests are still running). Then: who writes the first thesis (one question), update the prototype to the new rules (stock comp, PEG cap), item 6 **agent 4 (Technical)**,
+  item 7 **implementation plan**. An AI auditor is last.
+- **Pending questions:** None.
+- **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.

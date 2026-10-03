@@ -1,5 +1,5 @@
 @AGENTS.md
 
-## Claude Code'a özel
+## For Claude Code
 
-- Tüm proje kuralları `AGENTS.md` içindedir; kural eklemek / değiştirmek gerekirse orayı güncelle, buraya kopyalama.
+- All project rules live in `AGENTS.md`. If a rule needs to be added or changed, update that file. Do not copy it here.
