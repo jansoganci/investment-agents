@@ -27,5 +27,6 @@ for c in KO:0000021344 NVDA:0001045810 NKE:0000320187 SBUX:0000829224 PFE:000007
          NET:0001477333 V:0001403161 NVO:0000353278; do
   t=${c%%:*}; k=${c##*:}
   [ -s "$t.json" ] || { curl -s -m 60 -A "$UA" "https://data.sec.gov/api/xbrl/companyfacts/CIK$k.json" -o "$t.json"; sleep 0.4; }
+  [ -s "${t}_sub.json" ] || { curl -s -m 60 -A "$UA" "https://data.sec.gov/submissions/CIK$k.json" -o "${t}_sub.json"; sleep 0.4; }  # SIC code
 done
 echo "tamam"
