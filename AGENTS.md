@@ -106,7 +106,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   check), valuation watch (PEG > 3 or FCF yield < 1%, 4 weeks), weights in the Sunday summary (`holdings` via Hermes), optional
   SPY 40-week filter. Agent 3 reads 10-Q too (last 4 quarters, TTM); sell-review triggers recorded. SPY filter tests (34 / 40 / 55,
   Fibonacci daily / weekly) in `BAGLAM.md` section 3: plateau 21–55 weeks, 40 is the robust middle.
-- **Next:** the "half insurance" test (none / only new money waits / half / all) to set how much market filter to use; then
-  item 7 **implementation plan**. An AI auditor is last. A third external review is still running.
+  Insurance simulation with monthly buying (`BAGLAM.md` section 3): user chose **A — no market-filter selling**. Agent 4 never says
+  "sell" (valuation watch = info + back of the new-money queue); sell suggestions come only from agent 3 (thesis broke, `weak`,
+  `mid` 2 quarters in a row) plus my own call. Later idea: shrink, not sell, on a macro reason (e.g. rising rates).
+- **Next:** item 7 **implementation plan** (model / budget split, Hermes command list incl. holdings entry, Air setup, coding order).
+  An AI auditor is last. A third external review is still running.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.

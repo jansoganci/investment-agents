@@ -111,6 +111,27 @@ Lessons:
 - No average beats buy-and-hold on return; the filter is insurance (a much smaller drop for about 4–7 points of yearly return).
 - The same filter on SPY alone: buy and hold 7.4% / −54.6% (2006–2015) → 40-week 4.7% / −19.4%.
 
+### How much insurance? Simulation with monthly buying (2026-10-04; code: `sigorta_sim.py`)
+
+24 stocks; start 13,000 USD, then 1,000 USD a month (the same ratio as 500k TL start / ~37.5k TL a month); SPY 40-week filter;
+0.1% per trade side; cash earns nothing; no tax; no TL/USD. Sales are bought back in the same mix (an early version split them
+equally and wrongly reset the winners). Yearly return is money-weighted (it counts the monthly buying).
+
+| Option | 2006–2015: final (put in 132k) · yearly · largest drop | 2016–2026: final (put in 142k) · yearly · largest drop |
+|---|---|---|
+| **A. None** | 345k · 16.8% · −45.9% | 752k · 26.7% · −32.7% |
+| B. New money waits | 342k · 16.6% · −42.5% | 746k · 26.5% · −32.5% |
+| C. Sell half | 279k · 13.2% · −24.1% | 585k · 22.8% · −23.1% |
+| D. Sell all | 225k · 9.5% · −17.2% | 450k · 18.7% · −17.4% |
+
+- "New money waits" protects almost nothing: a few months of new money is small next to the pot built over years.
+- "Sell half" halves the drop for about 4 points a year; "sell all" cuts it to a third for about 7–8 points.
+- The absolute figures are optimistic (NVDA rose 320× in 2016–2026, a name chosen looking from today; without rebalancing it grows
+  to a big share); the comparison between options holds. Interest on cash would lower C / D's cost a little, tax would raise it.
+
+**User's decision (2026-10-04): option A — no market-filter selling in version 1.** Agent 4 never says "sell"; sell suggestions come
+only from agent 3 when the fundamentals break. Later idea: shrink (not sell) the portfolio on a macro reason such as rising rates.
+
 ## 4. Lessons from the old system (do not repeat them in the card design)
 
 The old step 3 was tested on 5 stocks (ROP, V, WM, APH, NET); **none of them got GREEN.** The cause was the rules, not the companies:

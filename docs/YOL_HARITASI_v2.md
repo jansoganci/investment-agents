@@ -42,7 +42,7 @@ write it, build it, run it; see the mistake, fix it. Building and fixing beats t
 | **1B. Counter** | Counts and ranks which stock / sector / commodity appeared in how many posts over the last 7 days. Code, no AI | Right before agent 2 + on request | ranked list | Does not score, does not read |
 | **2. Research** | Top of the Counter list, at most 10 stocks: reads the full text, web search, score + reason; **opens the card** | Once a week (Sunday morning) | `scores` table + card (`card.md`) + `Weekly/` report | Does not do fundamental analysis, does not visit the site |
 | **3. Analysis** | Builds the card from financial statements for stocks with `status = watching` (US: SEC; HK/A: uploaded PDF) + sets the grade | When a new filing arrives (see below) | `financials` table + `card.md` + grade | Does not forecast price, does not say buy/sell |
-| **4. Technical** | Weekly price watcher: where the new monthly money could go, drop alert, valuation and weight watch, optional market filter (section 3, "Agent 4 rules") | Weekly (Sunday) | `prices` / `signals` tables + Telegram Sunday summary | Does not trade; gives **no** per-stock technical sell signal |
+| **4. Technical** | Weekly price watcher: where the new monthly money could go, drop alert, valuation and weight info (section 3, "Agent 4 rules") | Weekly (Sunday) | `prices` / `signals` tables + Telegram Sunday summary | Does not trade; gives **no** per-stock technical sell signal |
 
 **The card is the stock card.** Each stock has one card; everything about it is there. The card **is born in agent 2**
 (first entry: research — score, reason, news summaries); when I start watching it, agent 3 appends fundamental entries
@@ -434,7 +434,9 @@ handles it. 20-F filers (ADRs) stay annual.
 | 2 | Grade fell to `weak` | any quarter → Telegram at once | agent 3 |
 | 3 | Grade `mid` for 2 quarters in a row (after `solid`) | 2 quarters | agent 3 |
 | 4 | I realize I was wrong (I did not understand the business) | — | me |
-| 5 | Much too expensive (agent 4, below) | 4 weeks in a row | agent 4 |
+
+**Sell suggestions come only from agent 3** (decision: 2026-10-04). Agent 4 never says "sell" — not on price, not on valuation, not
+on the market filter.
 
 A single bad quarter is **not** a sell trigger; it is a "check now": the card is updated and the AI answers "why?" with a quote.
 
@@ -444,7 +446,7 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 
 **Open (agent 3):** an AI auditor (last decision) · a third external review is still running.
 
-### Agent 4 (Technical) rules (decision: 2026-10-04; market-filter level still open)
+### Agent 4 (Technical) rules (decision: 2026-10-04)
 
 **Why the role changed:** the backtests (`BAGLAM.md` section 3) show that buying and selling single stocks on technical signals
 loses. Daily 5-8-13 lagged buy-and-hold in 24 of 24 stocks; a market filter with short averages loses money; a stock's own trend
@@ -459,17 +461,17 @@ signal. It runs weekly (Sunday), with the Friday close and the last 4 quarters' 
 2. **Drop alert:** a stock I hold falls **20%** from its highest weekly close of the last 52 weeks → Telegram, and agent 3 runs a
    "did the fundamentals break?" check at once. The answer: "thesis intact, the drop is the market" or "thesis point 2 broke". It
    never says "sell".
-3. **Valuation watch:** PEG > 3 **or** free-cash-flow yield < 1% for **4 weeks in a row** → if I hold it: "consider selling a part";
-   if I do not: "for now at the back of the queue for new money". Weekly figures live in the database (`prices` / `signals`), not in
+3. **Valuation watch:** PEG > 3 **or** free-cash-flow yield < 1% for **4 weeks in a row** → information only ("expensive for now") and
+   the stock goes to the back of the queue for new money. **No sell suggestion.** Weekly figures live in the database (`prices` / `signals`), not in
    the card; the card gets a dated note only when an alert fires.
 4. **Weights in the Sunday summary:** each holding's share of the portfolio (e.g. "NVDA 32% of the portfolio") — information only.
    This needs my position sizes: a Hermes command such as "ABC 10 adet aldım" fills a `holdings` table (command list: implementation plan).
-5. **Market filter (optional, level open):** S&P 500 (SPY) above its **40-week** average. Tests (`BAGLAM.md` section 3): every average
-   from about 21 to 55 weeks gives similar results (a plateau, so the effect is real, not luck); 40 is in the middle and barely
-   changed when run one week late. It roughly halves the largest drop (2006–2015 incl. 2008: −42% → about −16%) and costs about
-   4–7 points of yearly return. **How much of this insurance to take** (none / only new money waits / half / all) is decided after
-   the "half insurance" test.
-6. **No per-stock technical sell signals.** Selling is decided by agent 3's triggers (above) and by me.
+5. **Market filter: not used in version 1** (decision: 2026-10-04 — option A, no insurance). Tests (`BAGLAM.md` section 3): an
+   S&P 500 average of about 21–55 weeks (40 in the middle) roughly halves the largest drop but costs return; with monthly buying,
+   "new money waits" protects almost nothing, "sell half" costs about 4 points a year, "sell all" about 7–8. Later idea (not now):
+   **shrink, do not sell** the portfolio on a macro reason (e.g. rising interest rates) — to be discussed later.
+6. **No sell signals at all from agent 4** — no per-stock technical signal, no market-filter selling. Selling is suggested only by
+   agent 3's triggers (above); the decision is mine.
 
 ### Rules that prevent spending
 
@@ -562,7 +564,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 | **1. Analysis + card** | `shared/` + SQLite + agent 3, 3–5 US stocks | **Acceptance test of at least 20 stocks, figures compared by hand with the 10-K;** 3 stocks have a card on Drive; a second run appends a new dated entry without deleting the old one; **the trial-set test passes:** 3–5 companies everyone accepts as quality come out solid, 1–2 companies known to be weak do **not** come out solid, trap examples are classified correctly (in the old system no stock could enter the green list; if the quality names do not come out solid the rules are too tight, if the weak names come out solid the rules are too loose) |
 | **2. Eye** | Both sites with Playwright, 3 passes a day | For 1 week every pass fills `articles` (one sentence + full text + mapped tags) and the site never once answers "too many requests" / a block |
 | **3. Research** | 1B Counter + agent 2: reading + web search + score + reason + opening the card | The weekly report is on Drive and on Telegram; cards for candidate stocks open on Drive |
-| **4. Technical** | Weekly price watcher (new-money ranking, drop alert, valuation and weight watch, optional market filter) | The Sunday Telegram summary shows the new-money ranking, weights and valuation alerts; a drop alert triggers agent 3's check |
+| **4. Technical** | Weekly price watcher (new-money ranking, drop alert, valuation and weight info; no sell signals) | The Sunday Telegram summary shows the new-money ranking, weights and valuation alerts; a drop alert triggers agent 3's check |
 
 ## 9. Open topics (decided together before coding)
 
@@ -573,13 +575,13 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 3. ~~Agent 1 (Eye)~~ ✅ (2026-10-03: section 3, "Agent 1 rules")
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03: rules + 2 external reviews applied + prototype and golden set 10/10 — section 3). **Left:** AI auditor (last), third review
-6. **Agent 4** — ✅ mostly (2026-10-04: price-watcher role, drop alert, valuation and weight watch, no per-stock sell signals — section 3). **Left:** market-filter level (after the "half insurance" test)
+6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Later: a macro "shrink, do not sell" idea
 7. **Implementation plan** — model / budget split, Air setup, coding order
 
 Topic notes:
 
 - ~~**Agent 2 score rules.**~~ ✅ section 3, "Score rules".
 - **Card format.** Which metrics, which checks, how the "reason" section is written. Fundamental-analysis result in 3 classes: **solid / mid / weak**; only solid ones go to technical analysis (the green list). **To be discussed with agent 3:** if data is missing, Hermes asks me for it on Telegram (I find it and provide it, the agent continues the calculation) — control stays with me, the work stays with the agent.
-- ~~**Agent 4 rules.**~~ ✅ mostly — section 3, "Agent 4 rules". Open: how much market-filter insurance (none / new money waits / half / all).
+- ~~**Agent 4 rules.**~~ ✅ section 3, "Agent 4 rules". No market-filter selling in v1; later idea: shrink the portfolio on a macro reason (e.g. rising rates).
 - ~~**Site terms of use.**~~ ✅ The site owner gave permission (see section 4, Site reading).
 - **HK / A-share data** (⏸ deferred — version 1 is US only). Which figures will be taken from the PDF by hand / by AI. Note: US filings do not need PDF / OCR (SEC figures are a ready table). Most HK / A PDFs contain text → read with a free Python library; OCR only for a scanned (image) PDF, and that too is free on the computer.
