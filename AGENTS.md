@@ -120,6 +120,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   `/bought`, `/sold`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`) in the Telegram `/` menu;
   every change asks for confirmation and is logged.
   **10.3 Air setup checklist written:** `docs/AIR_SETUP.md` (to prepare before it: `.env.example`, `/setcommands` text, Drive test script).
+  **AI auditor decided (2026-10-04; roadmap section 3, "AI auditor"):** one auditor (DeepSeek V4 Pro, fallback GPT-6 Sol — a
+  different family from the writer), used only in agent 3 (figure, reading, sell audits) and agent 2 (serious-negative events);
+  code checks elsewhere; one rule card per place with known traps and an error test set; on a fail `unverified` + Telegram, a sell
+  suggestion is held; a big review every 6 months.
 - **Next:** 10.4 coding order (last planning item);
   the two model tests (cheap: 20 posts; strong: blind "why?" answers) when coding starts. AI auditor last; third review running.
 - **Pending questions:** None.

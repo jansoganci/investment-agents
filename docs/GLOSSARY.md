@@ -159,6 +159,18 @@ Hızlı büyüyen güvenlik kuralı: `fast_grower_safety` (faaliyet marjı ❌ +
 | piyasa filtresi | `market_filter` |
 | satışı değerlendir | `consider_selling` |
 
+## Yapay zekâ denetçi
+
+| Şimdi | İngilizce |
+|---|---|
+| denetçi | `auditor` |
+| kural kartı | `rule card` (dosya: `shared/auditor/cards/`) |
+| rakam denetimi · yorum denetimi · satış önerisi denetimi · olay denetimi | `figure audit` · `reading audit` · `sell audit` · `event audit` |
+| tutuyor / tutmuyor / bulunamadı | `pass` / `fail` / `not_found` |
+| doğrulanmadı (karnede işaret) | `unverified` |
+| bilinen tuzaklar | `known traps` |
+| büyük denetim (6 ayda bir) | `big review` |
+
 ## Puanın 5 kriteri
 
 | Şimdi | İngilizce |

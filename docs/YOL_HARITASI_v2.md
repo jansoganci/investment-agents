@@ -173,7 +173,7 @@ Thresholds are starting values; they are adjusted after looking at the first wee
 - **A linked commodity is favorable for the company's role:** if it is a producer, the commodity price is above its 40-week average; if it is a user, below
   (an oil rise is good for a producer, bad for an airline). If there is no linked commodity / no price data: the sector fund beat the S&P 500 over the last 13 weeks.
 
-**4. Serious-negative list (fixed):** accounting / auditor problem · bankruptcy risk / debt restructuring · a company-specific
+**4. Serious-negative list (fixed; each such event is checked by the AI auditor — "AI auditor" below):** accounting / auditor problem · bankruptcy risk / debt restructuring · a company-specific
 official investigation · profit warning + cut outlook · sudden departure of the CEO / CFO.
 
 **5. `quick_health` — purpose:** a pre-screen for "is it worth spending money on fundamental analysis?"; the deep analysis is agent 3. Thresholds are **deliberately
@@ -452,7 +452,7 @@ A single bad quarter is **not** a sell trigger; it is a "check now": the card is
 10/10 as expected: `solid` Nvidia · `mid` Coca-Cola (borderline), Nike, Starbucks · `weak` Pfizer, Intel, Boeing, Snap, Dow, Rivian.
 IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 
-**Open (agent 3):** an AI auditor (last decision) · a third external review is still running.
+**Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
 ### Agent 4 (Technical) rules (decision: 2026-10-04)
 
@@ -482,6 +482,67 @@ signal. It runs weekly (Sunday), with the Friday close and the last 4 quarters' 
    **shrink, do not sell** the portfolio on a macro reason (e.g. rising interest rates) — to be discussed later.
 6. **No sell signals at all from agent 4** — no per-stock technical signal, no market-filter selling. Selling is suggested only by
    agent 3's triggers (above); the decision is mine.
+
+### AI auditor (decision: 2026-10-04)
+
+**What it prevents** — the errors we actually met: a wrong figure (Coca-Cola's short-term investments, Boeing's debt), a wrong
+reading (the old system's NET: a general legal risk sentence taken as a real case), an invented quote.
+
+**One auditor, used only where an error is expensive.** It is not a running agent but a check step called inside agents 2 and 3.
+Free code checks come first; the auditor is the second line. **It never produces or fixes figures** (the AI does not produce figures).
+
+| Stop | Error and its cost | Who checks |
+|---|---|---|
+| Agent 1 (Eye) | a tag mapped to the wrong company (medium) · a poorly translated sentence (low) | **code:** the ticker exists in SEC's company list and the name is close; otherwise the mapping waits and the Sunday summary asks me · the sentence: no audit |
+| 1B Counter | — (pure code) | tests |
+| **Agent 2 (Research)** | an invented or misread **serious negative event** forces news-flow to 0 (medium) | **code + AI auditor** (only these events) |
+| **Agent 3 (Analysis)** | a wrong figure, a wrong reading, an invented quote → a wrong grade, **a wrong sell suggestion** (high) | **code + AI auditor** (the main place) |
+| Agent 4 (price watcher) | a split shows as a fake −50% drop (low) | **code:** no drop alert in a week with a split in Yahoo's history |
+| Hermes commands | a message misunderstood ("15" vs "50") (medium) | **me** (every change asks for confirmation) + **code:** `/sold` cannot exceed what I hold; `/bought` / `/sold` price more than 20% from that day's close → "are you sure?"; an unknown ticker is refused |
+
+**Shared engine, one rule card per place.** Shared: the model, the output format (for each item **pass / fail / not_found** + a
+quote + a reason), logging and cost, "check only, never produce figures". Per place a short **rule card** file (task, inputs,
+numbered checklist, known traps, pass criterion, what happens on a fail), read as the AI instruction on every run; full texts are
+written with agent 3's code (under `ortak/`, planned `shared/auditor/`). Four cards:
+
+1. **Agent 3 — figure audit.** Input: the ~10 main figures code took from SEC (revenue, operating profit, operating cash, capex,
+   cash, short-term investments, marketable securities, debt, share count, net profit — each with its XBRL name and period) + the
+   filing's main tables. Checklist: find each figure and quote its row · same unit (thousands / millions) · same period (year, last 4
+   quarters, 9 months) · liquid assets = cash + short-term investments + marketable securities — any part code missed? · debt =
+   long-term + current portion + short-term — any part missed or counted twice? · share count diluted average, after splits?
+   Known traps: Coca-Cola short-term investments under another name · Boeing only the current part of debt · Pfizer 2020 a single
+   item in `LongTermDebt`. Pass: difference under 1% or rounding only.
+2. **Agent 3 — reading audit.** Input: Sonnet's "why?" answers, warnings and quotes. Code first checks every quote appears verbatim
+   in the filing (catches invented quotes for free); then the auditor: does the quote really support the claim? general risk
+   sentence or company-specific event? (the NET lesson).
+3. **Agent 3 — sell-suggestion audit.** Input: the "consider selling" suggestion and its trigger. Have the figures behind it passed
+   card 1 and the claims card 2? If the thesis broke, is the evidence really in the filing / news?
+4. **Agent 2 — serious-negative event audit.** Input: the event, its source link, its quote. Code first checks the quote is in that
+   source; then: is it really about this company? within the last 12 months? company-specific, not a general risk sentence? Not
+   confirmed → the event is not counted and a note is written. Tone labels and positive events are not audited (cheap errors; the
+   score is only a ranking).
+
+**When agent 3's auditor runs:** a stock's **first card** (cards 1 + 2) · a `data_check` flag is open (1) · **before every sell
+suggestion** (3) · a big grade change, `solid` ↔ `weak` (1 + 2) · a **random 1 in 5** routine quarterly update (1 + 2, to measure
+the error rate).
+
+**On a fail:** the card gets an **`unverified`** mark, Telegram gets "the auditor disagrees: …"; a sell suggestion is **held back**;
+the figure is not changed; the decision is mine.
+
+**Model:** **DeepSeek V4 Pro**, fallback **GPT-6 Sol** (section 10.1). The auditor must come from a **different model family** than
+the writer (Claude Sonnet 5.5): a model checking its own writing tends to share its blind spots. Cost about 0.01 $ per audit — a few
+cents a month.
+
+**Living checklists:** every new kind of error found (acceptance test, my checks, a big review) is added to the relevant card's
+"known traps", like the synonym ledger.
+
+**An error test set per card** (like the golden set): card 1 — the old prototype's wrong figures (Coca-Cola and Nvidia liquid
+assets, Boeing debt, Pfizer 2020 debt); card 2 — a fake claim that turns a general risk sentence into a case (NET) and an invented
+quote; card 4 — another company's news and a 3-year-old event. Rerun after every card change. This is also the test of "is DeepSeek
+V4 Pro enough?"; if it misses, switch to GPT-6 Sol.
+
+**Big review every 6 months** (started by me, not automatic): the rules and the golden set are reviewed by one or two strong
+outside models, like the external review of 2026-10-03 (`docs/reviews/`) — the most valuable check of this round.
 
 ### Rules that prevent spending
 
@@ -584,7 +645,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 2. ~~Architecture~~ ✅ (2026-10-03: section 3 — flow, stock states, in_portfolio, event-driven runs, Telegram / Hermes)
 3. ~~Agent 1 (Eye)~~ ✅ (2026-10-03: section 3, "Agent 1 rules")
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
-5. **Agent 3** — ✅ (2026-10-03: rules + 2 external reviews applied + prototype and golden set 10/10 — section 3). **Left:** AI auditor (last), third review
+5. **Agent 3** — ✅ (2026-10-03 / 04: rules + 2 external reviews applied + prototype and golden set 10/10 + AI auditor — section 3). **Left:** third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Later: a macro "shrink, do not sell" idea
 7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Left: 10.4 coding order
 
@@ -609,6 +670,7 @@ English — checked in the model test. (My working conversations about the proje
 | **Cheap** — agent 1's one sentence, new-tag classification, making Telegram messages plain | **DeepSeek V4 Flash** | — | Gemini Flash-Lite or GPT-6 Luna if the test is poor |
 | **Strong** — agent 2 (tone, news flow, score reasons), agent 3 ("why?" answers with quotes, first thesis, thesis check, drop-alert check) | **Claude Sonnet 5.5** | **high** | **GPT-6 Sol** |
 | **Hermes chat** (Telegram) | my ChatGPT / Codex subscription, if Hermes can log in with it (checked in step 0) | — | **DeepSeek V4 Pro** (cheap, strong for its price) |
+| **Auditor** (agents 2 and 3; section 3, "AI auditor") | **DeepSeek V4 Pro** — a different family from the writer | — | **GPT-6 Sol** |
 
 Not needed for routine work: Opus 5.5 / GPT-6 Astra (the code does the arithmetic; the model reads and explains). A one-off use
 (e.g. one first thesis) is possible with a Telegram override.
@@ -621,6 +683,7 @@ order; on an error, exhausted credit or quota it moves to the next one; every ca
 ```yaml
 cheap:  [deepseek: deepseek-v4-flash,          openrouter: deepseek/deepseek-v4-flash]
 strong: [anthropic: claude-sonnet-5.5 (high),  openrouter: anthropic/claude-sonnet-5.5,  openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
+auditor: [deepseek: deepseek-v4-pro,         openrouter: deepseek/deepseek-v4-pro,   openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
 ```
 
 **My credits (2026-10-04):** Anthropic API 90 $ (expires 2026-10-19), DeepSeek 10 $, OpenAI API 5 $. The system will not be live
