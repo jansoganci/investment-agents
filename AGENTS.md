@@ -33,7 +33,7 @@ Kişisel yatırım danışmanı sistemi: 4 ajan okur, araştırır, analiz eder,
 ## Proje haritası
 
 ```text
-ajanlar/goz/        1. Göz — Emtia Defteri + Dragonomi okur (günlük)
+ajanlar/goz/        1. Göz — Emtia Defteri + Dragonomi okur, tek cümle yazar (günde 3 tur)
 ajanlar/arastirma/  2. Araştırma — web araması + puan (haftalık)
 ajanlar/analiz/     3. Analiz — SEC / PDF → karne.md (çeyreklik / yıllık)
 ajanlar/teknik/     4. Teknik — haftalık durum + piyasa filtresi; backtest/ burada
@@ -68,7 +68,11 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   2. sıra **mimari** kapandı (yol haritası 3. bölüm): akış, hisse durumları (aday / takipte / arşivde,
   sınıf, portföyde), takibe alma manuel, sağlam → yeşil liste otomatik, 3. ajan olayla çalışır,
   Telegram'da tek muhatap Hermes + komut listesi, 3. ajan için deneme seti testi.
-- **Sıradaki:** 3. sıra **1. ajan (Göz)** — ne çıkaracak, sıklık, sınırlar.
+  3. sıra **1. ajan (Göz)** kapandı (yol haritası 3. bölüm, "1. ajan kuralları"): günde 3 tur, yavaş tarama
+  (~20 dk / tur, engel cevabında dur), tam metin okunur + ucuz modelle tek tarafsız cümle, tam metin
+  `haberler`'e kaydedilir, etiket eşleme tablosu (şirket / emtia / sektör), sözlük yazıları alınmaz.
+- **Sıradaki:** 4. sıra **2. ajan (Araştırma)** — puan kuralları, tam metni nasıl okuyacağı (pahalı model),
+  emtia → hisse bağlantısı.
   Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.
 - **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.

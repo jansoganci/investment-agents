@@ -35,7 +35,7 @@ yaz, kur, çalıştır; hatayı gör, düzelt. Gereksiz uzun düşünüp hiçbir
 
 | Ajan | Ne yapar | Sıklık | Çıktı | Ne yapmaz |
 |---|---|---|---|---|
-| **1. Göz** | Emtia Defteri + Dragonomi yeni yazılarını okur; hisse adı, olumlu/olumsuz tek cümle, sektör çıkarır | Günlük | `haberler` tablosu + `Gelen/` | Yorum yapmaz, puanlamaz |
+| **1. Göz** | Emtia Defteri + Dragonomi yeni yazılarını tamamen okur; ucuz modelle tek tarafsız cümle yazar; etiketleri hisse / emtia / sektöre çevirir | Günde 3 tur | `haberler` tablosu + `Gelen/` | Olumlu / olumsuz demez, yorum yapmaz, puanlamaz, saymaz |
 | **2. Araştırma** | Adaylar için son 1 yıl web araması; gruplar, puanlar | Haftalık | `puanlar` tablosu + `Haftalik/` raporu | Temel analiz yapmaz |
 | **3. Analiz** | **Takipteki** hisseler için finansal tablolardan karne çıkarır (ABD: SEC; HK/A: yüklenen PDF) + sınıf verir | Yeni bilanço gelince (aşağıya bkz.) | `finansallar` tablosu + `karne.md` + sınıf | Fiyat tahmini, AL/SAT demez |
 | **4. Teknik** | Yeşil listedekiler için haftalık durum + piyasa filtresi | Haftalık | `sinyaller` tablosu + Telegram özeti | İşlem yapmaz |
@@ -85,6 +85,30 @@ Her hisse `hisseler` tablosunda tek satırdır:
 - `durum` ve `portfoyde` asıl olarak veritabanında tutulur; kod aynı anda karnenin üst bilgi kartını günceller ve karnenin sonuna tarihli not ekler (örn. `2026-10-10 · Portföye eklendi`).
 - **Arşiv hatırlatması:** takipte + portföyde değil + son 2 karnede sağlam değil → Pazar özetinde "arşive alalım mı?". Karar benim.
 
+### 1. ajan (Göz) kuralları (karar: 2026-10-03)
+
+Siteler: Ghost altyapılı; günde toplam ~100–150 yazı (Emtia Defteri ~30–90, Dragonomi ~50–90), giderek artıyor.
+RSS yok; **site haritası** (`/sitemap-posts.xml`) her yazının adresini ve saatini giriş gerektirmeden verir.
+Başlık, tarih, etiketler herkese açık; yazının devamı üyelik girişi ister.
+
+1. **Günde 3 tur:** 07:00, 13:00, 20:00 (`ayarlar.yaml`'dan değişir).
+2. **Yeni yazıyı bulma:** site haritasından, önceki turdan beri çıkanlar (tek istek).
+3. **Okuma:** benim üyelik oturumumla (Playwright, Air'de bir kez giriş) her yazının **tamamı** okunur.
+4. **Siteyi yormama / engellenmeme:** sayfalar arası ~20–30 sn, her seferinde biraz farklı → tur ~20 dk, günde ~1 saat.
+   Turda en fazla ~80 sayfa; kalanlar sonraki tura. Site "çok istek" / "erişim yok" derse tur **hemen durur**,
+   ısrar etmez, Telegram'a hata gelir.
+5. **Tek cümle:** ucuz model yazının tamamını okur, **tek, tarafsız** cümle yazar: sadece haberin söylediği;
+   yorum, tavsiye, olumlu / olumsuz yok. Örnek: "Rio Tinto'nun X madeninde kaza oldu; haberde bunun bakır arzını
+   daraltabileceği belirtiliyor." Amaç: hızlı bakışta ön bilgi.
+6. **Kayıt:** başlık, tarih, adres, etiketler, tek cümle ve **tam metin** → `haberler`. Her yazı siteden **bir kez**
+   indirilir; 2. ajan tam metni buradan okur, siteye tekrar gitmez.
+7. **Etiket eşleme:** tüm etiketler tek eşleme tablosundan geçer → şirket (hisse kodu + borsa, örn. `union-pacific` → UNP,
+   `rio-tinto` → RIO), **emtia** (petrol, lityum, kakao, buğday…) veya sektör. Yeni etiketi ucuz model bir kez sınıflar,
+   kaydedilir; yanlışsa ben düzeltirim. Hangi emtianın hangi hisseyi etkilediği 2. ajanda konuşulur.
+8. **Alınmayanlar:** sadece sözlük yazıları ("Emtia Sözlüğü", "Yatırım Sözlüğü"). Gerisi alınır; işe yarayıp
+   yaramadığına 2. ajan karar verir.
+9. **Maliyet:** ~150 yazı / gün, ucuz model → kabaca 1–5 $ / ay (kesin hesap uygulama planında).
+
 ### Para harcamayı önleyen kurallar
 
 1. 3. ajan takvimle değil **olayla** çalışır: haftada bir SEC'e "yeni 10-Q / 10-K var mı?" diye sorar (ücretsiz); yoksa hiçbir şey yapmaz. HK / A: `raporlar/` klasörüne yeni PDF koyduğumda.
@@ -110,7 +134,7 @@ Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes aj
 | Çalıştıran | Hermes Agent, yedek MacBook Air M2 (16 GB) üzerinde, 7/24. Air'de kod yazılmaz: `git pull` ile güncellenir; `.env`, site oturumu ve gerçek SQLite orada durur. Hermes sadece zamanlar ve haber verir; hesap / analiz mantığı bizim kodumuzda |
 | İletişim | Telegram'da tek muhatap Hermes (3. bölüm, "Telegram ve Hermes") + Drive klasörleri |
 | Yapay zekâ | Pahalı işler (karne yazımı): Codex aboneliği (1 abonelik ajana ayrılır). Ucuz işler + web arama: OpenRouter, harcama limitiyle. Claude aboneliği Hermes'e **bağlanmaz** (kullanım şartları) |
-| Site okuma | Playwright; ben bir kez giriş yaparım, oturum saklanır; günde 1 kez, az sayfa. Okuma adımında yapay zekâ yok. **İzin:** iki sitenin sahibi okumaya (scraping) şahsen izin verdi (2026-10-03); API yok; şart: siteyi yormamak / suistimal etmemek |
+| Site okuma | Playwright; ben bir kez giriş yaparım, oturum saklanır; günde 3 tur, yavaş (3. bölüm, "1. ajan kuralları"). Sayfa indirme adımında yapay zekâ yok; sadece okunan yazıya tek cümle için ucuz model. **İzin:** iki sitenin sahibi okumaya (scraping) şahsen izin verdi (2026-10-03); API yok; şart: siteyi yormamak / suistimal etmemek |
 | Model seçimi | Tek yer: `ayarlar.yaml` |
 | Bağımsızlık | Kod Hermes'i bilmez; her ajan elle de çalışır (`python -m ajanlar.analiz`) |
 | Blog ihtimali | Tüm rapor/karneler Markdown + üst bilgi kartı (`yayinla: evet/hayir`). Web arayüzü şimdilik yok |
@@ -144,7 +168,7 @@ investment-agents/                         (kod, Git)
 
 ## 6. Bütçe
 
-- Yapay zekâ / API: **en fazla 25–30 $/ay** (beklenen: OpenRouter < 5 $ + mevcut Codex aboneliği)
+- Yapay zekâ / API: **en fazla 25–30 $/ay** (beklenen: OpenRouter < 5 $ — bunun 1–5 $'ı 1. ajanın tek cümleleri — + mevcut Codex aboneliği)
 - Emtia Defteri + Dragonomi abonelikleri bu bütçenin **dışında**
 - OpenRouter'da sabit aylık limit; `calismalar` tablosu ile Telegram'dan "bu ay ne harcadık?"
 
@@ -165,7 +189,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 |---|---|---|
 | **0. Kurulum** | Mac ayarları (uyku kapalı, ayrı kullanıcı, FileVault), Hermes, Codex girişi, OpenRouter limiti, Drive masaüstü, Telegram botu | Telegram'dan mesajlaşabiliyorum ve zamanlanmış bir deneme işi Drive'a dosya yazıyor |
 | **1. Analiz + karne** | `ortak/` + SQLite + 3. ajan, 3–5 ABD hissesi | 3 hissenin karnesi Drive'da; ikinci çalıştırma eski kaydı silmeden yeni tarihli kayıt ekliyor; **deneme seti testi geçiyor:** herkesin kaliteli kabul ettiği 3–5 şirket sağlam, zayıf olduğu bilinen 1–2 şirket sağlam **değil** çıkıyor (eski sistemde hiçbir hisse yeşile girememişti; kaliteliler sağlam çıkmıyorsa kurallar fazla sıkı, zayıflar sağlam çıkıyorsa fazla gevşek) |
-| **2. Göz** | Playwright ile iki site | 1 hafta boyunca her gün `haberler` doluyor |
+| **2. Göz** | Playwright ile iki site, günde 3 tur | 1 hafta boyunca her tur `haberler` doluyor (tek cümle + tam metin + eşlenmiş etiketler) ve site bir kez bile "çok istek" / engel cevabı vermiyor |
 | **3. Araştırma** | Web araması + puan + neden | Haftalık rapor Drive'da ve Telegram'da |
 | **4. Teknik** | Haftalık durum + piyasa filtresi | Pazar günü Telegram'a yeşil liste özeti geliyor |
 
@@ -175,7 +199,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 
 1. ~~Genel çerçeve~~ ✅ (2026-10-03: karne = kart, çalışma ilkesi, site izni, geliştirme / çalıştırma ayrımı)
 2. ~~Mimari~~ ✅ (2026-10-03: 3. bölüm — akış, hisse durumları, portföyde, olayla çalışma, Telegram / Hermes)
-3. **1. ajan (Göz)** — ne çıkaracak, sıklık
+3. ~~1. ajan (Göz)~~ ✅ (2026-10-03: 3. bölüm, "1. ajan kuralları")
 4. **2. ajan** — puan kuralları
 5. **3. ajan** — metrikler, sağlam / orta / zayıf ölçütü, karne formatı
 6. **4. ajan** — teknik kurallar

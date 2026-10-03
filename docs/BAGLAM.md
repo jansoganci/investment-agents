@@ -17,7 +17,7 @@ Kaynak: 2–3 Ekim 2026 planlama sohbeti (eski proje içinde, Cursor).
 - %30 düşüşte: **bekler ama uykusu kaçar** → risk yönetimi ve sakin, az işlemli kurallar önemli.
 - Odak: ABD + Çin hisseleri (HK + A-hisse İş Bankası üzerinden; komisyona razı, ~3–5 milyon TL'ye kadar premium kabul), sonra emtia. 5–10 hisse + ETF.
 - Para akışı (aylık): hisse 25–50 bin TL · BES ~9 bin TL (maaştan kesilir) · altın ~5 g (~30 bin TL). Gider 50–75 bin TL. Acil fon: ~3 aylık gider var. Maaş şimdilik sabit.
-- Yatırım kaynağı fikirleri: takip ettiği "abi"nin iki ücretli sitesi — **emtiadefteri.com** ve **dragonomi.com**. Bülten / RSS yok; içerik sadece sitede, giriş yapılarak okunuyor. Eskiden Grok Bot siteye girip yazıları tek tek okuyordu.
+- Yatırım kaynağı fikirleri: takip ettiği "abi"nin iki ücretli sitesi — **emtiadefteri.com** ve **dragonomi.com**. Bülten / RSS yok, ama site haritası var (yeni yazıların adresi + saati, girişsiz). Başlık / etiketler açık, yazının devamı giriş yapılarak okunuyor. İki site de Ghost altyapılı, 7/24 ajanlarla yönetiliyor; günde toplam ~100–150 yazı. Site sahibi okumaya (scraping) şahsen izin verdi; API yok; şart: suistimal etmemek. Eskiden Grok Bot siteye girip yazıları tek tek okuyordu.
 
 ## 2. Hedef matematiği (bugünün parasıyla, "orta" senaryo)
 
