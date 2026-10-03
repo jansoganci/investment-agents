@@ -108,3 +108,72 @@ Genel ders: Eski 3. adımın **SEC veri çekme + kodla hesap** kısmı değerli 
 - `../investment-intelligence/docs/AUDIT_REPORT.md` — eski sistemin teknik denetim raporu.
 
 Bu dosyalardaki "LOCKED", "Plan §0", aşama kapıları gibi kurallar bu projeye **uygulanmaz**.
+
+## 7. Karne taslağı (2026-10-03 — TASLAK, karar verilmedi)
+
+3. ajan konuşulurken buradan başlanır. Amaç tek soru: **"Bu şirketi neden tutuyorum ve bu neden hâlâ geçerli mi?"**
+%30 düşüşte karneyi açınca 5 dakikada "düşen fiyat mı, şirket mi?" görülebilmeli.
+
+Her çeyrek / yıl `karne.md` sonuna yeni bölüm eklenir; en yeni kayıt en altta. Rakamlar örnektir (uydurma).
+
+```markdown
+---
+hisse: XYZ
+sektor: Endüstri
+tarih: 2026-11-05        # ilk kayıt tarihi; sonra değişmez
+yayinla: hayir
+---
+
+## 2026-11-05 · 2025 yıllık (10-K)
+
+**Özet:** Nakit üretimi güçlü, borç düşük; büyümenin yarısı satın almadan, izlenmeli.
+**Durum:** … — neden: …
+
+### Tez — neden sahip olunur (ilk kayıtta yazılır, sonra sadece kontrol edilir)
+1. … 2. … 3. …
+**Bu dönem tez geçerli mi?** Evet — 3 maddeden hiçbiri bozulmadı.
+
+### Rakamlar (kod hesaplar, yapay zekâ hesap yapmaz)
+| Ölçü | Son yıl | 5 yıl eğilimi | Not |
+|---|---|---|---|
+| Gelir büyümesi | %9 | yıllık %8 | |
+| Faaliyet marjı | %28 | sabit | |
+| Serbest nakit akışı / net kâr | 1,1 | 1,0–1,2 | kâr nakde dönüyor |
+| Sermaye getirisi (satın almalar dahil / hariç) | %12 / %45 | ↓ / ↑ | iki rakam yan yana |
+| Net borç / serbest nakit akışı | 1,8 yıl | ↓ | cari kısım + convertible dahil |
+| Hisse sayısı değişimi | −%6 (5 yılda) | geri alım | |
+
+### Uyarılar
+| Kod | Ne | Kanıt | Tür | Durum |
+|---|---|---|---|---|
+| U1 | Satın alma bağımlılığı | getiri %12 vs %45 | şirkete özel | açık |
+| U2 | Dava | "…" (10-K s.34 alıntı) | genel risk cümlesi | bilgi |
+
+### Belirsiz kalanlar (olumsuz sayılmaz)
+- Bakım yatırımı açıklanmıyor → hesaplanamadı.
+
+### Tezi bozacak 3 şey (izlenecekler)
+1. Faaliyet marjı 2 yıl üst üste %22 altı → bu dönem: hayır
+
+### Önceki kayda göre ne değişti?
+- …
+
+<sub>Kaynak: SEC 10-K (bağlantı) · veri tarihi · model · maliyet 0,04 $</sub>
+```
+
+**4. bölümdeki dersler taslakta nasıl karşılanıyor:**
+
+| Ders | Taslakta |
+|---|---|
+| NET: kelime eşleşmesi yanlış alarm | Her uyarıda rapordan **alıntı** + "genel risk cümlesi / şirkete özel" ayrımı; kelime listesi yok |
+| WM: belirsizlik olumsuz bulguya döndü | "Belirsiz kalanlar" ayrı bölüm, olumsuz sayılmaz; uyarı adları ne olduğunu söyler |
+| APH: aynı gerçek iki kez, kapatma yolu yok | Oran + mutlak seviye birlikte; her uyarının tek kodu var; "açık / kapattım" durumu |
+| NET: borç eksik okundu | Borç = cari kısım + convertible dahil |
+| 9 aşamalı kapı çok ağırdı | 6 satır rakam, tek sayfa; puan / ağırlık / kapı yok |
+
+**Açık sorular (önerilerle):**
+
+1. **Durum etiketi** — kullanıcı 3 sınıf istedi: sağlam / orta / zayıf. Öneri: bir de **belirsiz** (veri yetersiz) olsun; yapay zekâ önerir + neden yazar.
+2. **Değerleme bölümü** — öneri: şimdilik yok. İleride en fazla 2 betimleyici rakam (serbest nakit akışı verimi, F/K'nın kendi 5 yıllık aralığındaki yeri); "ucuz / pahalı" yargısı yok.
+3. **Uyarı kapatma** — öneri: karnenin sonuna tarihli kullanıcı notu (`2026-11-06 · Kullanıcı: U1 kapatıldı, çünkü …`); ajan sonraki çalışmada okur, koşul değişmedikçe tekrar açmaz.
+4. **İlk tezi kim yazar** — öneri: yapay zekâ 3 maddelik taslak, kullanıcı düzeltip onaylar; sonraki karneler tezi değiştirmez, sadece kontrol eder.

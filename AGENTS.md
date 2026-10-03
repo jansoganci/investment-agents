@@ -64,6 +64,6 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   karne = hisse kartı, "think fast, iterate faster", site sahibinden okuma izni alındı,
   geliştirme ana Mac / çalıştırma Air ayrımı. "Takipte / arşivde" kuralı taslak olarak yazıldı.
 - **Sıradaki:** 2. sıra **mimari** (ajanlar arası veri akışı + takipte / arşivde kuralını kesinleştirmek).
-  Karne formatı için konuşulmuş bir taslak var (3. ajan sırasında kullanılacak; henüz dosyaya yazılmadı).
+  Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.
 - **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.
