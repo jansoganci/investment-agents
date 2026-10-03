@@ -1,0 +1,5 @@
+# İndirilen SEC verisi ve çıktılar commit edilmez (büyük; `bash indir.sh` ile yeniden indirilir)
+*.json
+frames/
+ek_*.md
+__pycache__/

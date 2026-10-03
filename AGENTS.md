@@ -36,7 +36,7 @@ Kişisel yatırım danışmanı sistemi: 4 ajan okur, araştırır, analiz eder,
 ajanlar/goz/        1. Göz — Emtia Defteri + Dragonomi okur, tek cümle yazar (günde 3 tur)
 ajanlar/sayac/      1B. Sayaç — son 7 gün hisse / sektör / emtia sayımı (kod, yapay zekâ yok)
 ajanlar/arastirma/  2. Araştırma — okuma + web araması + puan; kartı açar (haftalık, Pazar)
-ajanlar/analiz/     3. Analiz — SEC / PDF → karne.md (çeyreklik / yıllık)
+ajanlar/analiz/     3. Analiz — SEC / PDF → karne.md (çeyreklik / yıllık); prototip/ = kural denemesi (üretim değil)
 ajanlar/teknik/     4. Teknik — haftalık durum + piyasa filtresi; backtest/ burada
 ortak/              yapay zekâ, SEC, fiyat, Drive yolları, SQLite
 ayarlar.yaml        modeller, bütçe, saatler, hisse listesi
@@ -83,7 +83,8 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   Araştırma notları `docs/BAGLAM.md` 8. bölüm.
   3. ajanın **eşikleri, tür kuralları (+ "kârsız"), sınıf kuralı, fiyat satırı** yazıldı; 10 gerçek şirketle denendi
   (sonuçlar + öğrenilenler `BAGLAM.md` 9. bölüm). Deneme kodu scratchpad'deydi, projede değil.
-  Dış inceleme promptu yazıldı: `docs/DIS_INCELEME_PROMPT.md` (kurallar + 10 şirket sonuç + ham veri + deneme kodu).
+  Dış inceleme promptu yazıldı: `docs/DIS_INCELEME_PROMPT.md` (Türkçe ana kopya) + `_EN.md` (modellere verilen İngilizce;
+  cevap Türkçe). Deneme kodu kalıcı: `ajanlar/analiz/prototip/` (SEC verisi git'e girmez, `indir.sh` ile iner).
 - **Sıradaki:** kullanıcı promptu iki farklı modele verecek; cevaplar gelince birlikte değerlendirip doğru bulunanlar
   kurallara işlenecek. 3. ajanın kalanları: karne formatı (`BAGLAM.md` 7. bölüm), PEG büyüme
   tavanı %25 önerisi, hisseyle ödenen maaş önerisi, eksik veri için Telegram'dan veri isteme. Yapay zekâ denetçi en son.
