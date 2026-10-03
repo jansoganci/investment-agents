@@ -109,6 +109,9 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   Insurance simulation with monthly buying (`BAGLAM.md` section 3): user chose **A — no market-filter selling**. Agent 4 never says
   "sell" (valuation watch = info + back of the new-money queue); sell suggestions come only from agent 3 (thesis broke, `weak`,
   `mid` 2 quarters in a row) plus my own call. Later idea: shrink, not sell, on a macro reason (e.g. rising rates).
+  Added (2026-10-04): the crash rule ("I do not sell because the market fell"), the drop-alert check reads the latest filing **and
+  the latest news** (news only says "watch"), every sell suggestion comes with its evidence and a "check the figure" warning when a
+  `data_check` flag is open.
 - **Next:** item 7 **implementation plan** (model / budget split, Hermes command list incl. holdings entry, Air setup, coding order).
   An AI auditor is last. A third external review is still running.
 - **Pending questions:** None.

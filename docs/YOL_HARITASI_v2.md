@@ -438,6 +438,14 @@ handles it. 20-F filers (ADRs) stay annual.
 **Sell suggestions come only from agent 3** (decision: 2026-10-04). Agent 4 never says "sell" — not on price, not on valuation, not
 on the market filter.
 
+**My rule for a crash:** *"I do not sell because the market fell. I consider selling only when agent 3's triggers break."* (In a
+2008-like crash the portfolio can show about −45% on paper; selling at the bottom in panic would cost more than any filter saves.
+The emergency fund and the gold exist so that I never have to sell stocks on a bad day.)
+
+**Every sell suggestion comes with its evidence:** which measure or thesis point broke, from which filing, and the figures. If the
+stock has an open `data_check` flag, the message says first: "check the figure before acting" (a wrongly read figure can produce a
+wrong `weak`).
+
 A single bad quarter is **not** a sell trigger; it is a "check now": the card is updated and the AI answers "why?" with a quote.
 
 **Prototype and golden set (2026-10-03):** `ajanlar/analiz/prototip/` follows these rules; `altin_set.py` reruns the 10 companies —
@@ -459,8 +467,10 @@ signal. It runs weekly (Sunday), with the Friday close and the last 4 quarters' 
    gets no new money (the portfolio rebalances itself with new money, no selling, no tax); being above 25% is fine and triggers no
    sell alert (Lynch: do not cut the flowers).
 2. **Drop alert:** a stock I hold falls **20%** from its highest weekly close of the last 52 weeks → Telegram, and agent 3 runs a
-   "did the fundamentals break?" check at once. The answer: "thesis intact, the drop is the market" or "thesis point 2 broke". It
-   never says "sell".
+   "did the fundamentals break?" check at once. Filings are slower than the price, so the check reads **the latest filing and the
+   latest news** (agent 1's `articles` for that stock + a short web search: e.g. "sales are slowing", "management cut its outlook").
+   The answer: "thesis intact, the drop is the market" or "thesis point 2 broke" or "news says watch: …". News can only say "watch";
+   a sell suggestion still needs agent 3's filing-based triggers. It never says "sell".
 3. **Valuation watch:** PEG > 3 **or** free-cash-flow yield < 1% for **4 weeks in a row** → information only ("expensive for now") and
    the stock goes to the back of the queue for new money. **No sell suggestion.** Weekly figures live in the database (`prices` / `signals`), not in
    the card; the card gets a dated note only when an alert fires.
