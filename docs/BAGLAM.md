@@ -313,14 +313,21 @@ Stock comp stays subtracted from free cash everywhere (review 1: warning only; r
 Reason: net profit already deducts stock comp as a cost while operating cash adds it back; without subtracting it, cash conversion
 (free cash ÷ net profit) compares unlike things.
 
-**Expected grades for the golden set (to be confirmed by the prototype rerun):**
+**Golden set after the prototype rerun (2026-10-03, `ajanlar/analiz/prototip/altin_set.py`, 10/10):**
 
-| Company | Before | Expected | Why it changes |
-|---|---|---|---|
-| Coca-Cola | `mid` | **`solid`** (borderline) | true liquid assets 15.8 billion $ (not 10.27) → debt years ~4.5 ➖ → combined debt ✅ → 3 ✅, 0 ❌. The user accepted: the earlier `mid` came from a data error |
-| Nvidia | `solid` | `solid` | margin stability may turn ❌ (75% → 71% in a year) but the grade stays |
-| Nike | `mid` (shrink) | `mid` (shrink) | liquid assets fixed → cash > debt; shrink rule still caps it |
-| Starbucks | `mid` | `mid` | one ❌ (margin) |
-| Pfizer | `mid` | **`weak`** | capital return: 5-year 12% ➖ carried by 2021–22 Covid years, last 3 years 5% ❌ → with debt ❌ = 2 ❌. A general rule (Smith: sustained return), it changes no other company |
-| Intel, Boeing, Snap, Dow | `weak` | `weak` | — |
-| Rivian | `weak` (`fast_grower`) | `weak` (`unprofitable`) | type changes under the new order; grade does not |
+| Company | Type | Grade | Decisive measures / why | User |
+|---|---|---|---|---|
+| Coca-Cola | `slow_grower` | **`mid`** (borderline) | margin ✅ · capital return ➖ 14.3% (borderline) · cash conversion ➖ 55% · debt ✅ (true liquid 13.87 bn) · dividend cover ❌: 5-year free cash 39.06 vs dividends 39.96 bn (−2%) because of the 12.1 bn one-offs (IRS deposit, fairlife); without them 51.2 bn. Flags: one-off, borderline. The reviews' `solid` did not subtract stock comp. Back to `solid` once the one-offs leave the 5-year window | **`mid` is right** — do not bend the rule |
+| Nvidia | `cyclical` (SIC 3674) | `solid` | capital return ✅ · debt ✅ · share count ✅ (×10 split confirmed by Yahoo). Flag: liquid 43.2 → 10.6 bn (company-only tag) | right |
+| Nike | `slow_grower` | `mid` (shrink rule) | true liquid 9.03 bn → cash > debt; revenue 3-year −3.2% | right |
+| Starbucks | `slow_grower` | `mid` | operating margin 15.6% → 7.9% ❌ | right |
+| Pfizer | `slow_grower` | **`weak`** | capital return 3-year 4.7% ❌ (5-year 12.1%, carried by Covid years) · debt ❌. Needed net interest from interest income − expense | right |
+| Intel | `cyclical` | `weak` | capital return 2.1% · debt ❌ | right |
+| Boeing | `cyclical` | `weak` | capital return −6.2% · debt ❌ (53.9 bn; a prototype bug once read 8.5) · shares +34% | right |
+| Snap | `unprofitable` | `weak` | stock comp makes 3-year free cash negative → loss + cash burn | right |
+| Dow | `cyclical` | `weak` | capital return 5.8% · debt ❌ · flag: free cash falling | right |
+| Rivian | `unprofitable` | `weak` | auto SIC code, but no profit in 5 years → not cyclical (user: "if it makes no profit, forget its cyclicality" — for now) | right |
+| *Novo Nordisk* (IFRS, not in the set) | `fast_grower` | `mid` | gross margin −3.7 pt ❌; DKK converted for the price line (P/E 10.7, FCF yield 6.4%) | — |
+
+Fixed during the rerun: debt groups need all their parts (Boeing) · net interest from interest income − expense (Pfizer, Dow) ·
+P/E and dividend yield from SEC × FX, not Yahoo (ADR currency mix) · liquid data-check only on drops · dividend borderline flag.

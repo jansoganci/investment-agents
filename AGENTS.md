@@ -98,7 +98,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   missing ≠ 0, capital return = worse of 3y / 5y (cyclical 5y), new margin-stability definition, new type order + cyclical SIC list,
   fast-grower safety, 20-F + IFRS, FCF yield on 3-year average, PEG on EPS growth, flags, the AI writes the first thesis.
   Expected golden set: `solid` KO, NVDA · `mid` NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN.
-- **Next:** update the prototype (`ajanlar/analiz/prototip/`) to the new rules and rerun the golden set; then item 6 **agent 4
-  (Technical)**, then item 7 **implementation plan**. An AI auditor is last. A third external review is still running.
+  Prototype updated to the post-review rules; golden set 10/10 (`ajanlar/analiz/prototip/altin_set.py`): `solid` NVDA · `mid` KO
+  (borderline, user-approved), NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN. IFRS / 20-F works (NVO). Rivian rule: a sector /
+  SIC cyclical needs at least 1 profit year in 5 (user-approved, may be revised).
+- **Next:** item 6 **agent 4 (Technical)**, then item 7 **implementation plan**. An AI auditor is last. A third external review is
+  still running.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.

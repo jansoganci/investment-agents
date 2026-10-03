@@ -250,8 +250,9 @@ Formulas:
   can carry old good years (Pfizer: 5-year 12% ➖, last 3 years 5% ❌). **Exception: `cyclical` uses the 5-year average only**
   (on purpose: the bottom of the cycle must not punish it alone).
 - If operating profit is not reported (Nike, Pfizer, Dow): **pre-tax profit − net interest income** (a net-interest tag such as
-  `InterestIncomeExpenseNonoperatingNet`; Nike: 3.900 − 0.050 = 3.850, the same as Nike's own figure). If there is no net-interest
-  tag → `not_computed`. The card says it is approximate.
+  `InterestIncomeExpenseNonoperatingNet`; Nike: 3.900 − 0.050 = 3.850, the same as Nike's own figure). With no net tag, net interest
+  income = interest income (`InvestmentIncomeInterest` · `InterestIncomeOther`) − interest expense — both accrual figures, never
+  cash interest (Pfizer, Dow). If neither works → `not_computed`. The card says it is approximate.
 - Interest cover = operating profit ÷ interest expense. **Cash interest paid (`InterestPaidNet`) is never used in 3, 4, 6 or the
   fallback**; it may appear only as an info line.
 - Net profit synonyms: `NetIncomeLoss` · `NetIncomeLossAvailableToCommonStockholdersBasic` · `ProfitLoss`.
@@ -298,7 +299,7 @@ paydown time is ❌, it drops one step (✅ → ➖, ➖ → ❌). If interest c
 
 | # | Type | Rule |
 |---|---|---|
-| 1 | `cyclical` | sector Energy / Materials, **or** a cyclical industry by the SEC SIC code: semiconductors, autos, airlines, shipping, homebuilding, chemicals, steel, mining (Lynch's biggest trap: a cyclical at its peak looks like a fast grower), **or** the last 5 years include both profit years and loss years |
+| 1 | `cyclical` | sector Energy / Materials, **or** a cyclical industry by the SEC SIC code: semiconductors, autos, airlines, shipping, homebuilding, chemicals, steel, mining (Lynch's biggest trap: a cyclical at its peak looks like a fast grower) — **the sector / SIC test applies only if the company made a profit in at least 1 of the last 5 years** (no profit, nothing to cycle: Rivian has an auto SIC code but is `unprofitable`; can be revised later) — **or** the last 5 years include both profit years and loss years |
 | 2 | `unprofitable` | profit in fewer than 4 of the last 5 years **and** it burns cash (3-year average free cash < 0) — the Rivian type |
 | 3 | `fast_grower` | revenue 3-year average ≥ 15% (a loss-maker that produces cash stays here — the Amazon type) |
 | 4 | `unprofitable` | profit in fewer than 4 of the last 5 years (produces cash but grows slower; like Snap — Lynch would not call this a stalwart) |
@@ -335,8 +336,9 @@ fast_grower safety = if operating margin is ❌ and it burns cash (3-year averag
 **Flags (they never change the grade; each one sends a "why?" question to the AI, answered with a quote on the card):**
 one-off (operating cash fell more than 30% over 2 years while net profit rose — e.g. Coca-Cola's 12 billion $ tax deposit and
 fairlife payment; or a gain on a sale explains most of operating profit — e.g. Boeing's 9.6 billion $ in 2025) · free cash negative
-in the latest year and falling for 3 years (Dow) · liquid assets or debt changed more than 50% / 30% in a year (data check) ·
-**borderline** (within 10% of a threshold; shown, no grade change) · lease-heavy (info line: debt including leases; not in the grade —
+in the latest year and falling for 3 years (Dow) · data check over the last 3 years: liquid assets **fell** more than 50% in a year
+(a rise is normal in growing companies; Nvidia's 43.2 → 10.6 caught its company-only tag) or debt changed more than 30% ·
+**borderline** (within 10% of a threshold, including dividend cover; shown, no grade change) · lease-heavy (info line: debt including leases; not in the grade —
 both reviews: a rough lease adjustment counts rent twice) · acquisitive (info line: money spent on acquisitions; free cash does not
 include it).
 
@@ -355,7 +357,10 @@ Lynch dividend ratio (for dividend payers) ≥ 2 attractive · 1–2 fair · < 1
 - Debt = the sum of the pieces (long-term + current portion + short-term + convertible); the pieces can overlap → **⚠ research item,
   must be checked by hand in the acceptance test.** The group `LongTermDebtNoncurrent` + current portion (`LongTermDebtCurrent` /
   `DebtCurrent`) is tried **before** `LongTermDebt` (Pfizer 2020: `LongTermDebt` held a single 4 billion $ item, the true total was
-  ~40 billion $). Code builds every candidate total; if they disagree, a flag. Flags: debt suddenly drops to zero from one year to the
+  ~40 billion $). **A group counts only if all of its parts are found** (convertible group: any part) — the prototype once took
+  Boeing's current part alone (8.5 instead of 53.9 billion $). Short-term borrowings are added only when the group does not
+  already include them, and only one of `ShortTermBorrowings` / `CommercialPaper` (the first often includes the second). Code builds
+  every candidate total; if they disagree, a flag. Flags: debt suddenly drops to zero from one year to the
   next · debt is larger than total liabilities · debt changed more than 30% in a year. Debt of a business held for sale and
   leases: info lines only.
 - **Consistency checks:** gross profit = revenue − cost · margin 0–100% · a sudden drop to zero / a 10-times jump → flagged, not used.
@@ -387,6 +392,9 @@ and the parts of liquid assets and debt. Approval comes after that.
   (Yahoo) × share count (SEC). The card also shows the 5-year path of free cash flow.
 - **PEG growth = diluted earnings per share, 3-year growth** (split-adjusted; P/E is a per-share ratio, so growth is per share too —
   Lynch also worked per share), capped at 25%.
+- **P/E and dividend yield are computed from SEC figures:** P/E = market value ÷ (latest net profit × FX); dividend yield = latest
+  dividends paid × FX ÷ market value. From Yahoo only price, market value (USD), split history and FX (Yahoo mixed currencies on
+  the ADR: Novo Nordisk's dividend yield showed 31%). Split confirmation uses only splits inside the years being looked at.
 
 **Not in version 1 (maybe later):** a "company's real value vs market value" calculation and **hidden
 assets** in the footnotes of annual reports (e.g. land booked at an old price). Lynch counts this as a separate type (`asset_play`) — that type is out of
@@ -411,9 +419,11 @@ is hard and error-prone for an AI; it would make version 1 harder.
   run and does not reopen it unless the condition has changed.
 - Sample skeleton: `BAGLAM.md` section 7 (the current skeleton).
 
-**Open (agent 3):** update the prototype to these rules and rerun the golden set (expected: `solid` Coca-Cola, Nvidia · `mid` Nike,
-Starbucks · `weak` Pfizer, Intel, Boeing, Snap, Dow, Rivian) · an AI auditor (last decision) · a third external review is still
-running.
+**Prototype and golden set (2026-10-03):** `ajanlar/analiz/prototip/` follows these rules; `altin_set.py` reruns the 10 companies —
+10/10 as expected: `solid` Nvidia · `mid` Coca-Cola (borderline), Nike, Starbucks · `weak` Pfizer, Intel, Boeing, Snap, Dow, Rivian.
+IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
+
+**Open (agent 3):** an AI auditor (last decision) · a third external review is still running.
 
 ### Rules that prevent spending
 
@@ -516,7 +526,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 2. ~~Architecture~~ ✅ (2026-10-03: section 3 — flow, stock states, in_portfolio, event-driven runs, Telegram / Hermes)
 3. ~~Agent 1 (Eye)~~ ✅ (2026-10-03: section 3, "Agent 1 rules")
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
-5. **Agent 3** — ✅ (2026-10-03: Lynch types + new type order, scope incl. 20-F / IFRS, 10 measures + thresholds, grade rule + fast-grower safety, flags, valuation, stock comp, card format, first thesis by the AI, missing data; 2 external reviews applied — section 3). **Left:** prototype update + golden-set rerun, AI auditor (last), third review
+5. **Agent 3** — ✅ (2026-10-03: rules + 2 external reviews applied + prototype and golden set 10/10 — section 3). **Left:** AI auditor (last), third review
 6. **Agent 4** — technical rules
 7. **Implementation plan** — model / budget split, Air setup, coding order
 

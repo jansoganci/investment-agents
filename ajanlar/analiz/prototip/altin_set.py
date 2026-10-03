@@ -5,7 +5,8 @@ import sys
 from karne_deneme import analyse, load_yahoo
 
 EXPECTED = {  # ticker: (grade, lynch_type)
-    "KO": ("solid", "slow_grower"), "NVDA": ("solid", "cyclical"), "NKE": ("mid", "slow_grower"),
+    "KO": ("mid", "slow_grower"),  # borderline: one-offs push dividend cover 2% short (user-approved)
+    "NVDA": ("solid", "cyclical"), "NKE": ("mid", "slow_grower"),
     "SBUX": ("mid", "slow_grower"), "PFE": ("weak", "slow_grower"), "INTC": ("weak", "cyclical"),
     "BA": ("weak", "cyclical"), "SNAP": ("weak", "unprofitable"), "DOW": ("weak", "cyclical"),
     "RIVN": ("weak", "unprofitable"),
