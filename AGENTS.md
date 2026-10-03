@@ -7,6 +7,7 @@ Kişisel yatırım danışmanı sistemi: 4 ajan okur, araştırır, analiz eder,
 
 1. `docs/YOL_HARITASI_v2.md` oku — amaç, kurallar, kararlar, adımlar, açık konular orada.
 2. Bu dosyanın sonundaki **Şu anki durum** bölümünü oku.
+   Profil, hedef hesabı, backtest sonuçları, eski sistemden dersler veya karne / puan / teknik kural konuşulurken `docs/BAGLAM.md` oku.
 3. Kullanıcıya süreci yeniden anlattırma; eksik bilgi varsa tek, net bir soru sor.
 
 ## Değişmez kurallar
