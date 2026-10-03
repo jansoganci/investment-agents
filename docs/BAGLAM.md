@@ -81,6 +81,36 @@ The rule lagged buy-and-hold in **24 of 24** stocks; about 57 trades per stock p
 - Limits: the stocks were chosen looking from today (the absolute figures are optimistic, the comparison is reliable); cash earns no interest and there is no tax; the more rules you try, the higher the risk of a rule that "happened to fit the past" → it was proposed to watch for 3 months with paper money without changing the rules.
 - Proposed but not run: with the market filter on, make the **entry** with weekly 5-8-13.
 
+### Market filter: which average? (2026-10-04; code: `spy_filtre.py`, `fib_spy.py`)
+
+Same setup as above (24 stocks equal weight; hold all if SPY closes above its N-period average, otherwise cash; 0.1% per side;
+cash earns nothing; also run one period late). Yearly return / largest drop:
+
+| SPY average | 2006–2015 (incl. 2008) | 2016–2026 | 2016–2026, one week late | Switches / year |
+|---|---|---|---|---|
+| Buy and hold | 16.7% / −42% | 19.9% / −28% | | — |
+| Daily 3 · 5 · 8 days | −5% to −6% / −53% to −57% | −4% to +5% / −25% to −41% | | 51–91 |
+| Daily 13 · 21 · 34 · 55 days | 0.7% to 7.6% / −19% to −37% | 7% to 11% / −22% to −31% | | 17–38 |
+| Daily 89 · 144 days | 8–9% / −16% to −18% | 12–13% / −18% to −21% | | 11 |
+| Weekly 3 · 5 · 8 weeks | 3–6% / −20% to −21% | 9–13% / −14% to −19% | 9–13% / −18% to −25% | 10–18 |
+| Weekly 13 · 21 weeks | 10% / −15% | 11–13% / −21% to −24% | 11–14% / −21% to −24% | 5–7 |
+| Weekly 34 weeks | 10.0% / −15.6% | 15.8% / −13.1% | 13.5% / −20.8% | 4.1 |
+| **Weekly 40 weeks** | **10.5% / −16.8%** | **14.3% / −15.8%** | **14.6% / −15.7%** | **3.7** |
+| Weekly 55 weeks | 11.9% / −17.0% | 13.4% / −18.0% | 15.2% / −20.8% | 2.8 |
+| Weekly 89 weeks | 12.6% / −19.1% | 15.1% / −16.0% | 13.0% / −26.3% | 1.8 |
+| Weekly 144 weeks | 11.7% / −24.9% | 13.2% / **−36.5%** | 15.9% / −26.3% | 1.8 |
+
+Lessons:
+- **Short averages lose money** (daily 3–13: negative return and no smaller drop; 40–90 trades a year): they follow noise.
+- **Very long averages react too late** (144 weeks: −36.5% in 2016–2026, worse than buy-and-hold).
+- **A plateau from about 21 to 55 weeks** (daily 89–144 days, the same length): all give similar results — the effect is real, not
+  luck; picking one "magic" number is pointless. Take the middle: **40 weeks**, which barely changed when run one week late
+  (34 and 55 moved a lot).
+- **Weekly beats daily:** similar results with far fewer trades (less tax, less stress).
+- **Fibonacci numbers have no special power:** results change smoothly with the length; 34 and 55 are neither better nor worse than 40.
+- No average beats buy-and-hold on return; the filter is insurance (a much smaller drop for about 4–7 points of yearly return).
+- The same filter on SPY alone: buy and hold 7.4% / −54.6% (2006–2015) → 40-week 4.7% / −19.4%.
+
 ## 4. Lessons from the old system (do not repeat them in the card design)
 
 The old step 3 was tested on 5 stocks (ROP, V, WM, APH, NET); **none of them got GREEN.** The cause was the rules, not the companies:

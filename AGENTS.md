@@ -101,7 +101,12 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   Prototype updated to the post-review rules; golden set 10/10 (`ajanlar/analiz/prototip/altin_set.py`): `solid` NVDA · `mid` KO
   (borderline, user-approved), NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN. IFRS / 20-F works (NVO). Rivian rule: a sector /
   SIC cyclical needs at least 1 profit year in 5 (user-approved, may be revised).
-- **Next:** item 6 **agent 4 (Technical)**, then item 7 **implementation plan**. An AI auditor is last. A third external review is
-  still running.
+  Item 6, **agent 4**, mostly closed (roadmap section 3, "Agent 4 rules", 2026-10-04): a weekly price watcher, not a trading signal —
+  new-money ranking (no new money above 25% weight; above 25% is fine), drop alert (−20% from the 52-week high → agent 3 thesis
+  check), valuation watch (PEG > 3 or FCF yield < 1%, 4 weeks), weights in the Sunday summary (`holdings` via Hermes), optional
+  SPY 40-week filter. Agent 3 reads 10-Q too (last 4 quarters, TTM); sell-review triggers recorded. SPY filter tests (34 / 40 / 55,
+  Fibonacci daily / weekly) in `BAGLAM.md` section 3: plateau 21–55 weeks, 40 is the robust middle.
+- **Next:** the "half insurance" test (none / only new money waits / half / all) to set how much market filter to use; then
+  item 7 **implementation plan**. An AI auditor is last. A third external review is still running.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.

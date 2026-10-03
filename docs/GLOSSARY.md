@@ -146,6 +146,19 @@ Küçülme notu bugün `ORTA (küçülme kuralı)`. Yeni ad: `mid` ve ayrıca `s
 
 Hızlı büyüyen güvenlik kuralı: `fast_grower_safety` (faaliyet marjı ❌ + nakit yakıyor → `solid` olamaz).
 
+## 4. ajan ve çeyreklik
+
+| Şimdi | İngilizce |
+|---|---|
+| son 4 çeyrek (kayan yıl) | `ttm` |
+| yeni paranın yönü | `new_money_rank` |
+| düşüş alarmı | `drop_alert` |
+| pahalı | `expensive` (PEG > 3 veya nakit verimi < %1, 4 hafta) |
+| portföydeki ağırlık | `weight` |
+| pozisyonlar tablosu | `holdings` |
+| piyasa filtresi | `market_filter` |
+| satışı değerlendir | `consider_selling` |
+
 ## Puanın 5 kriteri
 
 | Şimdi | İngilizce |
