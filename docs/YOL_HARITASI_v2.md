@@ -36,20 +36,22 @@ yaz, kur, çalıştır; hatayı gör, düzelt. Gereksiz uzun düşünüp hiçbir
 | Ajan | Ne yapar | Sıklık | Çıktı | Ne yapmaz |
 |---|---|---|---|---|
 | **1. Göz** | Emtia Defteri + Dragonomi yeni yazılarını tamamen okur; ucuz modelle tek tarafsız cümle yazar; etiketleri hisse / emtia / sektöre çevirir | Günde 3 tur | `haberler` tablosu + `Gelen/` | Olumlu / olumsuz demez, yorum yapmaz, puanlamaz, saymaz |
-| **2. Araştırma** | Adaylar için son 1 yıl web araması; gruplar, puanlar | Haftalık | `puanlar` tablosu + `Haftalik/` raporu | Temel analiz yapmaz |
+| **1B. Sayaç** | Son 7 günde hangi hisse / sektör / emtia kaç yazıda geçti, sayar ve sıralar. Kod, yapay zekâ yok | 2. ajandan hemen önce + istendiğinde | sıralı liste | Puanlamaz, okumaz |
+| **2. Araştırma** | Sayaç listesinin en üstündeki en çok 10 hisse: tam metni okur, web araması, puan + neden; **kartı açar** | Haftada bir (Pazar sabahı) | `puanlar` tablosu + kart (`karne.md`) + `Haftalik/` raporu | Temel analiz yapmaz, siteye gitmez |
 | **3. Analiz** | **Takipteki** hisseler için finansal tablolardan karne çıkarır (ABD: SEC; HK/A: yüklenen PDF) + sınıf verir | Yeni bilanço gelince (aşağıya bkz.) | `finansallar` tablosu + `karne.md` + sınıf | Fiyat tahmini, AL/SAT demez |
 | **4. Teknik** | Yeşil listedekiler için haftalık durum + piyasa filtresi | Haftalık | `sinyaller` tablosu + Telegram özeti | İşlem yapmaz |
 
-**Karne = hisse kartı.** Her hissenin tek bir karnesi olur; tüm bilgisi oradadır. Çeyrekler geçtikçe
-sona yeni tarihli kayıt eklenerek büyür.
+**Karne = hisse kartı.** Her hissenin tek bir karnesi olur; tüm bilgisi oradadır. Kart **2. ajanda doğar**
+(ilk kayıt: araştırma — puan, neden, haber özetleri); takibe alınınca 3. ajan temel analiz kayıtlarını aynı
+dosyanın sonuna ekler. Çeyrekler geçtikçe sona yeni tarihli kayıt eklenerek büyür.
 
 ### Akış (mimari, karar: 2026-10-03)
 
 ```text
- 1. GÖZ (her gün)                  2. ARAŞTIRMA (haftalık)
- İki siteyi okur          ──→      Haftanın haberlerini sayar,
- haberler tablosu                  adaylar için web araması yapar
-                                   puanlar tablosu + haftalık rapor
+ 1. GÖZ (günde 3 tur)     1B. SAYAÇ          2. ARAŞTIRMA (Pazar sabahı)
+ İki siteyi okur   ──→   Son 7 gün   ──→    En çok 10 hisse: okur,
+ haberler tablosu        sayar, sıralar     web araması, puan + neden
+                                            puanlar tablosu + KART açılır (aday)
                                           │
                                           ▼
                               ┌─ BEN: "XYZ'yi takibe al" ─┐
@@ -77,7 +79,7 @@ Her hisse `hisseler` tablosunda tek satırdır:
 
 | Alan | Değerler | Kim değiştirir |
 |---|---|---|
-| `durum` | **aday** (2. ajan buldu) · **takipte** (3. ajan karnesini tutar) · **arşivde** (karne durur, yeni analiz yok) | aday: 2. ajan · takipte / arşivde: **sadece ben** |
+| `durum` | **aday** (2. ajan puanladı, kartı açıldı) · **takipte** (3. ajan karnesini tutar) · **arşivde** (karne durur, yeni analiz yok) | aday: 2. ajan · takipte / arşivde: **sadece ben** |
 | `sinif` | sağlam · orta · zayıf · belirsiz (son karneden) | 3. ajan |
 | `portfoyde` | evet / hayır | **sadece ben** (sistem aracı kuruma bağlanmaz, bilemez) |
 
@@ -100,14 +102,52 @@ Başlık, tarih, etiketler herkese açık; yazının devamı üyelik girişi ist
 5. **Tek cümle:** ucuz model yazının tamamını okur, **tek, tarafsız** cümle yazar: sadece haberin söylediği;
    yorum, tavsiye, olumlu / olumsuz yok. Örnek: "Rio Tinto'nun X madeninde kaza oldu; haberde bunun bakır arzını
    daraltabileceği belirtiliyor." Amaç: hızlı bakışta ön bilgi.
-6. **Kayıt:** başlık, tarih, adres, etiketler, tek cümle ve **tam metin** → `haberler`. Her yazı siteden **bir kez**
-   indirilir; 2. ajan tam metni buradan okur, siteye tekrar gitmez.
+6. **Kayıt:** sayfadan sadece yazının düz metni alınır (resim / menü yok). Adres, site, başlık, tarih, etiketler,
+   tek cümle, **tam metin** (uzunluk sınırı yok — derin okumalar 15.000+ karakter), "detaylı okundu" ve "metin eksik"
+   işaretleri → SQLite `haberler` (Air diski; ~1–2 MB / gün). Drive'a (`Gelen/`) sadece günlük liste gider: başlık,
+   tek cümle, adres. Her yazı siteden **bir kez** indirilir; 2. ajan tam metni buradan okur, siteye tekrar gitmez.
 7. **Etiket eşleme:** tüm etiketler tek eşleme tablosundan geçer → şirket (hisse kodu + borsa, örn. `union-pacific` → UNP,
-   `rio-tinto` → RIO), **emtia** (petrol, lityum, kakao, buğday…) veya sektör. Yeni etiketi ucuz model bir kez sınıflar,
-   kaydedilir; yanlışsa ben düzeltirim. Hangi emtianın hangi hisseyi etkilediği 2. ajanda konuşulur.
+   `rio-tinto` → RIO), **emtia** (petrol, lityum, kakao, buğday…) veya sektör; her satırda **sektör** de yazar
+   (aşağıda "Sektör listesi"). Yeni etiketi ucuz model bir kez sınıflar, kaydedilir; yanlışsa ben düzeltirim.
 8. **Alınmayanlar:** sadece sözlük yazıları ("Emtia Sözlüğü", "Yatırım Sözlüğü"). Gerisi alınır; işe yarayıp
    yaramadığına 2. ajan karar verir.
 9. **Maliyet:** ~150 yazı / gün, ucuz model → kabaca 1–5 $ / ay (kesin hesap uygulama planında).
+
+### Sektör listesi (karar: 2026-10-03)
+
+İki seviye; yapay zekâ ikisini de **sadece listeden** seçer (serbest yazarsa "Enerji" / "Fosil Enerji" / "Petrol ve Gaz"
+ayrı sayılır, sayım bölünür).
+
+| Seviye | Liste | Değişir mi |
+|---|---|---|
+| **Ana sektör** | Dünyada en çok kullanılan GICS sınıflandırmasının 11 sektörü: Enerji · Malzeme · Sanayi · Zorunlu olmayan tüketim · Zorunlu tüketim · Sağlık · Finans · Bilgi teknolojisi · İletişim hizmetleri · Kamu hizmetleri · Gayrimenkul | Hiç |
+| **Alt sektör / tema** | Birlikte yazacağımız liste (örn. Havacılık, Yarı iletken, Yapay zekâ, Lityum) | Sadece **benim onayımla** |
+
+Hiçbiri uymazsa model "diğer" yazar; Pazar özetinde "Yeni alt sektör eklensin mi?" diye sorulur.
+
+### 1B. Sayaç kuralları (karar: 2026-10-03)
+
+1. Kod sayar, yapay zekâ yok, maliyet sıfır. 2. ajandan hemen önce çalışır; Hermes'e "bu hafta en çok ne geçti?" diye de sorulabilir.
+2. **Kayan pencere:** her çalışmada o günden geriye son 7 gün; sayım birikmez, her seferinde sıfırdan. 30 günlük sayı bilgi olarak yanında.
+3. Bir hisse aynı yazıda kaç kez geçerse geçsin **1** sayılır (farklı yazı sayısı). Sektörler ve emtialar da ayrıca sayılır.
+4. **Kartı olan hisse sıralamaya girmez** (tekrar puanlanmaz). Ama Pazar özetinde bir satır: "Kartı olup bu hafta çok
+   geçenler: XYZ (12 yazı)" — tekrar puanlanıp puanlanmayacağına ben karar veririm.
+
+### 2. ajan (Araştırma) kuralları (kısmi karar: 2026-10-03 — puan kuralları henüz açık)
+
+1. **Haftada bir** (Pazar sabahı), Sayaç listesinin en üstünden **en çok 10 hisse**. Gerekçe: uzun vadeli yatırım;
+   kontrol bende kalsın. Bütçe / kota sıkışırsa sayı düşer.
+2. **Siteye gitmez;** tam metni `haberler`'den okur. Tek istisna: "metin eksik" işaretli yazıyı siteden bir kez tekrar çeker.
+3. **"Gerçekten okumak":** güçlü model + belirli sorulara göre okuma (şirket hakkında ne söyleniyor, hangi rakamlar var,
+   olay mı genel yorum mu) + her iddiada **yazıdan alıntı**. Okunan yazıya "detaylı okundu" işareti; tekrar okunmaz.
+4. **Emtia → hisse bağlantısı, şirketten emtiaya:** bir hisse ilk kez araştırılırken bir kez web araması: "Bu şirket hangi
+   emtialara bağlı?" → `emtia_bagi` tablosu (şirket, emtia, **rol**: üretici / kullanıcı, kaynak). Rol önemli: kakao
+   pahalanınca üreticiye iyi, çikolata üreticisine (kullanıcı) kötü. Sadece ilgilendiğimiz hisseler için tutulur.
+   Kullanım: bir emtianın haberleri artınca bağlı hisselerin "sektör rüzgârı" puanına yansır; portföyümdeki hisseyi
+   etkileyen emtia haberi Pazar özetinde görünür.
+5. **Kart burada doğar:** Drive'da `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md` açılır; ilk kayıt araştırma
+   kaydıdır (puan, neden, haber özetleri). Hisse **aday** olur.
+6. **Puan kuralları:** açık (9. bölüm).
 
 ### Para harcamayı önleyen kurallar
 
@@ -119,7 +159,7 @@ Başlık, tarih, etiketler herkese açık; yazının devamı üyelik girişi ist
 
 Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes ajanları çalıştırır, sonuçları okur.
 
-- **Mesaj ne zaman gelir:** Pazar günü tek özet (yeni adaylar, karnede değişenler, teknik durum) · **hemen:** portföyümdeki hissenin sınıfı düşerse · **hemen:** bir ajan hata verirse · sağlam çıkıp yeşil listeye giren hisse. 1. ajanın günlük çıktısı Telegram'a gelmez, sadece `Gelen/`.
+- **Mesaj ne zaman gelir:** Pazar günü tek özet (yeni adaylar, karnede değişenler, kartı olup bu hafta çok geçenler, yeni alt sektör önerileri, teknik durum) · **hemen:** portföyümdeki hissenin sınıfı düşerse · **hemen:** bir ajan hata verirse · sağlam çıkıp yeşil listeye giren hisse. 1. ajanın günlük çıktısı Telegram'a gelmez, sadece `Gelen/`.
 - **Yapabildikleri:** soru cevaplamak (veritabanı + karneleri okur: "XYZ'nin karnesi ne diyor?", "bu ay ne harcadık?") ve **tanımlı komut listesinden** komut çalıştırmak ("XYZ'yi takibe al", "ABC'yi portföye ekledim", "XYZ'yi şimdi analiz et", "XYZ'deki U1 uyarısını kapat, çünkü …"). Komut listesi uygulama planında yazılır.
 - **Yapmadıkları:** veritabanı / dosyaları serbestçe değiştirmez (sadece komut listesi) · kod veya kural değiştirmez (o iş geliştirme Mac'inde) · işlem yapmaz.
 - Hermes'le sohbet Codex aboneliğini kullanır: ek ücret yok, ama çok konuşma kotayı doldurabilir.
@@ -148,19 +188,19 @@ Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes aj
 
 SQLite her gece Drive'a **yedek kopya** olarak atılır.
 
-Tablolar: `hisseler`, `haberler`, `puanlar`, `finansallar`, `fiyatlar`, `sinyaller`, `calismalar` (harcanan $ dahil).
+Tablolar: `hisseler`, `haberler` (tam metin dahil), `etiketler` (eşleme: tür, karşılık, ana sektör, alt sektör), `emtia_bagi`, `puanlar`, `finansallar`, `fiyatlar`, `sinyaller`, `calismalar` (harcanan $ dahil).
 
 ```text
 Yatirim/                                   (Drive)
-├── Gelen/                                 1. ajanın günlük çıktısı
+├── Gelen/                                 1. ajanın günlük listesi (başlık + tek cümle + adres)
 ├── Haftalik/                              haftalık özetler
 ├── Yedek/                                 gece SQLite kopyası
-└── Sektorler/<Sektör>/<HİSSE>/
-    ├── karne.md
+└── Hisseler/<KOD> - <Şirket adı>/         düz yapı; sektör kartın üst bilgisinde
+    ├── karne.md                           2. ajanda doğar
     └── raporlar/                          HK / A-hisse PDF'leri (elle yüklerim)
 
 investment-agents/                         (kod, Git)
-├── ajanlar/goz/  arastirma/  analiz/  teknik/
+├── ajanlar/goz/  sayac/  arastirma/  analiz/  teknik/
 ├── ortak/                                 yapay zekâ, SEC, fiyat, Drive yolları, veritabanı
 ├── ayarlar.yaml
 └── docs/  YOL_HARITASI_v2.md  BAGLAM.md  TASINANLAR.md
@@ -190,7 +230,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 | **0. Kurulum** | Mac ayarları (uyku kapalı, ayrı kullanıcı, FileVault), Hermes, Codex girişi, OpenRouter limiti, Drive masaüstü, Telegram botu | Telegram'dan mesajlaşabiliyorum ve zamanlanmış bir deneme işi Drive'a dosya yazıyor |
 | **1. Analiz + karne** | `ortak/` + SQLite + 3. ajan, 3–5 ABD hissesi | 3 hissenin karnesi Drive'da; ikinci çalıştırma eski kaydı silmeden yeni tarihli kayıt ekliyor; **deneme seti testi geçiyor:** herkesin kaliteli kabul ettiği 3–5 şirket sağlam, zayıf olduğu bilinen 1–2 şirket sağlam **değil** çıkıyor (eski sistemde hiçbir hisse yeşile girememişti; kaliteliler sağlam çıkmıyorsa kurallar fazla sıkı, zayıflar sağlam çıkıyorsa fazla gevşek) |
 | **2. Göz** | Playwright ile iki site, günde 3 tur | 1 hafta boyunca her tur `haberler` doluyor (tek cümle + tam metin + eşlenmiş etiketler) ve site bir kez bile "çok istek" / engel cevabı vermiyor |
-| **3. Araştırma** | Web araması + puan + neden | Haftalık rapor Drive'da ve Telegram'da |
+| **3. Araştırma** | 1B Sayaç + 2. ajan: okuma + web araması + puan + neden + kart açma | Haftalık rapor Drive'da ve Telegram'da; aday hisselerin kartı Drive'da açılıyor |
 | **4. Teknik** | Haftalık durum + piyasa filtresi | Pazar günü Telegram'a yeşil liste özeti geliyor |
 
 ## 9. Açık konular (kodlamadan önce birlikte karar verilecek)
@@ -200,7 +240,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 1. ~~Genel çerçeve~~ ✅ (2026-10-03: karne = kart, çalışma ilkesi, site izni, geliştirme / çalıştırma ayrımı)
 2. ~~Mimari~~ ✅ (2026-10-03: 3. bölüm — akış, hisse durumları, portföyde, olayla çalışma, Telegram / Hermes)
 3. ~~1. ajan (Göz)~~ ✅ (2026-10-03: 3. bölüm, "1. ajan kuralları")
-4. **2. ajan** — puan kuralları
+4. **2. ajan** — ✅ kısmen (2026-10-03: Sayaç, sektör listesi, okuma, emtia bağı, kartın doğuşu — 3. bölüm). **Kalan: puan kuralları**
 5. **3. ajan** — metrikler, sağlam / orta / zayıf ölçütü, karne formatı
 6. **4. ajan** — teknik kurallar
 7. **Uygulama planı** — model / bütçe dağılımı, Air kurulumu, kodlama sırası

@@ -114,6 +114,8 @@ Bu dosyalardaki "LOCKED", "Plan §0", aşama kapıları gibi kurallar bu projeye
 3. ajan konuşulurken buradan başlanır. Amaç tek soru: **"Bu şirketi neden tutuyorum ve bu neden hâlâ geçerli mi?"**
 %30 düşüşte karneyi açınca 5 dakikada "düşen fiyat mı, şirket mi?" görülebilmeli.
 
+**Not (2026-10-03):** Kart 2. ajanda doğar; ilk kayıt araştırma kaydıdır. Aşağıdaki format 3. ajanın sona eklediği temel analiz kayıtları içindir. Dosya yeri: `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md`.
+
 Her çeyrek / yıl `karne.md` sonuna yeni bölüm eklenir; en yeni kayıt en altta. Rakamlar örnektir (uydurma).
 
 ```markdown

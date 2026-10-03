@@ -34,7 +34,8 @@ Kişisel yatırım danışmanı sistemi: 4 ajan okur, araştırır, analiz eder,
 
 ```text
 ajanlar/goz/        1. Göz — Emtia Defteri + Dragonomi okur, tek cümle yazar (günde 3 tur)
-ajanlar/arastirma/  2. Araştırma — web araması + puan (haftalık)
+ajanlar/sayac/      1B. Sayaç — son 7 gün hisse / sektör / emtia sayımı (kod, yapay zekâ yok)
+ajanlar/arastirma/  2. Araştırma — okuma + web araması + puan; kartı açar (haftalık, Pazar)
 ajanlar/analiz/     3. Analiz — SEC / PDF → karne.md (çeyreklik / yıllık)
 ajanlar/teknik/     4. Teknik — haftalık durum + piyasa filtresi; backtest/ burada
 ortak/              yapay zekâ, SEC, fiyat, Drive yolları, SQLite
@@ -71,8 +72,11 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   3. sıra **1. ajan (Göz)** kapandı (yol haritası 3. bölüm, "1. ajan kuralları"): günde 3 tur, yavaş tarama
   (~20 dk / tur, engel cevabında dur), tam metin okunur + ucuz modelle tek tarafsız cümle, tam metin
   `haberler`'e kaydedilir, etiket eşleme tablosu (şirket / emtia / sektör), sözlük yazıları alınmaz.
-- **Sıradaki:** 4. sıra **2. ajan (Araştırma)** — puan kuralları, tam metni nasıl okuyacağı (pahalı model),
-  emtia → hisse bağlantısı.
+  4. sıra **2. ajan** kısmen kapandı (yol haritası 3. bölüm): 1B Sayaç (kod, kayan 7 gün, kartı olan
+  sıralamaya girmez), 2 seviyeli sabit sektör listesi (GICS 11 + onaylı alt sektör), 2. ajan haftada bir
+  en çok 10 hisse, siteye gitmez, alıntılı okuma, emtia bağı (şirket → emtia, rol), kart 2. ajanda doğar,
+  Drive düz yapı `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md`.
+- **Sıradaki:** 2. ajanın **puan kuralları** (taslak: yol haritası 9. bölüm).
   Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.
 - **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.
