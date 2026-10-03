@@ -78,11 +78,11 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   Drive düz yapı `Yatirim/Hisseler/<KOD> - <Şirket adı>/karne.md`, **puan kuralları** (5 kriter × 0–2,
   eşikli; veri yoksa belirsiz = 1 puan). **1. sürüm sadece ABD borsası (ADR dahil)**; HK / A sonra ek.
   5. sıra **3. ajan** kısmen kapandı (yol haritası 3. bölüm, "3. ajan kuralları"): kalite önce, Lynch türleri,
-  kapsam dışı (şimdilik) banka / sigorta / gayrimenkul / gelirsiz şirket / kamu hizmetleri, değerleme = Lynch PEG, kod ölçer + soru işaretler + yapay zekâ alıntıyla nedenini yazar, 10 ölçü,
+  kapsam dışı (şimdilik) banka / sigorta / gayrimenkul / gelirsiz şirket / kamu hizmetleri, değerleme = Lynch PEG + serbest nakit akışı verimi (gizli varlık / gerçek değer hesabı şimdilik yok), kod ölçer + soru işaretler + yapay zekâ alıntıyla nedenini yazar, 10 ölçü,
   SEC eş anlamlılar listesi (yıl yıl), `eksik_veri` kayıt defteri, borç ⚠ araştırma maddesi, UAT ≥ 20 hisse.
   Araştırma notları `docs/BAGLAM.md` 8. bölüm.
 - **Sıradaki:** 3. ajanın kalanları — her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı,
-  PEG eşiği, karne formatı (`BAGLAM.md` 7. bölüm), eksik veri için
+  PEG ve nakit verimi eşikleri, karne formatı (`BAGLAM.md` 7. bölüm), eksik veri için
   Telegram'dan veri isteme. Yapay zekâ denetçi en son karar verilecek.
   Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.

@@ -259,10 +259,19 @@ kararında türe göre öne çıkanlar (futbol: forvet golüne, kaleci kurtarı�
 küçülen → sağlam çıkmamalı; borcu yüksek ama iyi kullanan). **Kabul testi (UAT) en az 20 hisse**, rakamlar elle 10-K ile
 karşılaştırılır; onay ondan sonra.
 
-**Değerleme:** Lynch'in **PEG** oranı kullanılır (F/K ÷ yıllık kâr büyümesi %; ≈ 1 makul, < 1 cazip, > 2 pahalı). Fiyat
-Yahoo'dan, kâr büyümesi SEC'ten. Eşiği ve ek bir değerleme ölçüsü olup olmayacağı eşiklerle birlikte konuşulur.
+**Değerleme (2 ölçü):**
+- Lynch'in **PEG** oranı: F/K ÷ yıllık kâr büyümesi (%); ≈ 1 makul, < 1 cazip, > 2 pahalı.
+- **Serbest nakit akışı verimi:** serbest nakit akışı ÷ piyasa değeri ("şirketi bugün tamamen alsam, paramın yılda yüzde kaçı
+  nakit olarak döner?"). Serbest nakit = işletme nakdi − yatırım harcaması (SEC); piyasa değeri = fiyat (Yahoo) × hisse
+  sayısı (SEC). Karnede serbest nakit akışının 5 yıllık seyri de gösterilir.
+- Eşikleri sınıf kuralıyla birlikte konuşulur.
 
-**Açık (3. ajan):** her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı · PEG'in eşiği ve kullanımı ·
+**Şimdilik yok (sonra belki):** "şirketin gerçek değeri vs piyasa değeri" hesabı ve yıllık raporların dipnotlarındaki **gizli
+varlıklar** (örn. eski fiyattan kayıtlı arsa). Lynch bunu ayrı bir tür sayar ("varlık zengini") — o tür 1. sürümde kapsam
+dışı. Buffett ise ilk yıllarından sonra varlığa değil, şirketin gelecekte üreteceği nakde bakar. Dipnotları okuyup değerlemek
+yapay zekâ açısından zor ve hataya açık; 1. sürümü zorlaştırır.
+
+**Açık (3. ajan):** her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı · PEG ve serbest nakit akışı veriminin eşikleri ·
 yapay zekâ denetçi (en son karar) · eksik veri
 için Telegram'dan benden veri isteme · karne formatının 4 açık sorusu (`BAGLAM.md` 7. bölüm).
 
