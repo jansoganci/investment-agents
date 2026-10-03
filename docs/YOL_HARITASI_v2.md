@@ -503,7 +503,7 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
   (on an inconsistency such as a 10-times gap versus other years, "emin misin?"), and the card records `source: user`;
   if no answer comes, the figure stays `unclear` and is reminded once.
 - **What it does not do:** it does not freely change the database / files (only the command list) · it does not change code or rules (that work is on the development Mac) · it does not trade.
-- Chat with Hermes uses the Codex subscription: no extra fee, but a lot of chat can fill the quota.
+- Chat with Hermes uses my ChatGPT / Codex subscription if Hermes can log in with it (checked in step 0); otherwise a cheap but strong model (DeepSeek V4 Pro). Details: section 10.
 - In step 0 (setup) this way of working is tried and confirmed.
 
 ## 4. Technology decisions
@@ -514,7 +514,7 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
 | Development | On the main Mac (Claude Code / Cursor); each agent is tried by hand here first. Bridge: GitHub |
 | What runs it | Hermes Agent, on the backup MacBook Air M2 (16 GB), 24/7. No code is written on the Air: it is updated with `git pull`; `.env`, the site session, and the real SQLite live there. Hermes only schedules and reports; the calculation / analysis logic is in our code |
 | Communication | One counterpart on Telegram, Hermes (section 3, "Telegram and Hermes") + Drive folders |
-| AI | Expensive work (writing the card): Codex subscription (1 subscription is set aside for the agent). Cheap work + web search: OpenRouter, with a spend limit. The Claude subscription is **not** connected to Hermes (terms of use) |
+| AI | Agents call models through one client in `ortak/` with an ordered provider list per job: my API credits first, then OpenRouter (section 10). Hermes chat: ChatGPT / Codex subscription if possible. The Claude **subscription** is not connected to Hermes (terms of use); Claude **API credits** are fine |
 | Site reading | Playwright; I log in once, the session is stored; 3 passes a day, slow (section 3, "Agent 1 rules"). No AI in the page-download step; a cheap model only for the one sentence on the post that was read. **Permission:** the owner of both sites personally allowed reading (scraping) (2026-10-03); no API; condition: do not strain the site / do not abuse it |
 | Model choice | One place: `ayarlar.yaml` |
 | Independence | The code does not know Hermes; each agent also runs by hand (`python -m agents.analysis`) |
@@ -551,9 +551,9 @@ Today's folders are still `ajanlar/` and `ortak/` (the prototype and the backtes
 
 ## 6. Budget
 
-- AI / API: **at most 25–30 $ / month** (expected: OpenRouter < 5 $ — of which 1–5 $ is agent 1's one-sentence summaries — + the existing Codex subscription)
+- AI / API: **at most 25–30 $ / month**. Expected once running: ~6–7 $ / month on OpenRouter prices (agent 1 ~0.2 $, agents 2 + 3 ~4–5 $, web search ~0.6 $); while my API credits last, close to 0 (section 10)
 - Emtia Defteri + Dragonomi subscriptions are **outside** this budget
-- A fixed monthly limit on OpenRouter; the `runs` table answers "bu ay ne harcadık?" from Telegram
+- OpenRouter: a fixed monthly limit of **15 $**, a Telegram warning at **10 $**; the `runs` table answers "what did we spend this month?" from Telegram
 
 ## 7. To bring from the old project (investment-intelligence, `v1-arsiv`)
 
@@ -586,7 +586,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03: rules + 2 external reviews applied + prototype and golden set 10/10 — section 3). **Left:** AI auditor (last), third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — model / budget split, Air setup, coding order
+7. **Implementation plan** — section 10. ✅ 10.1 models and providers (2026-10-04). Left: Hermes command list, Air setup (step 0), coding order
 
 Topic notes:
 
@@ -595,3 +595,53 @@ Topic notes:
 - ~~**Agent 4 rules.**~~ ✅ section 3, "Agent 4 rules". No market-filter selling in v1; later idea: shrink the portfolio on a macro reason (e.g. rising rates).
 - ~~**Site terms of use.**~~ ✅ The site owner gave permission (see section 4, Site reading).
 - **HK / A-share data** (⏸ deferred — version 1 is US only). Which figures will be taken from the PDF by hand / by AI. Note: US filings do not need PDF / OCR (SEC figures are a ready table). Most HK / A PDFs contain text → read with a free Python library; OCR only for a scanned (image) PDF, and that too is free on the computer.
+
+## 10. Implementation plan
+
+### 10.1 Models and providers (decision: 2026-10-04)
+
+**Language:** every system output is **English** — cards, reports, the Sunday summary, Telegram messages and commands; I talk to
+Hermes in English. The sources are Turkish (Emtia Defteri, Dragonomi), so agent 1 reads Turkish and writes its one sentence in
+English — checked in the model test. (My working conversations about the project stay in Turkish — `AGENTS.md`.)
+
+| Job | Model | Effort | Fallback |
+|---|---|---|---|
+| **Cheap** — agent 1's one sentence, new-tag classification, making Telegram messages plain | **DeepSeek V4 Flash** | — | Gemini Flash-Lite or GPT-6 Luna if the test is poor |
+| **Strong** — agent 2 (tone, news flow, score reasons), agent 3 ("why?" answers with quotes, first thesis, thesis check, drop-alert check) | **Claude Sonnet 5.5** | **high** | **GPT-6 Sol** |
+| **Hermes chat** (Telegram) | my ChatGPT / Codex subscription, if Hermes can log in with it (checked in step 0) | — | **DeepSeek V4 Pro** (cheap, strong for its price) |
+
+Not needed for routine work: Opus 5.5 / GPT-6 Astra (the code does the arithmetic; the model reads and explains). A one-off use
+(e.g. one first thesis) is possible with a Telegram override.
+
+**Who writes the first thesis:** the AI (strong model), decided in section 3.
+
+**Provider order (per job, in `ayarlar.yaml`):** my API credits first, then OpenRouter. The client in `ortak/` tries the list in
+order; on an error, exhausted credit or quota it moves to the next one; every call's cost goes to `runs`.
+
+```yaml
+cheap:  [deepseek: deepseek-v4-flash,          openrouter: deepseek/deepseek-v4-flash]
+strong: [anthropic: claude-sonnet-5.5 (high),  openrouter: anthropic/claude-sonnet-5.5,  openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
+```
+
+**My credits (2026-10-04):** Anthropic API 90 $ (expires 2026-10-19), DeepSeek 10 $, OpenAI API 5 $. The system will not be live
+before 10-19, so the Anthropic credit is for development: the model test, agent 3's AI parts, the 20-stock acceptance test (≈ 4–5 $
+with Sonnet). It is **not** spent just to use it up. DeepSeek's 10 $ covers agent 1 for years; OpenAI's 5 $ covers the GPT tests.
+Using the ChatGPT subscription inside the agents (through the Codex command-line tool) is possible but not planned (quota locks,
+unclear terms); it can be added as a provider later.
+
+**Choosing by test, not by guess:**
+- cheap: 20 real posts → the model's English sentences side by side; I choose.
+- strong: two companies' "why?" answers from Sonnet 5.5 and GPT-6 Sol, shown **without model names**; I choose.
+
+**Model change from Telegram (Hermes command list):**
+- one job: `analyze XYZ with opus-5.5`
+- from now on: `set strong model to gpt-6-sol`
+The override lives in the database on the Air (not in `ayarlar.yaml` in git, so the repo stays clean); every change is logged; the
+spend limit still applies.
+
+**Data sent to models — only what the job needs.** Post texts and filings go out; my holdings, trades, amounts and portfolio do not
+go to a model unless a job needs them (e.g. Hermes answering my own question). DeepSeek's own API processes data in China — fine
+for news text, never for my personal data.
+
+**Spend safety:** OpenRouter monthly limit 15 $, a Telegram warning at 10 $ (section 6).
+

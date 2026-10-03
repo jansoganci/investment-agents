@@ -112,7 +112,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   Added (2026-10-04): the crash rule ("I do not sell because the market fell"), the drop-alert check reads the latest filing **and
   the latest news** (news only says "watch"), every sell suggestion comes with its evidence and a "check the figure" warning when a
   `data_check` flag is open.
-- **Next:** item 7 **implementation plan** (model / budget split, Hermes command list incl. holdings entry, Air setup, coding order).
-  An AI auditor is last. A third external review is still running.
+  Item 7 started — roadmap section 10. **10.1 models and providers decided (2026-10-04):** all system output and commands in
+  English; cheap = DeepSeek V4 Flash, strong = Claude Sonnet 5.5 (high) with GPT-6 Sol fallback, Hermes chat = ChatGPT/Codex
+  subscription if possible else DeepSeek V4 Pro; provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,
+  OpenAI 5 $) then OpenRouter; model change from Telegram via an override in the Air database; only needed data goes to models.
+- **Next:** 10.2 Hermes command list (incl. "bought 10 KO at 85.65", model override), 10.3 Air setup (step 0), 10.4 coding order;
+  the two model tests (cheap: 20 posts; strong: blind "why?" answers) when coding starts. AI auditor last; third review running.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.

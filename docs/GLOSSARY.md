@@ -15,7 +15,7 @@ Yeni kod sağ sütunu kullanır. Deneme kodu (`ajanlar/analiz/prototip/`, `ajanl
 
 Bölüm numarası kalır. Dosyalar birbirine "3. bölüm" diye bağlanır, başlık cümlesiyle değil.
 
-Telegram'da sana görünen cümle Türkçe kalır. İngilizce dokümanda tırnak içinde durur (son tablo).
+**Karar (2026-10-04): sistemin bütün çıktıları ve komutları İngilizce** (karne, rapor, Pazar özeti, Telegram). Dokümanlardaki Türkçe tırnaklı örnekler son tablodaki İngilizce karşılıklarıyla okunur.
 
 Çevrilmeyen özel adlar: Emtia Defteri, Dragonomi, Hermes, Telegram, İş Bankası, BES, Selçuk Gönençler, SEC etiket adları (`Revenues` gibi).
 
@@ -258,14 +258,18 @@ Doküman İngilizce adı yazar. Backtest dosyası bugünkü kodu taşır; kod ay
 
 Karışık ayrı kod değil: durum değişmez, önceki pozisyon durur.
 
-## Sana görünen Türkçe (çevrilmez)
+## Telegram komutları ve mesajları (İngilizce; önceki Türkçe örnekler)
 
-| Ne | Cümle |
-|---|---|
-| Takibe al | "XYZ'yi takibe al" |
-| Portföye ekle | "ABC'yi portföye ekledim" |
-| Şimdi analiz et | "XYZ'yi şimdi analiz et" |
-| Uyarı kapat | "XYZ'deki U1 uyarısını kapat, çünkü …" |
-| Arşiv sorusu | "arşive alalım mı?" |
-| Yeni alt sektör | "Yeni alt sektör eklensin mi?" |
-| Portföy notu | "Portföye eklendi" |
+| Ne | Eski Türkçe örnek | İngilizce |
+|---|---|---|
+| Takibe al | "XYZ'yi takibe al" | "watch XYZ" |
+| Alım kaydı | "KO 10 adet 85,65$'dan aldım" | "bought 10 KO at 85.65" |
+| Şimdi analiz et | "XYZ'yi şimdi analiz et" | "analyze XYZ now" (tek seferlik model: "analyze XYZ with opus-5.5") |
+| Model değiştir | — | "set strong model to gpt-6-sol" |
+| Uyarı kapat | "XYZ'deki U1 uyarısını kapat, çünkü …" | "close warning U1 on XYZ because …" |
+| Arşiv sorusu | "arşive alalım mı?" | "archive it?" |
+| Yeni alt sektör | "Yeni alt sektör eklensin mi?" | "add a new subsector?" |
+| Portföy notu | "Portföye eklendi" | "Added to portfolio" |
+| Harcama sorusu | "bu ay ne harcadık?" | "what did we spend this month?" |
+
+Kesin komut listesi uygulama planında (yol haritası 10. bölüm) yazılır.
