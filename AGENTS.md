@@ -66,7 +66,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-03
+- **Last update:** 2026-10-04
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -124,7 +124,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   different family from the writer), used only in agent 3 (figure, reading, sell audits) and agent 2 (serious-negative events);
   code checks elsewhere; one rule card per place with known traps and an error test set; on a fail `unverified` + Telegram, a sell
   suggestion is held; a big review every 6 months.
-- **Next:** 10.4 coding order (last planning item);
-  the two model tests (cheap: 20 posts; strong: blind "why?" answers) when coding starts. AI auditor last; third review running.
+- **Next (after the break, 2026-10-04):** 10.4 coding order — the last planning item (the auditor is already decided). Then the
+  implementation plan and the UAT plan, building + tests (golden set, auditor error sets, the two model tests, 20-stock UAT),
+  step 0 on the Air, then a few months of real use without changing the rules.
+  Small open items: the subsector list (needed for tag mapping) · prepare `.env.example`, the `/setcommands` text and the Drive
+  test script before the Air setup · the Anthropic API credit expires 2026-10-19 (use it for agent 3's AI parts and the tests) ·
+  a third external review is still running · local commits are not pushed to GitHub yet.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.
