@@ -586,7 +586,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03: rules + 2 external reviews applied + prototype and golden set 10/10 — section 3). **Left:** AI auditor (last), third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list (2026-10-04). Left: Air setup (step 0), coding order
+7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Left: 10.4 coding order
 
 Topic notes:
 
@@ -694,4 +694,12 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 **Deliberately not on the list:** changing rules, thresholds or code (done on the development Mac; no code is written on the Air) ·
 deleting a card entry (append-only) · buy / sell orders (the system never connects to a broker) · changing the spend limit from
 Telegram (only in the OpenRouter dashboard, for safety).
+
+### 10.3 Air setup — step 0 (decision: 2026-10-04)
+
+Checklist: `docs/AIR_SETUP.md` (7 phases: the Mac, tools and project, Drive, Telegram bot, Hermes, OpenRouter, tests). Key
+points: a separate macOS user, FileVault, no sleep on power, Screen Sharing / SSH from the main Mac; a read-only GitHub deploy
+key; `.env` with `chmod 600`, never committed; the bot talks only to my Telegram user ID; Hermes logs in with the ChatGPT
+subscription, runs as a launchd service, its terminal powers limited to our command scripts; agents run as script-only cron jobs
+(no LLM); OpenRouter key with a 15 $ monthly limit. Done when the tests in phase 7 pass.
 

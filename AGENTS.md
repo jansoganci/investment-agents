@@ -45,7 +45,7 @@ ajanlar/analiz/     3. Analysis — SEC / PDF → card.md (quarterly / annual); 
 ajanlar/teknik/     4. Technical — weekly state + market filter; backtest/ is here
 ortak/              AI, SEC, price, Drive paths, SQLite
 ayarlar.yaml        models, budget, hours, stock list
-docs/               YOL_HARITASI_v2.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md; reviews/ (external reviews)
+docs/               YOL_HARITASI_v2.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md; reviews/ (external reviews)
 ```
 
 ## Technical
@@ -119,7 +119,8 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   **10.2 Hermes command list decided (2026-10-04):** 10 information commands + actions (`/watch`, `/archive`, `/unarchive`,
   `/bought`, `/sold`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`) in the Telegram `/` menu;
   every change asks for confirmation and is logged.
-- **Next:** 10.3 Air setup (step 0), 10.4 coding order;
+  **10.3 Air setup checklist written:** `docs/AIR_SETUP.md` (to prepare before it: `.env.example`, `/setcommands` text, Drive test script).
+- **Next:** 10.4 coding order (last planning item);
   the two model tests (cheap: 20 posts; strong: blind "why?" answers) when coding starts. AI auditor last; third review running.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.
