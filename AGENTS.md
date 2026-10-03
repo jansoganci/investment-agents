@@ -81,9 +81,10 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   kapsam dışı (şimdilik) banka / sigorta / gayrimenkul / gelirsiz şirket / kamu hizmetleri, değerleme = Lynch PEG + serbest nakit akışı verimi (gizli varlık / gerçek değer hesabı şimdilik yok), kod ölçer + soru işaretler + yapay zekâ alıntıyla nedenini yazar, 10 ölçü,
   SEC eş anlamlılar listesi (yıl yıl), `eksik_veri` kayıt defteri, borç ⚠ araştırma maddesi, UAT ≥ 20 hisse.
   Araştırma notları `docs/BAGLAM.md` 8. bölüm.
-- **Sıradaki:** 3. ajanın kalanları — her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı,
-  PEG ve nakit verimi eşikleri, karne formatı (`BAGLAM.md` 7. bölüm), eksik veri için
-  Telegram'dan veri isteme. Yapay zekâ denetçi en son karar verilecek.
+  3. ajanın **eşikleri, tür kuralları (+ "kârsız"), sınıf kuralı, fiyat satırı** yazıldı; 10 gerçek şirketle denendi
+  (sonuçlar + öğrenilenler `BAGLAM.md` 9. bölüm). Deneme kodu scratchpad'deydi, projede değil.
+- **Sıradaki:** kullanıcı "başka bir şey" isteyecek. 3. ajanın kalanları: karne formatı (`BAGLAM.md` 7. bölüm), PEG büyüme
+  tavanı %25 önerisi, hisseyle ödenen maaş önerisi, eksik veri için Telegram'dan veri isteme. Yapay zekâ denetçi en son.
   Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.
 - **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.

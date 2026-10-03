@@ -206,3 +206,31 @@ sorunlar: Coca-Cola borç ismini 2024'te değiştirmiş · Cloudflare borcu sade
 milyar $) · Apple 2023'ten sonra faiz giderini ayrı vermiyor · Amazon brüt kârı raporlamıyor (gelir − maliyet ile hesaplanır) ·
 Visa satış maliyeti yok (brüt marj hesaplanamaz) ve çok sınıflı hisse yüzünden standart hisse sayısı ismi yok · Novo Nordisk
 (20-F) IFRS isimleri, sadece yıllık.
+
+## 9. 3. ajan kuralları — 10 gerçek şirketle deneme (2026-10-03)
+
+Deneme kodu (scratchpad, projede değil) SEC son yıllık rapor (çoğu 2025) + Yahoo bugünkü fiyatla çalıştırıldı. Rakamlar
+henüz 10-K ile elle karşılaştırılmadı (o iş kabul testinde). Sonuçlar **beklenen sınıf** olarak deneme setinde kullanılabilir.
+
+| Şirket | Tür | Sınıf | Neden (kısa) | Kullanıcı görüşü |
+|---|---|---|---|---|
+| Coca-Cola (KO) | Yavaş büyüyen | ORTA | sermaye getirisi %13,8 (sınırın altı); nakde dönüşüm %57 (2024–25 tek seferlik ödemeler); fiyat pahalı (PEG 2,3, nakit verimi %1,4) | doğru; kuralı KO için esnetme (geçmişe uydurma olur) |
+| Nvidia (NVDA) | Hızlı büyüyen | SAĞLAM | her belirleyici ✅; ama nakit verimi %1,7 → "şirket harika, fiyat ayrı konu" | doğru |
+| Nike (NKE) | Yavaş büyüyen | ORTA (küçülme kuralı) | gelir 3 yıl ort. −%3,2; serbest nakit 6,6 → 2,2 milyar $ | zayıf görüyor; şimdilik ORTA kalsın |
+| Starbucks (SBUX) | Yavaş büyüyen | ORTA | faaliyet marjı 5 yıl ort. %14,1 → %7,9 | zayıf görüyor; şimdilik ORTA |
+| Pfizer (PFE) | Yavaş büyüyen | ORTA | gelir Covid sonrası çöktü; borç ❌ (Seagen alımı) | zayıf görüyor; şimdilik ORTA |
+| Intel (INTC) | Döngüsel | ZAYIF | sermaye getirisi %2; işinden nakit üretmiyor + borç | doğru |
+| Boeing (BA) | Döngüsel | ZAYIF | sermaye getirisi eksi; faiz karşılama 1,5; hisse +%34 | doğru |
+| Snap (SNAP) | Kârsız (eski kuralda "istikrarlı dev") | ZAYIF | faaliyet marjı −%9; hisse +%16 (hisseyle maaş) | doğru; "kârsız" türü eklendi |
+| Dow (DOW) | Döngüsel | ZAYIF | marj −6 puan; işinden nakit üretmiyor | doğru |
+| Rivian (RIVN) | Hızlı büyüyen | ZAYIF (yeni kuralla; eski kuralda ORTA) | yılda ~2,5 milyar $ nakit yakıyor, kasası < 3 yıl, hisse +%30 | doğru — Amazon tipi değil, Rivian tipi |
+
+**Denemenin öğrettikleri (kurallara işlendi):** bölünme (Nvidia "+%877 hisse" çıkıyordu) · halka arz yılı (Rivian) · faaliyet kârı
+raporlamayanlar (Nike, Pfizer, Dow — eski "%100 bulunuyor" ölçümü yanıltıcıydı, kapsam tanımı yüzünden) · eksi özkaynak
+(Starbucks sermaye getirisi %105 çıkıyordu → Smith tanımına geçildi) · "3 yıl üst üste küçülme" Nike tuzağını kaçırıyordu
+(→ 3 yıl ortalaması) · yavaş büyüyenlerde kalite ölçülmüyordu (→ marj + sermaye getirisi eklendi) · borç birleşik yargı ·
+tek seferlik ödemeler (→ 3 / 5 yıl ortalamaları) · 7 ve 10 farklı taban kullanıyordu (Boeing 15,7 yıl → ~7,7 yıl).
+
+**Amazon tipi vs Rivian tipi** (kullanıcının özeti): Amazon nakit üreten, tercihen zarar eden ya da çok az kâr eden bir şirketti;
+nakdi her yıl artıyordu çünkü altyapıya deli gibi yatırım yapıyordu; bugün oturmuş ve kâr açıklıyor. Rivian hem zarar ediyor,
+hem işinden nakit üretemiyor, hem de kasasında nakit azalıyor → zayıf.

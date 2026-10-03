@@ -197,13 +197,13 @@ hesaplanabildiyse sonuç **belirsiz → nötr 1 puan** ("ne ödül ne ceza"); ka
 raporlayabilir (ADR'lerde IFRS isimleri): kodda her rakam için olası isimler listesi; ilk bulunan kullanılır, yeni isim
 görülünce listeye eklenir. ABD tarafı eski projede hazır (taşınacak).
 
-### 3. ajan (Analiz) kuralları (kısmi karar: 2026-10-03 — eşikler ve sınıf kuralı açık)
+### 3. ajan (Analiz) kuralları (karar: 2026-10-03; eşikler 10 gerçek şirketle denendi — `BAGLAM.md` 9. bölüm)
 
 **Yaklaşım — kalite önce, yapı Lynch'ten:**
 
-1. **Önce şirketin türü** (Peter Lynch): hızlı büyüyen · istikrarlı dev · yavaş büyüyen · döngüsel. Toparlanan ve varlık
-   zengini 1. sürümde kapsam dışı → "belirsiz". Türü kod rakamlardan tahmin eder (büyüme hızı, kâr dalgalanması),
-   yapay zekâ işin tarifinden doğrular, ben düzeltebilirim.
+1. **Önce şirketin türü** (Peter Lynch): hızlı büyüyen · istikrarlı dev · yavaş büyüyen · döngüsel (+ "kârsız", aşağıda).
+   Toparlanan ve varlık zengini 1. sürümde kapsam dışı → "belirsiz". Türü kod rakamlardan belirler, yapay zekâ işin
+   tarifinden doğrular, ben düzeltebilirim.
 2. **Kapsam dışı — şimdilik (iş modeline göre, GICS sektörüne göre değil):** banka · sigorta · gayrimenkul (REIT) ·
    henüz geliri olmayan şirketler (örn. erken aşama biyoteknoloji) · kamu hizmetleri (elektrik, su, doğalgaz dağıtımı).
    Neden: "think fast, iterate faster" — önce 10 ölçünün iyi çalıştığı şirketler; gerekirse sonra eklenir.
@@ -221,20 +221,81 @@ görülünce listeye eklenir. ABD tarafı eski projede hazır (taşınacak).
 | 1 | Gelir büyümesi | satışlar yılda % kaç büyüyor (5 yıl ort. + son yıl) | Lynch, Fisher |
 | 2 | Brüt marj ve istikrarı | 100 $ satıştan ürün maliyeti çıkınca kalan; son yıl 5 yıl ortalamasının altına düştü mü? **Brüt marj yoksa faaliyet marjının istikrarı.** Sadece şirketin kendi geçmişiyle kıyaslanır (şirketler "maliyet"i farklı tanımlar) | Smith, ben |
 | 3 | Faaliyet marjı | tüm işletme giderleri çıkınca 100 $'dan kalan | Buffett |
-| 4 | Sermaye getirisi | şirkete konan her 100 $ yılda kaç $ kazandırıyor | Buffett, Smith |
+| 4 | Sermaye getirisi | işe bağlanan her 100 $ yılda kaç $ kazandırıyor (Smith'in tanımı, aşağıda formül) | Buffett, Smith |
 | 5 | Nakde dönüşüm | kâğıttaki 100 $ kârın kaçı kasaya nakit giriyor | Smith, Piotroski |
 | 6 | Faiz karşılama | faaliyet kârı faizin kaç katı; **nakit > borç ise gerekmez** | ben, Smith |
-| 7 | Borcu kaç yılda öder | net borç ÷ yıllık serbest nakit (**⚠ araştırma maddesi**) | Buffett |
+| 7 | Borcu kaç yılda öder | net borç ÷ serbest nakit (3 yıl ort.). Eksi ise: "işinden nakit üretmiyor, borcu var" (**⚠ araştırma maddesi**) | Buffett |
 | 8 | Hisse sayısı değişimi | sulanma mı, geri alım mı | Buffett, Lynch |
 | 9 | Brüt kâr büyümesi | zarar edende asıl iş büyüyor mu | Lynch |
-| 10 | Nakit kaç yıl yeter | nakit yakan şirkette eldeki para kaç yıl dayanır | Lynch |
+| 10 | Kasadaki para kaç yıl yeter | nakit yakan şirkette kasadaki para ÷ yıllık nakit yakma (3 yıl ort.); borç kasadan fazlaysa karnede not ("kasadaki paranın bir kısmı borç") | Lynch |
 
-Formüller: sermaye getirisi = faaliyet kârı × (1 − vergi gideri ÷ vergi öncesi kâr) ÷ (özkaynak + borç − nakit − kısa vadeli
-yatırımlar) · faiz karşılama = faaliyet kârı ÷ faiz gideri · nakit yılı = (nakit + kısa vadeli yatırım) ÷ yıllık nakit yakma.
+Formüller:
+- Sermaye getirisi = faaliyet kârı × (1 − vergi oranı) ÷ (toplam varlık − kısa vadeli yükümlülükler − nakit − kısa vadeli
+  yatırımlar); vergi oranı = vergi gideri ÷ vergi öncesi kâr (0–%35 arası; kâr yoksa %21). Özkaynak / borç kullanılmaz
+  (Starbucks gibi eksi özkaynaklı şirkette %105 gibi saçma sonuç veriyordu; borç rakamına da bağımlı değil).
+- Faaliyet kârı raporlanmamışsa (Nike, Pfizer, Dow): **vergi öncesi kâr + faiz gideri** (yaklaşık; karnede belirtilir).
+- Faiz karşılama = faaliyet kârı ÷ faiz gideri · serbest nakit = işletme nakdi − yatırım harcaması.
+- **7 ve 10 aynı tabanı kullanır:** son 3 yılın ortalama serbest nakit akışı (tek seferlik ödemeler tek yılı bozmasın).
+- **Hisse sayısı:** bölünme (split) düzeltilir — SEC rakamında 2, 3, 4, 5, 10… kat sıçrama + **Yahoo bölünme geçmişiyle
+  sağlama**; tutmazsa bayrak, ölçü "hesaplanamadı". Halka arz yılı atlanır (ilk yıl rakamı yanıltıcı).
+- **Brüt kâr zarardan kâra yeni döndüyse** büyüme hesaplanamaz → ➖ "zarardan kâra yeni döndü".
 
-**Türe göre belirleyici ölçüler (taslak — sınıf kuralında kesinleşir):** 10 ölçünün hepsi hesaplanır; sağlam / orta / zayıf
-kararında türe göre öne çıkanlar (futbol: forvet golüne, kaleci kurtarışına göre). İstikrarlı dev: 3, 4, 5, 2 · Hızlı büyüyen:
-1, 9, 2, 10, 8 · Yavaş büyüyen: 5, 7, 6 + temettü nakitle karşılanıyor mu · Döngüsel: 6, 7 + 4'ün 5–10 yıllık ortalaması.
+**Eşikler (başlangıç; deneme seti + kabul testiyle ayarlanır):**
+
+| # | Ölçü | ✅ | ➖ | ❌ |
+|---|---|---|---|---|
+| 1 | Gelir büyümesi (3 yıl ort.) | ≥ %15 | %8–15 | < %8 |
+| 2 | Marj istikrarı (son yıl − 5 yıl ort.) | düşüş ≤ 1 puan | 1–3 puan düşüş | > 3 puan düşüş |
+| 3 | Faaliyet marjı | ≥ %15 | %5–15 | < %5 |
+| 4 | Sermaye getirisi (5 yıl ort.) | ≥ %15 | %8–15 | < %8 |
+| 5 | Nakde dönüşüm (3 yıl ort.) | ≥ %80 | %50–80 | < %50 (net kâr ≤ 0 ise hesaplanmaz) |
+| 6 | Faiz karşılama | ≥ 8 kat veya nakit > borç | 3–8 kat | < 3 kat |
+| 7 | Borcu öder | ≤ 3 yıl veya nakit > borç | 3–5 yıl | > 5 yıl veya işinden nakit üretmiyor + borcu var |
+| 8 | Hisse sayısı (5 yıl) | azalmış / sabit | +%0–10 | > +%10 |
+| 9 | Brüt kâr büyümesi (3 yıl ort.) | ≥ %20 | %10–20 | < %10 |
+| 10 | Kasadaki para yeter | ≥ 3 yıl veya nakit üretiyor | 1,5–3 yıl | < 1,5 yıl |
+| 10* | **Aynısı — işinden nakit üretmeyen hızlı büyüyen** (Rivian tipi) | ≥ 5 yıl | 3–5 yıl | **< 3 yıl** |
+| T | Temettü nakitle karşılanıyor (5 yıl toplam) | serbest nakit ≥ ödenen temettü | — | değil |
+
+**Borç (sınıfta tek yargı, 6 + 7 birlikte)** — "borç iyi kullanılıyorsa sorun değil": faiz karşılamanın rengi esas; borcu
+ödeme süresi ❌ ise bir basamak düşer (✅ → ➖, ➖ → ❌). Faiz bulunamazsa 7'nin rengi.
+
+**Tür kuralları** (sırayla):
+
+| Tür | Kural |
+|---|---|
+| Döngüsel | ana sektör Enerji / Malzeme **veya** son 5 yılda hem kâr hem zarar eden yıllar var |
+| Hızlı büyüyen | gelir 3 yıl ort. ≥ %15 |
+| İstikrarlı dev | %5–15 **ve** son 5 yılın en az 4'ünde faaliyet kârı var |
+| Kârsız | %15'ten yavaş büyüyor ve son 5 yılın 4'ünde kâr yok (Snap gibi; Lynch buna "istikrarlı dev" demez) |
+| Yavaş büyüyen | < %5 |
+
+**Belirleyici ölçüler (türe göre; futbol: forvet golüne, kaleci kurtarışına göre):**
+
+| Tür | Belirleyiciler |
+|---|---|
+| İstikrarlı dev | 2 marj istikrarı · 3 faaliyet marjı · 4 sermaye getirisi · 5 nakde dönüşüm |
+| Hızlı büyüyen | 1 gelir büyümesi · 9 brüt kâr büyümesi · 2 marj istikrarı · 10 kasadaki para · 8 hisse sayısı |
+| Yavaş büyüyen | 2 marj istikrarı · 4 sermaye getirisi · 5 nakde dönüşüm · Borç · T temettü |
+| Döngüsel | 4 sermaye getirisi (5 yıl ort.) · Borç · 8 hisse sayısı |
+| Kârsız | istikrarlı devle aynı (2, 3, 4, 5) |
+
+10 ölçünün hepsi her şirket için hesaplanır ve karnede görünür; belirleyici olmayan bir ölçü ❌ alırsa yapay zekâya "neden?"
+sorulur (cevap karnede), sınıfı değiştirmez.
+
+**Sınıf kuralı:**
+
+```text
+SAĞLAM   = belirleyicilerin hiçbiri ❌ değil  VE  en az yarısı ✅
+ZAYIF    = belirleyicilerden 2 veya daha fazlası ❌
+ORTA     = arada kalan
+BELİRSİZ = belirleyicilerin yarısından fazlası hesaplanamadı, ya da kapsam dışı
+Küçülme  = gelirin 3 yıllık ortalama büyümesi eksiyse SAĞLAM olamaz (en fazla ORTA)
+```
+
+**Fiyat sınıfa girmez, karnede ayrı satır** (kalite önce; yeşil liste ≠ AL): PEG ≤ 1 cazip · 1–2 makul · > 2 pahalı ·
+serbest nakit akışı verimi ≥ %5 cazip · %2–5 makul · < %2 pahalı. Kâr yoksa / düşüyorsa PEG "hesaplanamaz", nakit verimi
+yine çalışır.
 
 **SEC verisi — eş anlamlılar yöntemi:**
 
@@ -264,15 +325,14 @@ karşılaştırılır; onay ondan sonra.
 - **Serbest nakit akışı verimi:** serbest nakit akışı ÷ piyasa değeri ("şirketi bugün tamamen alsam, paramın yılda yüzde kaçı
   nakit olarak döner?"). Serbest nakit = işletme nakdi − yatırım harcaması (SEC); piyasa değeri = fiyat (Yahoo) × hisse
   sayısı (SEC). Karnede serbest nakit akışının 5 yıllık seyri de gösterilir.
-- Eşikleri sınıf kuralıyla birlikte konuşulur.
 
 **Şimdilik yok (sonra belki):** "şirketin gerçek değeri vs piyasa değeri" hesabı ve yıllık raporların dipnotlarındaki **gizli
 varlıklar** (örn. eski fiyattan kayıtlı arsa). Lynch bunu ayrı bir tür sayar ("varlık zengini") — o tür 1. sürümde kapsam
 dışı. Buffett ise ilk yıllarından sonra varlığa değil, şirketin gelecekte üreteceği nakde bakar. Dipnotları okuyup değerlemek
 yapay zekâ açısından zor ve hataya açık; 1. sürümü zorlaştırır.
 
-**Açık (3. ajan):** her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı · PEG ve serbest nakit akışı veriminin eşikleri ·
-yapay zekâ denetçi (en son karar) · eksik veri
+**Açık (3. ajan):** PEG'de büyüme tavanı %25 önerisi (Nvidia PEG 0,15 çıktı; Lynch: %25'ten hızlısı sürmez) · serbest nakit
+akışından hisseyle ödenen maaşı düşme önerisi (Snap'in nakit verimi şişik görünüyor) · yapay zekâ denetçi (en son karar) · eksik veri
 için Telegram'dan benden veri isteme · karne formatının 4 açık sorusu (`BAGLAM.md` 7. bölüm).
 
 ### Para harcamayı önleyen kurallar
@@ -367,7 +427,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 2. ~~Mimari~~ ✅ (2026-10-03: 3. bölüm — akış, hisse durumları, portföyde, olayla çalışma, Telegram / Hermes)
 3. ~~1. ajan (Göz)~~ ✅ (2026-10-03: 3. bölüm, "1. ajan kuralları")
 4. ~~2. ajan~~ ✅ (2026-10-03: Sayaç, sektör listesi, okuma, emtia bağı, kartın doğuşu, puan kuralları — 3. bölüm)
-5. **3. ajan** — ✅ kısmen (2026-10-03: Lynch türleri, kapsam, 10 ölçü, SEC eş anlamlılar yöntemi, kayıt defteri, testler — 3. bölüm). **Kalan:** eşikler + sınıf kuralı, değerleme, karne formatı
+5. **3. ajan** — ✅ büyük ölçüde (2026-10-03: Lynch türleri, kapsam, 10 ölçü + eşikler, sınıf kuralı, değerleme, SEC yöntemi, testler — 3. bölüm). **Kalan:** karne formatı, PEG tavanı, hisseyle maaş, denetçi, eksik veri için Telegram
 6. **4. ajan** — teknik kurallar
 7. **Uygulama planı** — model / bütçe dağılımı, Air kurulumu, kodlama sırası
 
