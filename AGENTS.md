@@ -94,7 +94,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   the answer is in Turkish). SEC data is not committed; it is downloaded with `indir.sh`.
   Further decisions: PEG growth capped at 25% plus Lynch's dividend-adjusted ratio (no analyst estimates) · stock comp is subtracted from free cash (SEC, Yahoo as fallback) · card format (a YAML data block, fixed headings; the header includes `lynch_type`, `grade`,
   `last_entry`) · missing data is requested on Telegram (on the "analiz et" command and on Sunday; the message is plain).
-- **Next:** when the two models' external-review answers arrive, they will be judged together (the tests are still running). Then: who writes the first thesis (one question), update the prototype to the new rules (stock comp, PEG cap), item 6 **agent 4 (Technical)**,
-  item 7 **implementation plan**. An AI auditor is last.
+  Two external reviews read and applied (`docs/reviews/`; `BAGLAM.md` section 9): liquid-asset extraction fixed in the rules,
+  missing ≠ 0, capital return = worse of 3y / 5y (cyclical 5y), new margin-stability definition, new type order + cyclical SIC list,
+  fast-grower safety, 20-F + IFRS, FCF yield on 3-year average, PEG on EPS growth, flags, the AI writes the first thesis.
+  Expected golden set: `solid` KO, NVDA · `mid` NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN.
+- **Next:** update the prototype (`ajanlar/analiz/prototip/`) to the new rules and rerun the golden set; then item 6 **agent 4
+  (Technical)**, then item 7 **implementation plan**. An AI auditor is last. A third external review is still running.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.

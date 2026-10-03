@@ -297,3 +297,30 @@ one-off payments (→ 3- / 5-year averages) · 7 and 10 were using different bas
 **Amazon type vs Rivian type** (the user's summary): Amazon was a company that produced cash and, by preference, lost money or made very little profit;
 its cash rose every year because it was investing furiously in infrastructure; today it is established and reports a profit. Rivian both loses money,
 fails to produce cash from the business, and the cash on hand is falling → weak.
+
+### After the two external reviews (2026-10-03)
+
+Both reviews (`docs/reviews/`) found the same main error: **liquid assets were read incompletely** (short-term investments and
+marketable securities missed at Coca-Cola, Nvidia, Nike, Pfizer — wrong tag names, parts treated as alternatives instead of added;
+Nvidia uses a company-only tag). Rules and grade code were found correct; the problems were in data extraction. Decisions taken
+(roadmap section 3): missing ≠ 0 · liquid parts added · operating-profit fallback with net interest · no cash-interest in accrual
+measures · debt group order + candidate check · reverse splits only with Yahoo confirmation · margin stability vs previous 4 years
+and vs last year · capital return = worse of 3y / 5y (cyclical 5y) · new type order (`unprofitable` = loss + cash burn before
+`fast_grower`) + cyclical industry list by SIC · fast-grower safety rule · 20-F and IFRS read · FCF yield on 3-year average ·
+PEG on diluted EPS growth · flags for one-offs, borderline, leases, acquisitions · the AI writes the first thesis.
+
+Stock comp stays subtracted from free cash everywhere (review 1: warning only; review 2: subtract except in cash conversion).
+Reason: net profit already deducts stock comp as a cost while operating cash adds it back; without subtracting it, cash conversion
+(free cash ÷ net profit) compares unlike things.
+
+**Expected grades for the golden set (to be confirmed by the prototype rerun):**
+
+| Company | Before | Expected | Why it changes |
+|---|---|---|---|
+| Coca-Cola | `mid` | **`solid`** (borderline) | true liquid assets 15.8 billion $ (not 10.27) → debt years ~4.5 ➖ → combined debt ✅ → 3 ✅, 0 ❌. The user accepted: the earlier `mid` came from a data error |
+| Nvidia | `solid` | `solid` | margin stability may turn ❌ (75% → 71% in a year) but the grade stays |
+| Nike | `mid` (shrink) | `mid` (shrink) | liquid assets fixed → cash > debt; shrink rule still caps it |
+| Starbucks | `mid` | `mid` | one ❌ (margin) |
+| Pfizer | `mid` | **`weak`** | capital return: 5-year 12% ➖ carried by 2021–22 Covid years, last 3 years 5% ❌ → with debt ❌ = 2 ❌. A general rule (Smith: sustained return), it changes no other company |
+| Intel, Boeing, Snap, Dow | `weak` | `weak` | — |
+| Rivian | `weak` (`fast_grower`) | `weak` (`unprofitable`) | type changes under the new order; grade does not |

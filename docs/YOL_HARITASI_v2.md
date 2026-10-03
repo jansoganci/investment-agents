@@ -197,7 +197,7 @@ could be computed, the result is **unclear → a neutral 1 point** ("neither rew
 (IFRS names on ADRs): the code has a list of possible names for each figure; the first one found is used, and a new name
 is added to the list when it shows up. The US side is ready in the old project (to be brought over).
 
-### Agent 3 (Analysis) rules (decision: 2026-10-03; thresholds tried on 10 real companies — `BAGLAM.md` section 9)
+### Agent 3 (Analysis) rules (decision: 2026-10-03; tried on 10 real companies and checked by 2 external reviews — `BAGLAM.md` section 9, `docs/reviews/`)
 
 **Approach — quality first, the shape from Lynch:**
 
@@ -213,13 +213,18 @@ is added to the list when it shows up. The US side is ready in the old project (
    **with a quote** (e.g. "the loss is from a new warehouse investment; gross profit is growing 30%; operating cash is positive"). Figure + reason
    sit side by side on the card; the decision is mine. (The Amazon lesson: a loss by itself is not weakness.)
 4. **I do not invest in a business I do not understand:** the card's first line is a Lynch-style 2-sentence story; if I do not understand it, I do not start watching it.
+5. **The AI writes the first thesis** (why it is owned, at most 3 points + 3 things that would break it). Later entries do not rewrite it;
+   they only check whether it still holds. I can correct it with a `note` entry.
+6. **Filings read:** 10-K (US companies) and 20-F (foreign companies / ADRs), in both the `us-gaap` and the `ifrs-full` taxonomy;
+   each taxonomy has its own synonym lists. 20-F filers are annual only. Measures are ratios, so the reporting currency does not
+   matter; only the price line converts currency (Yahoo FX rate, free).
 
 **10 measures (Python computes all of them; each is computed for every company and shown on the card):**
 
 | # | Measure | In plain words | From |
 |---|---|---|---|
 | 1 | `revenue_growth_3y` | by what percent a year sales are growing (3-year average annual growth) | Lynch, Fisher |
-| 2 | `margin_stability` | what remains of $100 of sales after product cost; did the latest year fall below the 5-year average? **If there is no gross margin, the stability of the operating margin.** Compared only with the company's own past (companies define "cost" differently) | Smith, me |
+| 2 | `margin_stability` | what remains of $100 of sales after product cost; did the latest year fall — against the previous 4 years and against last year? **If there is no gross margin, the stability of the operating margin.** Compared only with the company's own past (companies define "cost" differently) | Smith, me |
 | 3 | `operating_margin` | what remains of $100 after all operating expenses | Buffett |
 | 4 | `capital_return` | how many dollars a year each $100 tied up in the business earns (Smith's definition, formula below) | Buffett, Smith |
 | 5 | `cash_conversion` | how much of $100 of paper profit arrives as cash | Smith, Piotroski |
@@ -230,29 +235,53 @@ is added to the list when it shows up. The US side is ready in the old project (
 | 10 | `cash_runway` | for a company burning cash, cash on hand ÷ annual cash burn (3-year average); if debt exceeds cash, a note on the card ("part of the cash on hand is debt") | Lynch |
 
 Formulas:
-- Capital return = operating profit × (1 − tax rate) ÷ (total assets − current liabilities − cash − short-term
-  investments); tax rate = tax expense ÷ pre-tax profit (between 0 and 35%; 21% if there is no profit). Equity / debt are not used
+- **Missing is not zero** (both external reviews): a figure that is not found stays `not_computed` and goes to the ledger;
+  zero is used only when the filing really says zero. This applies to capex, free cash, liquid assets, dividends, net profit and the
+  price line. A multi-year average uses the years that exist; with fewer than 2 years it is `not_computed`.
+- **Liquid assets = cash + short-term investments + current marketable securities** — the parts are **added**, not tried as
+  alternatives. Short-term investments: `ShortTermInvestments` · `OtherShortTermInvestments`; marketable securities:
+  `MarketableSecuritiesCurrent`; a partial tag (`AvailableForSaleSecuritiesDebtSecuritiesCurrent`, …) only if nothing else is found.
+  (The trial missed these at Coca-Cola, Nvidia, Nike and Pfizer; Nvidia uses a company-only tag that SEC's standard data never shows
+  → `not_computed` + ledger + a Telegram request.)
+- Capital return (per year) = operating profit × (1 − tax rate) ÷ (total assets − current liabilities − liquid assets);
+  tax rate = tax expense ÷ pre-tax profit (between 0 and 35%; 21% if there is no profit). Equity / debt are not used
   (a company with negative equity, such as Starbucks, produced a nonsense result like 105%; the figure also does not depend on the debt number).
-- If operating profit is not reported (Nike, Pfizer, Dow): **pre-tax profit + interest expense** (approximate; the card says so).
-- Interest cover = operating profit ÷ interest expense.
+  **The grade uses the worse of the 3-year and the 5-year average** — Smith's test is a *sustained* high return; a 5-year average
+  can carry old good years (Pfizer: 5-year 12% ➖, last 3 years 5% ❌). **Exception: `cyclical` uses the 5-year average only**
+  (on purpose: the bottom of the cycle must not punish it alone).
+- If operating profit is not reported (Nike, Pfizer, Dow): **pre-tax profit − net interest income** (a net-interest tag such as
+  `InterestIncomeExpenseNonoperatingNet`; Nike: 3.900 − 0.050 = 3.850, the same as Nike's own figure). If there is no net-interest
+  tag → `not_computed`. The card says it is approximate.
+- Interest cover = operating profit ÷ interest expense. **Cash interest paid (`InterestPaidNet`) is never used in 3, 4, 6 or the
+  fallback**; it may appear only as an info line.
+- Net profit synonyms: `NetIncomeLoss` · `NetIncomeLossAvailableToCommonStockholdersBasic` · `ProfitLoss`.
+- Fiscal-year ends less than 10 days apart are the same year (52/53-week years).
 - **Free cash = operating cash − capex − stock comp** (one definition, everywhere; Buffett: "pay is pay").
   Stock comp: SEC `ShareBasedCompensation` → `AllocatedShareBasedCompensationExpense` (94% of 1,688 companies);
   fallback: Yahoo cash-flow statement ("Stock Based Compensation"). It also appears as its own line on the card. Example: Snap's free
   cash +0.44 → −0.58 billion $ after stock comp is subtracted; at Nike, stock comp is 33% of free cash. (The 10-company trial was run before this
   definition; the prototype will be updated.)
 - **7 and 10 use the same base:** average free cash flow of the last 3 years (so a one-off payment does not wreck a single year).
-- **Share count:** adjusted for splits — a jump of 2, 3, 4, 5, 10… times in the SEC figure + a **check against Yahoo's split
-  history**; if they disagree, a flag, and the measure is `not_computed`. The IPO year is skipped (the first year's figure misleads).
-- **If gross profit has just turned from a loss to a profit,** growth cannot be computed → ➖ "just turned from a loss to a profit".
+- **Share count:** adjusted for splits — a jump of 2, 3, 4, 5, 10… times **or the reverse (1/2, 1/10 …, reverse split)** in the SEC
+  figure, adjusted **only if Yahoo's split history confirms it** (only whole-number ratios count; Yahoo also lists spin-offs such
+  as Pfizer's "×1.054"). Unconfirmed → no adjustment, a flag ("possible merger"), and the measure is `not_computed`. SEC's later
+  filings may already be restated (Nvidia ×4 in 2021). The IPO year is skipped (the first year's figure misleads).
+- **Margin stability = the worse of** (latest − average of the **previous 4** years) and (latest − previous year), in percentage points.
+  Years with a margin beyond ±100% or revenue below 10% of the latest year are left out (Rivian's early years gave a meaningless
+  +223 points); fewer than 3 years left → `not_computed`.
+- **Gross-profit growth:** just turned from a loss to a profit → ➖ "just turned from a loss to a profit"; a loss both 3 years ago
+  and now → ❌.
+- **Profit years** (for the type rules): the sign of operating profit; if it is missing, the sign of pre-tax profit (sign only, not the
+  amount); if both are missing the year is not counted; fewer than 3 years with data → type `unclear`.
 
 **Thresholds (starting values; adjusted with the trial set + the acceptance test):**
 
 | # | Measure | ✅ | ➖ | ❌ |
 |---|---|---|---|---|
 | 1 | Revenue growth (3-year average) | ≥ 15% | 8–15% | < 8% |
-| 2 | Margin stability (latest year − 5-year average) | drop ≤ 1 percentage point | drop of 1–3 percentage points | drop > 3 percentage points |
+| 2 | Margin stability (the worse of: latest − previous 4-year average, latest − previous year) | drop ≤ 1 percentage point | drop of 1–3 percentage points | drop > 3 percentage points |
 | 3 | Operating margin | ≥ 15% | 5–15% | < 5% |
-| 4 | Capital return (5-year average) | ≥ 15% | 8–15% | < 8% |
+| 4 | Capital return (worse of 3-year and 5-year average; `cyclical`: 5-year) | ≥ 15% | 8–15% | < 8% |
 | 5 | Cash conversion (3-year average) | ≥ 80% | 50–80% | < 50% (not computed if net profit ≤ 0) |
 | 6 | Interest cover | ≥ 8 times or cash > debt | 3–8 times | < 3 times |
 | 7 | Pays down debt | ≤ 3 years or cash > debt | 3–5 years | > 5 years, or does not produce cash from the business and has debt |
@@ -265,15 +294,19 @@ Formulas:
 **Debt (one judgment in the grade, 6 + 7 together)** — "debt is fine if it is used well": the interest-cover mark is the base; if the
 paydown time is ❌, it drops one step (✅ → ➖, ➖ → ❌). If interest cannot be found, use measure 7's mark.
 
-**Type rules** (in order):
+**Type rules** (in order; the first that matches wins):
 
-| Type | Rule |
-|---|---|
-| `cyclical` | sector is Energy / Materials **or** the last 5 years include both profitable years and loss years |
-| `fast_grower` | revenue 3-year average ≥ 15% |
-| `stalwart` | 5–15% **and** operating profit in at least 4 of the last 5 years |
-| `unprofitable` | growing slower than 15% and no profit in 4 of the last 5 years (like Snap; Lynch would not call this a stalwart) |
-| `slow_grower` | < 5% |
+| # | Type | Rule |
+|---|---|---|
+| 1 | `cyclical` | sector Energy / Materials, **or** a cyclical industry by the SEC SIC code: semiconductors, autos, airlines, shipping, homebuilding, chemicals, steel, mining (Lynch's biggest trap: a cyclical at its peak looks like a fast grower), **or** the last 5 years include both profit years and loss years |
+| 2 | `unprofitable` | profit in fewer than 4 of the last 5 years **and** it burns cash (3-year average free cash < 0) — the Rivian type |
+| 3 | `fast_grower` | revenue 3-year average ≥ 15% (a loss-maker that produces cash stays here — the Amazon type) |
+| 4 | `unprofitable` | profit in fewer than 4 of the last 5 years (produces cash but grows slower; like Snap — Lynch would not call this a stalwart) |
+| 5 | `stalwart` | 5–15% |
+| 6 | `slow_grower` | < 5% |
+
+Because rule 1 catches mixed profit / loss years, `unprofitable` in practice means "a loss in every year". Known limit: a company that
+was a loss-maker and then turned profitable (e.g. Uber) gets `cyclical`.
 
 **Decisive measures (by type; in football, a striker is judged on goals and a goalkeeper on saves):**
 
@@ -296,7 +329,16 @@ weak     = 2 or more of the decisive measures are ❌
 mid      = everything in between
 unclear  = more than half of the decisive measures could not be computed, or out of scope
 shrink   = if the 3-year average revenue growth is negative, the grade cannot be solid (mid at best); shrink_rule: yes
+fast_grower safety = if operating margin is ❌ and it burns cash (3-year average free cash < 0), the grade cannot be solid (mid at best)
 ```
+
+**Flags (they never change the grade; each one sends a "why?" question to the AI, answered with a quote on the card):**
+one-off (operating cash fell more than 30% over 2 years while net profit rose — e.g. Coca-Cola's 12 billion $ tax deposit and
+fairlife payment; or a gain on a sale explains most of operating profit — e.g. Boeing's 9.6 billion $ in 2025) · free cash negative
+in the latest year and falling for 3 years (Dow) · liquid assets or debt changed more than 50% / 30% in a year (data check) ·
+**borderline** (within 10% of a threshold; shown, no grade change) · lease-heavy (info line: debt including leases; not in the grade —
+both reviews: a rough lease adjustment counts rent twice) · acquisitive (info line: money spent on acquisitions; free cash does not
+include it).
 
 **Price does not enter the grade; it is a separate line on the card** (quality first; green list ≠ buy): PEG ≤ 1 attractive · 1–2 fair · > 2 expensive ·
 Lynch dividend ratio (for dividend payers) ≥ 2 attractive · 1–2 fair · < 1 expensive · free-cash-flow yield ≥ 5% attractive ·
@@ -311,7 +353,11 @@ Lynch dividend ratio (for dividend payers) ≥ 2 attractive · 1–2 fair · < 1
   takes the first one found → a company that renames a tag is caught on its own (Coca-Cola: 2023 `LongTermDebt`, 2024
   `LongTermDebtAndCapitalLeaseObligations`).
 - Debt = the sum of the pieces (long-term + current portion + short-term + convertible); the pieces can overlap → **⚠ research item,
-  must be checked by hand in the acceptance test.** Flags: debt suddenly drops to zero from one year to the next · debt is larger than total liabilities.
+  must be checked by hand in the acceptance test.** The group `LongTermDebtNoncurrent` + current portion (`LongTermDebtCurrent` /
+  `DebtCurrent`) is tried **before** `LongTermDebt` (Pfizer 2020: `LongTermDebt` held a single 4 billion $ item, the true total was
+  ~40 billion $). Code builds every candidate total; if they disagree, a flag. Flags: debt suddenly drops to zero from one year to the
+  next · debt is larger than total liabilities · debt changed more than 30% in a year. Debt of a business held for sale and
+  leases: info lines only.
 - **Consistency checks:** gross profit = revenue − cost · margin 0–100% · a sudden drop to zero / a 10-times jump → flagged, not used.
 - **Trace:** the card records which name and which filing each figure came from.
 - **Ledger:** a figure that cannot be found becomes `not_computed` and is written to the SQLite `missing_data` table (date, ticker, year,
@@ -322,8 +368,11 @@ Lynch dividend ratio (for dividend payers) ≥ 2 attractive · 1–2 fair · < 1
   are not a missing name; the company never reports the figure — like Visa).
 
 **Tests:** the trial set also includes **trap examples** (a fast grower that loses money on purpose → must not come out weak; high margin but
-shrinking → must not come out solid; high debt but used well). **Acceptance test (UAT) at least 20 stocks**, figures compared by hand with the 10-K;
-approval comes after that.
+shrinking → must not come out solid; high debt but used well; a cyclical at its peak; a reverse split; an acquisitive company).
+**Golden set:** the 10 trial companies with their expected grades (`BAGLAM.md` section 9); after every rule change code reruns them and
+reports which grade changed. **Acceptance test (UAT) at least 20 stocks**, figures compared by hand with the 10-K / 20-F — always
+liquid assets and total debt against the balance-sheet lines; flagged rows first; the export includes the tag used, the raw fact, tax
+and the parts of liquid assets and debt. Approval comes after that.
 
 **Valuation (2 measures):**
 - Lynch's **PEG** ratio: P/E ÷ annual earnings growth (%); ≈ 1 fair, < 1 attractive, > 2 expensive. **Growth is capped at 25%**
@@ -333,8 +382,11 @@ approval comes after that.
   Lynch: < 1 weak, 1.5 is all right, ≥ 2 is what you want. It corrects PEG's unfairness to a slow grower that pays a dividend (such as Coca-Cola).
   (The same idea is used today under the name "PEGY", flipped: P/E ÷ (growth + yield).)
 - **Free-cash-flow yield:** free cash flow ÷ market value ("if I bought the whole company today, what percent of my money comes back
-  as cash per year?"). Free cash = operating cash − capex − stock comp (the single definition above; SEC); market value = price (Yahoo) × share
-  count (SEC). The card also shows the 5-year path of free cash flow.
+  as cash per year?"). Free cash = operating cash − capex − stock comp (the single definition above; SEC); **the main value uses
+  the 3-year average free cash**, the latest year is shown next to it (Coca-Cola: latest 1.4%, 3-year 1.7%). Market value = price
+  (Yahoo) × share count (SEC). The card also shows the 5-year path of free cash flow.
+- **PEG growth = diluted earnings per share, 3-year growth** (split-adjusted; P/E is a per-share ratio, so growth is per share too —
+  Lynch also worked per share), capped at 25%.
 
 **Not in version 1 (maybe later):** a "company's real value vs market value" calculation and **hidden
 assets** in the footnotes of annual reports (e.g. land booked at an old price). Lynch counts this as a separate type (`asset_play`) — that type is out of
@@ -359,8 +411,9 @@ is hard and error-prone for an AI; it would make version 1 harder.
   run and does not reopen it unless the condition has changed.
 - Sample skeleton: `BAGLAM.md` section 7 (the current skeleton).
 
-**Open (agent 3):** who writes the first thesis (proposal: the AI drafts 3 points, I correct and approve) · external-review results
-(two models, waiting) · an AI auditor (last decision).
+**Open (agent 3):** update the prototype to these rules and rerun the golden set (expected: `solid` Coca-Cola, Nvidia · `mid` Nike,
+Starbucks · `weak` Pfizer, Intel, Boeing, Snap, Dow, Rivian) · an AI auditor (last decision) · a third external review is still
+running.
 
 ### Rules that prevent spending
 
@@ -463,7 +516,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 2. ~~Architecture~~ ✅ (2026-10-03: section 3 — flow, stock states, in_portfolio, event-driven runs, Telegram / Hermes)
 3. ~~Agent 1 (Eye)~~ ✅ (2026-10-03: section 3, "Agent 1 rules")
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
-5. **Agent 3** — ✅ mostly (2026-10-03: Lynch types, scope, 10 measures + thresholds, grade rule, valuation + PEG cap + Lynch dividend ratio, stock comp, card format, asking for missing data — section 3). **Left:** who writes the first thesis, external-review results, auditor (last)
+5. **Agent 3** — ✅ (2026-10-03: Lynch types + new type order, scope incl. 20-F / IFRS, 10 measures + thresholds, grade rule + fast-grower safety, flags, valuation, stock comp, card format, first thesis by the AI, missing data; 2 external reviews applied — section 3). **Left:** prototype update + golden-set rerun, AI auditor (last), third review
 6. **Agent 4** — technical rules
 7. **Implementation plan** — model / budget split, Air setup, coding order
 

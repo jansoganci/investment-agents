@@ -133,6 +133,19 @@ Fiyat satırındaki yargı kelimeleri: `cazip` → `attractive` · `makul` → `
 
 Küçülme notu bugün `ORTA (küçülme kuralı)`. Yeni ad: `mid` ve ayrıca `shrink_rule: yes`.
 
+## Bayraklar (`flags`, sınıfı değiştirmez)
+
+| Şimdi | İngilizce | Ne zaman |
+|---|---|---|
+| tek seferlik | `one_off` | işletme nakdi 2 yılda %30'dan çok düştü ama net kâr arttı; ya da satış kazancı faaliyet kârının çoğunu açıklıyor |
+| nakit düşüyor | `fcf_falling` | son yıl serbest nakit eksi ve 3 yıldır düşüyor |
+| veri kontrol | `data_check` | likit %50'den, borç %30'dan fazla değişti; borç adayları uyuşmuyor; bölünme Yahoo ile teyit edilmedi |
+| sınırda | `borderline` | değer eşiğe %10'dan yakın |
+| kira ağırlıklı | `lease_heavy` | bilgi satırı: kira dahil borç |
+| satın almacı | `acquisitive` | bilgi satırı: satın almalara harcanan para |
+
+Hızlı büyüyen güvenlik kuralı: `fast_grower_safety` (faaliyet marjı ❌ + nakit yakıyor → `solid` olamaz).
+
 ## Puanın 5 kriteri
 
 | Şimdi | İngilizce |
