@@ -15,6 +15,7 @@ Kişisel yatırım danışmanı sistemi: 4 ajan okur, araştırır, analiz eder,
 1. Ajanlar sadece **öneri** verir. Aracı kurum / banka şifresi sisteme asla girmez.
 2. Yeşil liste ≠ AL. Puan = sıralama; her puanın yanında zorunlu bir "neden" cümlesi olur.
 3. `karne.md` sadece sona eklenir; eski kayıt silinmez; her kayıt tarihlidir.
+   Tek istisna: üst bilgi kartı güncel durumu gösterir (`durum`, `portfoyde`), sadece kod günceller; her değişiklik sona tarihli not olarak da eklenir.
 4. Ajanlar birbirini tanımaz; sadece dosya / SQLite üzerinden haberleşir.
 5. Yeni özellik ancak mevcut adım "bitti" sayıldıktan sonra eklenir.
 
@@ -46,7 +47,8 @@ docs/               YOL_HARITASI_v2.md, BAGLAM.md, TASINANLAR.md
 - Python, ortam yönetimi `uv`. Örnek: `uv run --with pytest pytest -q`
 - Geliştirme ana Mac'te; çalıştırma yedek MacBook Air'de (Hermes). Köprü GitHub; Air'de kod yazılmaz.
 - SQLite Mac diskinde durur, Drive klasörüne **konmaz** (senkron bozabilir); gece Drive'a yedeklenir.
-- Rapor / karne: Markdown + üst bilgi kartı (`hisse`, `sektor`, `tarih`, `yayinla: hayir`).
+- Rapor / karne: Markdown + üst bilgi kartı (`hisse`, `sektor`, `tarih`, `yayinla: hayir`; karnede ayrıca `durum`, `portfoyde`).
+- Telegram'da kullanıcının tek muhatabı Hermes; Hermes sadece tanımlı komut listesini çalıştırır, kod / kural değiştirmez.
 - Model ve bütçe ayarları tek yerde: `ayarlar.yaml`. Yapay zekâ bütçesi en fazla 25–30 $/ay.
 - Sırlar (API anahtarları) `.env` içinde; asla commit edilmez.
 
@@ -62,8 +64,11 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
 - **Yapıldı:** Proje açıldı; yol haritası + `BAGLAM.md` yazıldı; backtest betikleri taşındı.
   Karar sırası belirlendi (yol haritası 9. bölüm) ve 1. sıra **genel çerçeve** kapandı:
   karne = hisse kartı, "think fast, iterate faster", site sahibinden okuma izni alındı,
-  geliştirme ana Mac / çalıştırma Air ayrımı. "Takipte / arşivde" kuralı taslak olarak yazıldı.
-- **Sıradaki:** 2. sıra **mimari** (ajanlar arası veri akışı + takipte / arşivde kuralını kesinleştirmek).
+  geliştirme ana Mac / çalıştırma Air ayrımı.
+  2. sıra **mimari** kapandı (yol haritası 3. bölüm): akış, hisse durumları (aday / takipte / arşivde,
+  sınıf, portföyde), takibe alma manuel, sağlam → yeşil liste otomatik, 3. ajan olayla çalışır,
+  Telegram'da tek muhatap Hermes + komut listesi, 3. ajan için deneme seti testi.
+- **Sıradaki:** 3. sıra **1. ajan (Göz)** — ne çıkaracak, sıklık, sınırlar.
   Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
 - **Bekleyen sorular:** Yok.
 - **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.

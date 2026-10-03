@@ -27,7 +27,7 @@ yaz, kur, çalıştır; hatayı gör, düzelt. Gereksiz uzun düşünüp hiçbir
 
 1. Ajanlar sadece **öneri** verir. Aracı kurum / banka şifresi sisteme **asla** girmez.
 2. Yeşil liste ≠ AL. Puan = **sıralama**; her puanın yanında zorunlu bir "neden" cümlesi olur.
-3. Karne **sadece sona eklenir**, eski kayıt silinmez; her kayıt tarihlidir.
+3. Karne **sadece sona eklenir**, eski kayıt silinmez; her kayıt tarihlidir. Tek istisna: en üstteki **üst bilgi kartı** güncel durumu gösterir (`durum`, `portfoyde`) ve sadece kod tarafından güncellenir; her değişiklik ayrıca sona tarihli not olarak eklenir.
 4. Ajanlar birbirini tanımaz; sadece dosya / veritabanı üzerinden haberleşir.
 5. Önce basit olan: yeni özellik ancak mevcut adım "bitti" sayıldıktan sonra eklenir.
 
@@ -37,16 +37,69 @@ yaz, kur, çalıştır; hatayı gör, düzelt. Gereksiz uzun düşünüp hiçbir
 |---|---|---|---|---|
 | **1. Göz** | Emtia Defteri + Dragonomi yeni yazılarını okur; hisse adı, olumlu/olumsuz tek cümle, sektör çıkarır | Günlük | `haberler` tablosu + `Gelen/` | Yorum yapmaz, puanlamaz |
 | **2. Araştırma** | Adaylar için son 1 yıl web araması; gruplar, puanlar | Haftalık | `puanlar` tablosu + `Haftalik/` raporu | Temel analiz yapmaz |
-| **3. Analiz** | Finansal tablolardan karne çıkarır (ABD: SEC; HK/A: yüklenen PDF) | Çeyreklik / yıllık | `finansallar` tablosu + `karne.md` | Fiyat tahmini, AL/SAT demez |
+| **3. Analiz** | **Takipteki** hisseler için finansal tablolardan karne çıkarır (ABD: SEC; HK/A: yüklenen PDF) + sınıf verir | Yeni bilanço gelince (aşağıya bkz.) | `finansallar` tablosu + `karne.md` + sınıf | Fiyat tahmini, AL/SAT demez |
 | **4. Teknik** | Yeşil listedekiler için haftalık durum + piyasa filtresi | Haftalık | `sinyaller` tablosu + Telegram özeti | İşlem yapmaz |
 
 **Karne = hisse kartı.** Her hissenin tek bir karnesi olur; tüm bilgisi oradadır. Çeyrekler geçtikçe
 sona yeni tarihli kayıt eklenerek büyür.
 
-**Takipte / arşivde (taslak, mimaride kesinleşecek):** Takibi bırakılan hisseye her çeyrekte boşuna
-analiz ve para harcanmaz. 3. ajan sadece **takipteki** hisseleri analiz eder; arşivdeki hissenin
-karnesi silinmez, sadece yeni kayıt eklenmez. Arşive alma / geri alma kararı benimdir; ajan sadece
-hatırlatır (örnek: "XYZ 2 çeyrektir yeşil listede değil, arşive alalım mı?").
+### Akış (mimari, karar: 2026-10-03)
+
+```text
+ 1. GÖZ (her gün)                  2. ARAŞTIRMA (haftalık)
+ İki siteyi okur          ──→      Haftanın haberlerini sayar,
+ haberler tablosu                  adaylar için web araması yapar
+                                   puanlar tablosu + haftalık rapor
+                                          │
+                                          ▼
+                              ┌─ BEN: "XYZ'yi takibe al" ─┐
+                              ▼                           │
+ 3. ANALİZ (yeni bilanço gelince)                         │
+ Sadece TAKİPTEKİ hisseler                                │
+ finansallar tablosu + karne.md + sınıf                   │
+ (sağlam / orta / zayıf / belirsiz)                       │
+                                          │               │
+                         sınıf = sağlam → YEŞİL LİSTE     │
+                                          ▼               │
+ 4. TEKNİK (haftalık)                                     │
+ Yeşil liste + piyasa filtresi                            │
+ sinyaller tablosu → Pazar günü Telegram özeti ───────────┘
+                                          │
+                                          ▼
+                              BEN: al / sat / bekle (aracı kurumda)
+```
+
+Süreç %100 otomatik değildir; ajan gereksiz yere çalışmaz.
+
+### Hisse durumları
+
+Her hisse `hisseler` tablosunda tek satırdır:
+
+| Alan | Değerler | Kim değiştirir |
+|---|---|---|
+| `durum` | **aday** (2. ajan buldu) · **takipte** (3. ajan karnesini tutar) · **arşivde** (karne durur, yeni analiz yok) | aday: 2. ajan · takipte / arşivde: **sadece ben** |
+| `sinif` | sağlam · orta · zayıf · belirsiz (son karneden) | 3. ajan |
+| `portfoyde` | evet / hayır | **sadece ben** (sistem aracı kuruma bağlanmaz, bilemez) |
+
+- **Yeşil liste** ayrı bir durum değil: `durum = takipte` ve `sinif = sağlam` olan hisseler. Sağlam çıkan hisse **otomatik** girer, Telegram'dan haber gelir.
+- `durum` ve `portfoyde` asıl olarak veritabanında tutulur; kod aynı anda karnenin üst bilgi kartını günceller ve karnenin sonuna tarihli not ekler (örn. `2026-10-10 · Portföye eklendi`).
+- **Arşiv hatırlatması:** takipte + portföyde değil + son 2 karnede sağlam değil → Pazar özetinde "arşive alalım mı?". Karar benim.
+
+### Para harcamayı önleyen kurallar
+
+1. 3. ajan takvimle değil **olayla** çalışır: haftada bir SEC'e "yeni 10-Q / 10-K var mı?" diye sorar (ücretsiz); yoksa hiçbir şey yapmaz. HK / A: `raporlar/` klasörüne yeni PDF koyduğumda.
+2. Arşivdeki hisse hiç analiz edilmez.
+3. Her ajan her çalışmada `calismalar` tablosuna satır yazar (başlangıç, bitiş, tamam / hata, harcanan $).
+
+### Telegram ve Hermes (tek muhatap)
+
+Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes ajanları çalıştırır, sonuçları okur.
+
+- **Mesaj ne zaman gelir:** Pazar günü tek özet (yeni adaylar, karnede değişenler, teknik durum) · **hemen:** portföyümdeki hissenin sınıfı düşerse · **hemen:** bir ajan hata verirse · sağlam çıkıp yeşil listeye giren hisse. 1. ajanın günlük çıktısı Telegram'a gelmez, sadece `Gelen/`.
+- **Yapabildikleri:** soru cevaplamak (veritabanı + karneleri okur: "XYZ'nin karnesi ne diyor?", "bu ay ne harcadık?") ve **tanımlı komut listesinden** komut çalıştırmak ("XYZ'yi takibe al", "ABC'yi portföye ekledim", "XYZ'yi şimdi analiz et", "XYZ'deki U1 uyarısını kapat, çünkü …"). Komut listesi uygulama planında yazılır.
+- **Yapmadıkları:** veritabanı / dosyaları serbestçe değiştirmez (sadece komut listesi) · kod veya kural değiştirmez (o iş geliştirme Mac'inde) · işlem yapmaz.
+- Hermes'le sohbet Codex aboneliğini kullanır: ek ücret yok, ama çok konuşma kotayı doldurabilir.
+- 0. adımda (kurulum) Hermes'in bu şekilde çalıştığı denenerek doğrulanır.
 
 ## 4. Teknoloji kararları
 
@@ -55,7 +108,7 @@ hatırlatır (örnek: "XYZ 2 çeyrektir yeşil listede değil, arşive alalım m
 | Dil | Python (tek dil) |
 | Geliştirme | Ana Mac'te (Claude Code / Cursor); her ajan önce burada elle denenir. Köprü: GitHub |
 | Çalıştıran | Hermes Agent, yedek MacBook Air M2 (16 GB) üzerinde, 7/24. Air'de kod yazılmaz: `git pull` ile güncellenir; `.env`, site oturumu ve gerçek SQLite orada durur. Hermes sadece zamanlar ve haber verir; hesap / analiz mantığı bizim kodumuzda |
-| İletişim | Telegram (Hermes üzerinden) + Drive klasörleri |
+| İletişim | Telegram'da tek muhatap Hermes (3. bölüm, "Telegram ve Hermes") + Drive klasörleri |
 | Yapay zekâ | Pahalı işler (karne yazımı): Codex aboneliği (1 abonelik ajana ayrılır). Ucuz işler + web arama: OpenRouter, harcama limitiyle. Claude aboneliği Hermes'e **bağlanmaz** (kullanım şartları) |
 | Site okuma | Playwright; ben bir kez giriş yaparım, oturum saklanır; günde 1 kez, az sayfa. Okuma adımında yapay zekâ yok. **İzin:** iki sitenin sahibi okumaya (scraping) şahsen izin verdi (2026-10-03); API yok; şart: siteyi yormamak / suistimal etmemek |
 | Model seçimi | Tek yer: `ayarlar.yaml` |
@@ -111,7 +164,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 | Adım | İş | Bitti sayılır, eğer… |
 |---|---|---|
 | **0. Kurulum** | Mac ayarları (uyku kapalı, ayrı kullanıcı, FileVault), Hermes, Codex girişi, OpenRouter limiti, Drive masaüstü, Telegram botu | Telegram'dan mesajlaşabiliyorum ve zamanlanmış bir deneme işi Drive'a dosya yazıyor |
-| **1. Analiz + karne** | `ortak/` + SQLite + 3. ajan, 3–5 ABD hissesi | 3 hissenin karnesi Drive'da; ikinci çalıştırma eski kaydı silmeden yeni tarihli kayıt ekliyor |
+| **1. Analiz + karne** | `ortak/` + SQLite + 3. ajan, 3–5 ABD hissesi | 3 hissenin karnesi Drive'da; ikinci çalıştırma eski kaydı silmeden yeni tarihli kayıt ekliyor; **deneme seti testi geçiyor:** herkesin kaliteli kabul ettiği 3–5 şirket sağlam, zayıf olduğu bilinen 1–2 şirket sağlam **değil** çıkıyor (eski sistemde hiçbir hisse yeşile girememişti; kaliteliler sağlam çıkmıyorsa kurallar fazla sıkı, zayıflar sağlam çıkıyorsa fazla gevşek) |
 | **2. Göz** | Playwright ile iki site | 1 hafta boyunca her gün `haberler` doluyor |
 | **3. Araştırma** | Web araması + puan + neden | Haftalık rapor Drive'da ve Telegram'da |
 | **4. Teknik** | Haftalık durum + piyasa filtresi | Pazar günü Telegram'a yeşil liste özeti geliyor |
@@ -121,7 +174,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 **Karar sırası (2026-10-03):** önce tüm kararlar ve planlar, sonra kod.
 
 1. ~~Genel çerçeve~~ ✅ (2026-10-03: karne = kart, çalışma ilkesi, site izni, geliştirme / çalıştırma ayrımı)
-2. **Mimari** — hangi ajan neyi nereye yazar, sonraki ajan neyi okur; takipte / arşivde kuralı
+2. ~~Mimari~~ ✅ (2026-10-03: 3. bölüm — akış, hisse durumları, portföyde, olayla çalışma, Telegram / Hermes)
 3. **1. ajan (Göz)** — ne çıkaracak, sıklık
 4. **2. ajan** — puan kuralları
 5. **3. ajan** — metrikler, sağlam / orta / zayıf ölçütü, karne formatı
