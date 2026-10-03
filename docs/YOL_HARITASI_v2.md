@@ -204,7 +204,10 @@ görülünce listeye eklenir. ABD tarafı eski projede hazır (taşınacak).
 1. **Önce şirketin türü** (Peter Lynch): hızlı büyüyen · istikrarlı dev · yavaş büyüyen · döngüsel. Toparlanan ve varlık
    zengini 1. sürümde kapsam dışı → "belirsiz". Türü kod rakamlardan tahmin eder (büyüme hızı, kâr dalgalanması),
    yapay zekâ işin tarifinden doğrular, ben düzeltebilirim.
-2. **Kapsam dışı (iş modeline göre, GICS sektörüne göre değil):** banka, sigorta. Visa / Mastercard gibi ödeme şirketleri
+2. **Kapsam dışı — şimdilik (iş modeline göre, GICS sektörüne göre değil):** banka · sigorta · gayrimenkul (REIT) ·
+   henüz geliri olmayan şirketler (örn. erken aşama biyoteknoloji) · kamu hizmetleri (elektrik, su, doğalgaz dağıtımı).
+   Neden: "think fast, iterate faster" — önce 10 ölçünün iyi çalıştığı şirketler; gerekirse sonra eklenir.
+   Kapsam dışı hisse "belirsiz — kapsam dışı: <neden>" olarak işaretlenir. Visa / Mastercard gibi ödeme şirketleri
    kapsam **içinde** (Visa GICS'te "Finans" ama banka değil).
 3. **Kod ölçer ve soru işaretler, hüküm vermez:** örn. "zarar var" → "bu zarar neden?". Yapay zekâ nedenini yıllık rapordan
    **alıntıyla** yazar (örn. "zarar yeni depo yatırımından; brüt kâr %30 büyüyor; işletme nakdi pozitif"). Rakam + neden
@@ -256,8 +259,11 @@ kararında türe göre öne çıkanlar (futbol: forvet golüne, kaleci kurtarı�
 küçülen → sağlam çıkmamalı; borcu yüksek ama iyi kullanan). **Kabul testi (UAT) en az 20 hisse**, rakamlar elle 10-K ile
 karşılaştırılır; onay ondan sonra.
 
-**Açık (3. ajan):** her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı · değerleme (Lynch PEG önerisi) ·
-REIT ve gelirsiz şirketler (örn. erken aşama biyoteknoloji) kapsam dışı mı · yapay zekâ denetçi (en son karar) · eksik veri
+**Değerleme:** Lynch'in **PEG** oranı kullanılır (F/K ÷ yıllık kâr büyümesi %; ≈ 1 makul, < 1 cazip, > 2 pahalı). Fiyat
+Yahoo'dan, kâr büyümesi SEC'ten. Eşiği ve ek bir değerleme ölçüsü olup olmayacağı eşiklerle birlikte konuşulur.
+
+**Açık (3. ajan):** her ölçünün eşiği + türe göre sağlam / orta / zayıf / belirsiz kuralı · PEG'in eşiği ve kullanımı ·
+yapay zekâ denetçi (en son karar) · eksik veri
 için Telegram'dan benden veri isteme · karne formatının 4 açık sorusu (`BAGLAM.md` 7. bölüm).
 
 ### Para harcamayı önleyen kurallar

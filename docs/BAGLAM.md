@@ -176,7 +176,7 @@ yayinla: hayir
 **Açık sorular (önerilerle):**
 
 1. **Durum etiketi** — kullanıcı 3 sınıf istedi: sağlam / orta / zayıf. Öneri: bir de **belirsiz** (veri yetersiz) olsun; yapay zekâ önerir + neden yazar.
-2. **Değerleme bölümü** — öneri: şimdilik yok. İleride en fazla 2 betimleyici rakam (serbest nakit akışı verimi, F/K'nın kendi 5 yıllık aralığındaki yeri); "ucuz / pahalı" yargısı yok.
+2. **Değerleme bölümü** — ✅ karar (2026-10-03): Lynch PEG kullanılacak (yol haritası 3. bölüm). Eski öneri: şimdilik yok. İleride en fazla 2 betimleyici rakam (serbest nakit akışı verimi, F/K'nın kendi 5 yıllık aralığındaki yeri); "ucuz / pahalı" yargısı yok.
 3. **Uyarı kapatma** — öneri: karnenin sonuna tarihli kullanıcı notu (`2026-11-06 · Kullanıcı: U1 kapatıldı, çünkü …`); ajan sonraki çalışmada okur, koşul değişmedikçe tekrar açmaz.
 4. **İlk tezi kim yazar** — öneri: yapay zekâ 3 maddelik taslak, kullanıcı düzeltip onaylar; sonraki karneler tezi değiştirmez, sadece kontrol eder.
 
