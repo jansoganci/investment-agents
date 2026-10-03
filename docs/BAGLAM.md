@@ -109,7 +109,62 @@ Genel ders: Eski 3. adımın **SEC veri çekme + kodla hesap** kısmı değerli 
 
 Bu dosyalardaki "LOCKED", "Plan §0", aşama kapıları gibi kurallar bu projeye **uygulanmaz**.
 
-## 7. Karne taslağı (2026-10-03 — TASLAK, karar verilmedi)
+## 7. Karne taslağı (2026-10-03 — ilk taslak; **güncel karar yol haritası 3. bölüm "Karne formatı"**)
+
+**Güncel iskelet (karar):**
+
+````markdown
+---
+hisse: XYZ
+sirket: XYZ Corp
+borsa: NASDAQ
+ulke: ABD
+sektor: Bilgi teknolojisi
+alt_sektor: Yarı iletken
+durum: takipte          # kod günceller
+portfoyde: hayir        # kod günceller
+tur: Hızlı büyüyen      # kod günceller
+sinif: SAĞLAM           # kod günceller
+son_kayit: 2026-11-05   # kod günceller
+tarih: 2026-10-05       # ilk kayıt, değişmez
+yayinla: hayir
+---
+# XYZ Corp (XYZ)
+> Hikâye: <2 cümle — ne satıyor, parayı nereden kazanıyor>
+
+## 2026-10-05 · araştırma · 2. ajan
+```yaml
+puan: 7
+kriterler:
+  bahsedilme: {puan: 2, neden: "7 günde 8 yazı"}
+  ton: {puan: 1, neden: "3 olumlu, 2 olumsuz"}
+```
+<kısa özet>
+
+## 2026-11-05 · temel analiz · 3. ajan · 2025 yıllık (10-K)
+```yaml
+kaynak: {rapor: 10-K, donem_sonu: 2025-12-31, adres: "https://...", veri_tarihi: 2026-11-05}
+tur: Hızlı büyüyen
+sinif: SAĞLAM
+olculer:
+  gelir_buyumesi_3y: {deger: 0.48, renk: iyi, belirleyici: evet, xbrl: Revenues}
+  marj_istikrari: {deger: 2.9, birim: puan, renk: iyi, belirleyici: evet}
+  # ... 10 ölçü + borç + temettü
+serbest_nakit: {deger: 1.2e9, hisseyle_maas: 0.3e9}
+fiyat: {peg: 1.18, lynch_temettu_orani: null, nakit_verimi: 0.017}
+uyarilar:
+  - {kod: U1, ad: "Satın alma bağımlılığı", tur: sirkete_ozel, durum: acik, alinti: "...", kaynak: "10-K s.34"}
+belirsiz: ["bakım yatırımı açıklanmıyor"]
+```
+### Özet
+### Tez — neden sahip olunur / tezi bozacak 3 şey
+### Önceki kayda göre ne değişti
+
+## 2026-11-06 · not · kullanıcı
+U1 kapatıldı, çünkü …
+````
+
+**İlk taslak (tarihçe için korunuyor):**
 
 3. ajan konuşulurken buradan başlanır. Amaç tek soru: **"Bu şirketi neden tutuyorum ve bu neden hâlâ geçerli mi?"**
 %30 düşüşte karneyi açınca 5 dakikada "düşen fiyat mı, şirket mi?" görülebilmeli.
@@ -175,9 +230,9 @@ yayinla: hayir
 
 **Açık sorular (önerilerle):**
 
-1. **Durum etiketi** — kullanıcı 3 sınıf istedi: sağlam / orta / zayıf. Öneri: bir de **belirsiz** (veri yetersiz) olsun; yapay zekâ önerir + neden yazar.
+1. ✅ **Durum etiketi** (karar: sağlam / orta / zayıf / belirsiz) — kullanıcı 3 sınıf istedi: sağlam / orta / zayıf. Öneri: bir de **belirsiz** (veri yetersiz) olsun; yapay zekâ önerir + neden yazar.
 2. **Değerleme bölümü** — ✅ karar (2026-10-03): Lynch PEG kullanılacak (yol haritası 3. bölüm). Eski öneri: şimdilik yok. İleride en fazla 2 betimleyici rakam (serbest nakit akışı verimi, F/K'nın kendi 5 yıllık aralığındaki yeri); "ucuz / pahalı" yargısı yok.
-3. **Uyarı kapatma** — öneri: karnenin sonuna tarihli kullanıcı notu (`2026-11-06 · Kullanıcı: U1 kapatıldı, çünkü …`); ajan sonraki çalışmada okur, koşul değişmedikçe tekrar açmaz.
+3. ✅ **Uyarı kapatma** (karar: kullanıcı notu kaydı) — öneri: karnenin sonuna tarihli kullanıcı notu (`2026-11-06 · Kullanıcı: U1 kapatıldı, çünkü …`); ajan sonraki çalışmada okur, koşul değişmedikçe tekrar açmaz.
 4. **İlk tezi kim yazar** — öneri: yapay zekâ 3 maddelik taslak, kullanıcı düzeltip onaylar; sonraki karneler tezi değiştirmez, sadece kontrol eder.
 
 ## 8. 3. ajan araştırma notları (2026-10-03)

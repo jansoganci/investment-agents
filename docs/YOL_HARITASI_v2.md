@@ -28,7 +28,7 @@ yaz, kur, çalıştır; hatayı gör, düzelt. Gereksiz uzun düşünüp hiçbir
 
 1. Ajanlar sadece **öneri** verir. Aracı kurum / banka şifresi sisteme **asla** girmez.
 2. Yeşil liste ≠ AL. Puan = **sıralama**; her puanın yanında zorunlu bir "neden" cümlesi olur.
-3. Karne **sadece sona eklenir**, eski kayıt silinmez; her kayıt tarihlidir. Tek istisna: en üstteki **üst bilgi kartı** güncel durumu gösterir (`durum`, `portfoyde`) ve sadece kod tarafından güncellenir; her değişiklik ayrıca sona tarihli not olarak eklenir.
+3. Karne **sadece sona eklenir**, eski kayıt silinmez; her kayıt tarihlidir. Tek istisna: en üstteki **üst bilgi kartı** güncel durumu gösterir (`durum`, `portfoyde`, `tur`, `sinif`, `son_kayit`) ve sadece kod tarafından güncellenir; her değişiklik ayrıca sona tarihli not olarak eklenir.
 4. Ajanlar birbirini tanımaz; sadece dosya / veritabanı üzerinden haberleşir.
 5. Önce basit olan: yeni özellik ancak mevcut adım "bitti" sayıldıktan sonra eklenir.
 
@@ -234,7 +234,12 @@ Formüller:
   yatırımlar); vergi oranı = vergi gideri ÷ vergi öncesi kâr (0–%35 arası; kâr yoksa %21). Özkaynak / borç kullanılmaz
   (Starbucks gibi eksi özkaynaklı şirkette %105 gibi saçma sonuç veriyordu; borç rakamına da bağımlı değil).
 - Faaliyet kârı raporlanmamışsa (Nike, Pfizer, Dow): **vergi öncesi kâr + faiz gideri** (yaklaşık; karnede belirtilir).
-- Faiz karşılama = faaliyet kârı ÷ faiz gideri · serbest nakit = işletme nakdi − yatırım harcaması.
+- Faiz karşılama = faaliyet kârı ÷ faiz gideri.
+- **Serbest nakit = işletme nakdi − yatırım harcaması − hisseyle ödenen maaş** (tek tanım, her yerde; Buffett: "maaş maaştır").
+  Hisseyle ödenen maaş: SEC `ShareBasedCompensation` → `AllocatedShareBasedCompensationExpense` (1.688 şirkette %94);
+  yedek: Yahoo nakit akış tablosu ("Stock Based Compensation"). Karnede ayrı satırda da görünür. Örnek: Snap'in serbest
+  nakdi +0,44 → hisseyle maaş düşülünce −0,58 milyar $; Nike'ta maaş serbest nakdin %33'ü. (10 şirketlik deneme bu
+  tanımdan önce yapıldı; prototip güncellenecek.)
 - **7 ve 10 aynı tabanı kullanır:** son 3 yılın ortalama serbest nakit akışı (tek seferlik ödemeler tek yılı bozmasın).
 - **Hisse sayısı:** bölünme (split) düzeltilir — SEC rakamında 2, 3, 4, 5, 10… kat sıçrama + **Yahoo bölünme geçmişiyle
   sağlama**; tutmazsa bayrak, ölçü "hesaplanamadı". Halka arz yılı atlanır (ilk yıl rakamı yanıltıcı).
@@ -294,8 +299,8 @@ Küçülme  = gelirin 3 yıllık ortalama büyümesi eksiyse SAĞLAM olamaz (en 
 ```
 
 **Fiyat sınıfa girmez, karnede ayrı satır** (kalite önce; yeşil liste ≠ AL): PEG ≤ 1 cazip · 1–2 makul · > 2 pahalı ·
-serbest nakit akışı verimi ≥ %5 cazip · %2–5 makul · < %2 pahalı. Kâr yoksa / düşüyorsa PEG "hesaplanamaz", nakit verimi
-yine çalışır.
+Lynch temettü oranı (temettü ödeyenlerde) ≥ 2 cazip · 1–2 makul · < 1 pahalı · serbest nakit akışı verimi ≥ %5 cazip ·
+%2–5 makul · < %2 pahalı. Kâr yoksa / düşüyorsa PEG "hesaplanamaz", nakit verimi yine çalışır.
 
 **SEC verisi — eş anlamlılar yöntemi:**
 
@@ -321,7 +326,12 @@ küçülen → sağlam çıkmamalı; borcu yüksek ama iyi kullanan). **Kabul te
 karşılaştırılır; onay ondan sonra.
 
 **Değerleme (2 ölçü):**
-- Lynch'in **PEG** oranı: F/K ÷ yıllık kâr büyümesi (%); ≈ 1 makul, < 1 cazip, > 2 pahalı.
+- Lynch'in **PEG** oranı: F/K ÷ yıllık kâr büyümesi (%); ≈ 1 makul, < 1 cazip, > 2 pahalı. **Büyüme en fazla %25 alınır**
+  (Lynch: daha hızlısı sürmez; Nvidia'da tavansız PEG 0,15 çıkıyordu). Büyüme geçmiş rakamlardan; **analist tahmini
+  kullanılmaz.** Sayısal taban yok (Lynch'in de yok); kâr büyümesi ≤ 0 ise PEG hesaplanamaz.
+- **Lynch'in temettü düzeltmeli oranı** (temettü ödeyen şirketlerde ayrıca): (kâr büyümesi % + temettü verimi %) ÷ F/K;
+  Lynch: < 1 zayıf, 1,5 idare eder, ≥ 2 aranan. Yavaş büyüyen ama temettü ödeyen şirketlere (Coca-Cola gibi) PEG'in
+  haksızlığını düzeltir. (Aynı fikir bugün "PEGY" adıyla ters çevrilmiş hâlde kullanılıyor: F/K ÷ (büyüme + verim).)
 - **Serbest nakit akışı verimi:** serbest nakit akışı ÷ piyasa değeri ("şirketi bugün tamamen alsam, paramın yılda yüzde kaçı
   nakit olarak döner?"). Serbest nakit = işletme nakdi − yatırım harcaması (SEC); piyasa değeri = fiyat (Yahoo) × hisse
   sayısı (SEC). Karnede serbest nakit akışının 5 yıllık seyri de gösterilir.
@@ -331,9 +341,25 @@ varlıklar** (örn. eski fiyattan kayıtlı arsa). Lynch bunu ayrı bir tür say
 dışı. Buffett ise ilk yıllarından sonra varlığa değil, şirketin gelecekte üreteceği nakde bakar. Dipnotları okuyup değerlemek
 yapay zekâ açısından zor ve hataya açık; 1. sürümü zorlaştırır.
 
-**Açık (3. ajan):** PEG'de büyüme tavanı %25 önerisi (Nvidia PEG 0,15 çıktı; Lynch: %25'ten hızlısı sürmez) · serbest nakit
-akışından hisseyle ödenen maaşı düşme önerisi (Snap'in nakit verimi şişik görünüyor) · yapay zekâ denetçi (en son karar) · eksik veri
-için Telegram'dan benden veri isteme · karne formatının 4 açık sorusu (`BAGLAM.md` 7. bölüm).
+**Karne formatı (karar: 2026-10-03; LLM ve kodun kolay okuması için):**
+
+- Üst bilgi kartı: `hisse`, `sirket`, `borsa`, `ulke`, `sektor`, `alt_sektor`, `durum`, `portfoyde`, `tur`, `sinif`,
+  `son_kayit` (bu 5'ini kod günceller), `tarih` (ilk kayıt, değişmez), `yayinla`.
+- İlk satır: Lynch tarzı 2 cümlelik **hikâye** (ne satıyor, parayı nereden kazanıyor).
+- Her kayıt aynı başlık kalıbıyla: `## <tarih> · <tür> · <kim> [· <kaynak>]` — türler: `araştırma` (2. ajan),
+  `temel analiz` (3. ajan), `not` (kullanıcı; örn. uyarı kapatma). Kayıtlar sadece sona eklenir.
+- **Rakamlar sadece kaydın içindeki YAML veri bloğunda** (tek kaynak): oranlar `0.48` biçiminde (yüzde işareti yok), renkler
+  kelimeyle (`iyi` / `orta` / `zayif`), her ölçüde `belirleyici` ve kaynak XBRL ismi; ayrıca `kaynak` (rapor, dönem sonu,
+  adres, veri tarihi), `tur`, `sinif`, `fiyat`, `uyarilar` (kod, ad, tür: `sirkete_ozel` / `genel_risk`, durum, alıntı,
+  kaynak sayfa), `belirsiz`.
+- Yazılar blokların dışında, sabit alt başlıklarla: `### Özet` · `### Tez — neden sahip olunur / tezi bozacak 3 şey` ·
+  `### Önceki kayda göre ne değişti`.
+- Uyarı kapatma: kullanıcı notu kaydı (`## 2026-11-06 · not · kullanıcı` → "U1 kapatıldı, çünkü …"); ajan sonraki
+  çalışmada okur, koşul değişmedikçe tekrar açmaz.
+- Örnek iskelet: `BAGLAM.md` 7. bölüm (güncel hâli).
+
+**Açık (3. ajan):** ilk tezi kim yazar (öneri: yapay zekâ 3 maddelik taslak, ben düzeltip onaylarım) · dış inceleme sonuçları
+(iki model, bekleniyor) · yapay zekâ denetçi (en son karar).
 
 ### Para harcamayı önleyen kurallar
 
@@ -347,6 +373,13 @@ Telegram'da tek muhatabım **Hermes**; 4 ajanla ayrı ayrı konuşmam. Hermes aj
 
 - **Mesaj ne zaman gelir:** Pazar günü tek özet (yeni adaylar, karnede değişenler, kartı olup bu hafta çok geçenler, ABD dışı çok geçenler, "belirsiz" kalan veriler, yeni alt sektör önerileri, teknik durum) · **hemen:** portföyümdeki hissenin sınıfı düşerse · **hemen:** bir ajan hata verirse · sağlam çıkıp yeşil listeye giren hisse. 1. ajanın günlük çıktısı Telegram'a gelmez, sadece `Gelen/`.
 - **Yapabildikleri:** soru cevaplamak (veritabanı + karneleri okur: "XYZ'nin karnesi ne diyor?", "bu ay ne harcadık?") ve **tanımlı komut listesinden** komut çalıştırmak ("XYZ'yi takibe al", "ABC'yi portföye ekledim", "XYZ'yi şimdi analiz et", "XYZ'deki U1 uyarısını kapat, çünkü …"). Komut listesi uygulama planında yazılır.
+- **Eksik veri isteme (karar: 2026-10-03):** 3. ajan bir rakamı bulamazsa (kayıt defterine düşen) benden ister —
+  **ben "XYZ'yi analiz et" dediğimde** ve **Pazar günü** analizler sırasında (o çalışmadaki eksikler tek mesajda toplu).
+  Mesaj tek satırlık şifreli bir şey değil, **açık ve anlaşılır** olur; şablonu kod doldurur, ucuz model sadeleştirir:
+  hangi hisse · hangi rakam · hangi yıl · neden gerekli (hangi ölçü hesaplanamıyor) · nerede bulunur (örn. "10-K → nakit
+  akış tablosu → 'Stock-based compensation' satırı") · nasıl cevaplanır (örn. `XYZ 2025 borç 12,3 milyar`). Girdiğim rakamı
+  kod kontrol eder (diğer yıllarla 10 kat fark gibi tutarsızlıkta "emin misin?"), karnede "kaynak: kullanıcı" yazar;
+  cevap gelmezse rakam "belirsiz" kalır, bir kez hatırlatılır.
 - **Yapmadıkları:** veritabanı / dosyaları serbestçe değiştirmez (sadece komut listesi) · kod veya kural değiştirmez (o iş geliştirme Mac'inde) · işlem yapmaz.
 - Hermes'le sohbet Codex aboneliğini kullanır: ek ücret yok, ama çok konuşma kotayı doldurabilir.
 - 0. adımda (kurulum) Hermes'in bu şekilde çalıştığı denenerek doğrulanır.
@@ -427,7 +460,7 @@ Taşınmayacak: 9 aşamalı kapı sistemi, final FA renk mantığı, handoff dok
 2. ~~Mimari~~ ✅ (2026-10-03: 3. bölüm — akış, hisse durumları, portföyde, olayla çalışma, Telegram / Hermes)
 3. ~~1. ajan (Göz)~~ ✅ (2026-10-03: 3. bölüm, "1. ajan kuralları")
 4. ~~2. ajan~~ ✅ (2026-10-03: Sayaç, sektör listesi, okuma, emtia bağı, kartın doğuşu, puan kuralları — 3. bölüm)
-5. **3. ajan** — ✅ büyük ölçüde (2026-10-03: Lynch türleri, kapsam, 10 ölçü + eşikler, sınıf kuralı, değerleme, SEC yöntemi, testler — 3. bölüm). **Kalan:** karne formatı, PEG tavanı, hisseyle maaş, denetçi, eksik veri için Telegram
+5. **3. ajan** — ✅ büyük ölçüde (2026-10-03: Lynch türleri, kapsam, 10 ölçü + eşikler, sınıf kuralı, değerleme + PEG tavanı + Lynch temettü oranı, hisseyle maaş, karne formatı, eksik veri isteme — 3. bölüm). **Kalan:** ilk tezi kim yazar, dış inceleme sonuçları, denetçi (en son)
 6. **4. ajan** — teknik kurallar
 7. **Uygulama planı** — model / bütçe dağılımı, Air kurulumu, kodlama sırası
 

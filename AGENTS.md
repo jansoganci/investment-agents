@@ -15,7 +15,7 @@ Kişisel yatırım danışmanı sistemi: 4 ajan okur, araştırır, analiz eder,
 1. Ajanlar sadece **öneri** verir. Aracı kurum / banka şifresi sisteme asla girmez.
 2. Yeşil liste ≠ AL. Puan = sıralama; her puanın yanında zorunlu bir "neden" cümlesi olur.
 3. `karne.md` sadece sona eklenir; eski kayıt silinmez; her kayıt tarihlidir.
-   Tek istisna: üst bilgi kartı güncel durumu gösterir (`durum`, `portfoyde`), sadece kod günceller; her değişiklik sona tarihli not olarak da eklenir.
+   Tek istisna: üst bilgi kartı güncel durumu gösterir (`durum`, `portfoyde`, `tur`, `sinif`, `son_kayit`), sadece kod günceller; her değişiklik sona tarihli not olarak da eklenir.
 4. Ajanlar birbirini tanımaz; sadece dosya / SQLite üzerinden haberleşir.
 5. Yeni özellik ancak mevcut adım "bitti" sayıldıktan sonra eklenir.
 
@@ -48,7 +48,7 @@ docs/               YOL_HARITASI_v2.md, BAGLAM.md, TASINANLAR.md
 - Python, ortam yönetimi `uv`. Örnek: `uv run --with pytest pytest -q`
 - Geliştirme ana Mac'te; çalıştırma yedek MacBook Air'de (Hermes). Köprü GitHub; Air'de kod yazılmaz.
 - SQLite Mac diskinde durur, Drive klasörüne **konmaz** (senkron bozabilir); gece Drive'a yedeklenir.
-- Rapor / karne: Markdown + üst bilgi kartı (`hisse`, `sektor`, `tarih`, `yayinla: hayir`; karnede ayrıca `durum`, `portfoyde`).
+- Rapor / karne: Markdown + üst bilgi kartı (`hisse`, `sektor`, `tarih`, `yayinla: hayir`; karne formatı: yol haritası 3. bölüm "Karne formatı"; rakamlar sadece YAML veri bloğunda).
 - Telegram'da kullanıcının tek muhatabı Hermes; Hermes sadece tanımlı komut listesini çalıştırır, kod / kural değiştirmez.
 - Model ve bütçe ayarları tek yerde: `ayarlar.yaml`. Yapay zekâ bütçesi en fazla 25–30 $/ay.
 - Sırlar (API anahtarları) `.env` içinde; asla commit edilmez.
@@ -85,9 +85,11 @@ Bir dosya gerekiyorsa tam yolla oku, sadece gereken parçayı kopyala ve `docs/T
   (sonuçlar + öğrenilenler `BAGLAM.md` 9. bölüm). Deneme kodu scratchpad'deydi, projede değil.
   Dış inceleme promptu yazıldı: `docs/DIS_INCELEME_PROMPT.md` (Türkçe ana kopya) + `_EN.md` (modellere verilen İngilizce;
   cevap Türkçe). Deneme kodu kalıcı: `ajanlar/analiz/prototip/` (SEC verisi git'e girmez, `indir.sh` ile iner).
-- **Sıradaki:** kullanıcı promptu iki farklı modele verecek; cevaplar gelince birlikte değerlendirip doğru bulunanlar
-  kurallara işlenecek. 3. ajanın kalanları: karne formatı (`BAGLAM.md` 7. bölüm), PEG büyüme
-  tavanı %25 önerisi, hisseyle ödenen maaş önerisi, eksik veri için Telegram'dan veri isteme. Yapay zekâ denetçi en son.
-  Karne formatı taslağı `docs/BAGLAM.md` 7. bölümde (3. ajan sırasında kullanılacak).
+  Ek kararlar: PEG büyüme tavanı %25 + Lynch temettü düzeltmeli oranı (analist tahmini yok) · serbest nakitten hisseyle
+  ödenen maaş düşülür (SEC, yedek Yahoo) · karne formatı (YAML veri bloğu, sabit başlıklar; üst bilgiye `tur`, `sinif`,
+  `son_kayit`) · eksik veri Telegram'dan istenir ("analiz et" komutunda ve Pazar; anlaşılır mesaj).
+- **Sıradaki:** iki modelin dış inceleme cevapları gelince birlikte değerlendirilecek (testler sürüyor). Sonra: ilk tezi kim
+  yazar (tek soru), prototipi yeni kurallara göre güncelleme (hisseyle maaş, PEG tavanı), 6. sıra **4. ajan (Teknik)**,
+  7. sıra **uygulama planı**. Yapay zekâ denetçi en son.
 - **Bekleyen sorular:** Yok.
 - **Not:** Commit'ler GitHub'a henüz gönderilmedi; kullanıcı en sonda topluca göndermek istiyor.
