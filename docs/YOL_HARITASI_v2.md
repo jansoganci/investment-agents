@@ -586,7 +586,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03: rules + 2 external reviews applied + prototype and golden set 10/10 — section 3). **Left:** AI auditor (last), third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — section 10. ✅ 10.1 models and providers (2026-10-04). Left: Hermes command list, Air setup (step 0), coding order
+7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list (2026-10-04). Left: Air setup (step 0), coding order
 
 Topic notes:
 
@@ -644,4 +644,54 @@ go to a model unless a job needs them (e.g. Hermes answering my own question). D
 for news text, never for my personal data.
 
 **Spend safety:** OpenRouter monthly limit 15 $, a Telegram warning at 10 $ (section 6).
+
+### 10.2 Hermes command list (decision: 2026-10-04)
+
+Hermes may change something **only** through these commands; anything not on the list it cannot do ("not on the command list").
+All commands are registered in the Telegram `/` menu with a short description (names: lowercase, one word — Telegram's rule).
+I can also write a plain sentence ("I bought 10 KO at 85.65"); Hermes maps it to a command and shows the exact command in its
+confirmation. Clashes with Hermes's own built-in commands are checked in step 0; on a clash ours is renamed.
+
+**Rules:** (1) every command that changes something asks for confirmation first — Hermes lists exactly what will change, and runs
+it only after `yes`; (2) every change is logged (what, when, which command); (3) each command is a small Python function in our code
+(`python -m ortak.komut …` style) — Hermes calls it, it never edits tables or files itself.
+
+**A. Information (changes nothing, no confirmation)**
+
+| Command | What it does |
+|---|---|
+| `/help` | lists all commands with a short description |
+| `/summary` | shows the latest Sunday summary again |
+| `/green` | the green list: type, grade, price line |
+| `/candidates` | this week's candidates with scores and reasons |
+| `/card KO` | summary of the latest card entry + Drive link |
+| `/portfolio` | holdings: quantity, average cost, weight in the portfolio, gain / loss |
+| `/missing` | missing figures waiting for me |
+| `/spend` | this month's AI spend by provider; how much is left of the limit |
+| `/model` | which job runs on which model now |
+| `/status` | system health: when each agent last ran, any errors |
+
+**B. Actions (change something, ask for confirmation)**
+
+| Group | Command | Example | What changes |
+|---|---|---|---|
+| Stock state | `/watch` | `/watch KO` | `candidate` → `watching`; agent 3 starts the card; a note on the card |
+| | `/archive` | `/archive KO` | `watching` → `archived`; no new analysis or spend; a note on the card |
+| | `/unarchive` | `/unarchive KO` | `archived` → `watching` |
+| Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a BUY row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
+| | `/sold` | `/sold 5 KO 92.10` | a SELL row; when the position reaches 0, `in_portfolio = no` |
+| Analysis | `/analyze` | `/analyze KO` or `/analyze KO opus-5.5` | runs agent 3 now (filing + latest news); the confirmation shows the **estimated cost** |
+| Card | `/closewarning` | `/closewarning KO U1 one-off tax deposit, not recurring` | the warning closes; a note with the reason; it does not reopen unless the condition changes |
+| | `/thesis` | `/thesis KO <corrected point>` | my correction of the AI's thesis as a note; the old thesis is not deleted |
+| | `/note` | `/note KO met management at a conference…` | my free note on the card |
+| Data | `/data` | `/data NKE 2026 interest 0.25bn` | enters a missing figure I was asked for; code checks it is plausible (a 10× gap vs other years → "are you sure?"); the card says "source: user" |
+| | `/tag` | `/tag rio-tinto RIO` | fixes a wrong tag mapping; the tag is not asked to the AI again |
+| Settings | `/model` | `/model strong gpt-6-sol` · `/model strong default` | persistent model override (in the Air database), or back to the default |
+| | `/subsector` | `/subsector add Uranium Energy` | approves a new subsector (the answer to "add a new subsector?") |
+
+`/model` appears in both groups: without arguments it only shows; with arguments it changes.
+
+**Deliberately not on the list:** changing rules, thresholds or code (done on the development Mac; no code is written on the Air) ·
+deleting a card entry (append-only) · buy / sell orders (the system never connects to a broker) · changing the spend limit from
+Telegram (only in the OpenRouter dashboard, for safety).
 

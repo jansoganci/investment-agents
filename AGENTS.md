@@ -116,7 +116,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   English; cheap = DeepSeek V4 Flash, strong = Claude Sonnet 5.5 (high) with GPT-6 Sol fallback, Hermes chat = ChatGPT/Codex
   subscription if possible else DeepSeek V4 Pro; provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,
   OpenAI 5 $) then OpenRouter; model change from Telegram via an override in the Air database; only needed data goes to models.
-- **Next:** 10.2 Hermes command list (incl. "bought 10 KO at 85.65", model override), 10.3 Air setup (step 0), 10.4 coding order;
+  **10.2 Hermes command list decided (2026-10-04):** 10 information commands + actions (`/watch`, `/archive`, `/unarchive`,
+  `/bought`, `/sold`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`) in the Telegram `/` menu;
+  every change asks for confirmation and is logged.
+- **Next:** 10.3 Air setup (step 0), 10.4 coding order;
   the two model tests (cheap: 20 posts; strong: blind "why?" answers) when coding starts. AI auditor last; third review running.
 - **Pending questions:** None.
 - **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.
