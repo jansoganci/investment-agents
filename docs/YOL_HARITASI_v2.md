@@ -57,7 +57,7 @@ to the same file. As quarters pass, new dated entries are appended at the end an
                                              scores table + CARD opens (candidate)
                                           │
                                           ▼
-                              ┌─ ME: "XYZ'yi takibe al" ─┐
+                              ┌─ ME: "watch XYZ" ────────┐
                               ▼                          │
  3. ANALYSIS (when a new filing arrives)                 │
  Only stocks with status = watching                      │
@@ -76,6 +76,9 @@ to the same file. As quarters pass, new dated entries are appended at the end an
 
 The process is not 100% automatic; an agent does not run when there is nothing to do.
 
+**Sunday order (decision: 2026-10-04):** 1B Counter → agent 2 → agent 3 (asks SEC for new filings) → agent 4 → the summary (code
+in `shared/`, reads the database) → Telegram.
+
 ### Stock states
 
 Each stock is one row in the `stocks` table:
@@ -89,8 +92,8 @@ Each stock is one row in the `stocks` table:
 | `country` | where the company is based (e.g. Alibaba: exchange NYSE, country China → ADR) | mapping (agent 1) |
 
 - The **green list** is not a separate status: stocks with `status = watching` and `grade = solid`. A stock that comes out solid **enters automatically**, and Telegram sends a message.
-- `status` and `in_portfolio` live in the database; code updates the card header at the same time and appends a dated note (e.g. `2026-10-10 · Portföye eklendi`).
-- **Archive reminder:** watching + not in the portfolio + not solid on the last 2 cards → the Sunday summary asks "arşive alalım mı?". The decision is mine.
+- `status` and `in_portfolio` live in the database; code updates the card header at the same time and appends a dated note (e.g. `2026-10-10 · Added to portfolio`).
+- **Archive reminder:** watching + not in the portfolio + not solid on the last 2 cards → the Sunday summary asks "archive it?". The decision is mine.
 
 ### Agent 1 (Eye) rules (decision: 2026-10-03)
 
@@ -98,7 +101,7 @@ Sites: Ghost; about 100–150 posts a day in total (Emtia Defteri ~30–90, Drag
 No RSS; the **sitemap** (`/sitemap-posts.xml`) gives every post's address and time with no login.
 Title, date, and tags are public; the rest of the post requires a member login.
 
-1. **3 passes a day:** 07:00, 13:00, 20:00 (changed from `ayarlar.yaml`).
+1. **3 passes a day:** 07:00, 13:00, 20:00 (changed from `settings.yaml`).
 2. **Finding new posts:** from the sitemap, posts since the previous pass (one request).
 3. **Reading:** with my member session (Playwright, log in once on the Air) the **full** post is read.
 4. **Not straining the site / not getting blocked:** ~20–30 seconds between pages, a little different each time → a pass ~20 minutes, about 1 hour a day.
@@ -126,17 +129,17 @@ count as different and the count splits).
 | **Sector** | The 11 sectors of GICS, the classification used most widely: Energy · Materials · Industrials · Consumer Discretionary · Consumer Staples · Health Care · Financials · Information Technology · Communication Services · Utilities · Real Estate | Never |
 | **Subsector / theme** | A list we will write together (e.g. Aviation, Semiconductors, Artificial intelligence, Lithium) | Only **with my approval** |
 
-If none fit, the model writes `other`; the Sunday summary asks "Yeni alt sektör eklensin mi?".
+If none fit, the model writes `other`; the Sunday summary asks "add a new subsector?".
 
 ### Agent 1B (Counter) rules (decision: 2026-10-03)
 
-1. Code counts, no AI, cost zero. It runs right before agent 2; Hermes can also be asked "bu hafta en çok ne geçti?".
+1. Code counts, no AI, cost zero. It runs right before agent 2; Hermes can also be asked "what was mentioned most this week?".
 2. **Rolling window:** each run looks back 7 days from that day; the count does not accumulate, it starts from zero every time. The 30-day count sits beside it as information.
 3. No matter how many times a stock appears in the same post, it counts as **1** (number of distinct posts). Sectors and commodities are counted separately too.
 4. **Only US-listed stocks enter the scoring order** (ADRs included). Non-US stocks are counted too, but on the Sunday
-   summary they appear only as an information line: "ABD dışı çok geçenler" (the data is ready when the China add-on comes).
-5. **A stock that already has a card does not enter the ranking** (it is not scored again). But the Sunday summary has one line: "Kartı olup bu hafta çok
-   geçenler: XYZ (12 yazı)" — I decide whether it gets scored again.
+   summary they appear only as an information line: "Non-US names mentioned a lot" (the data is ready when the China add-on comes).
+5. **A stock that already has a card does not enter the ranking** (it is not scored again). But the Sunday summary has one line: "Stocks with
+   a card mentioned a lot this week: XYZ (12 posts)" — I decide whether it gets scored again.
 
 ### Agent 2 (Research) rules (decision: 2026-10-03)
 
@@ -415,7 +418,7 @@ is hard and error-prone for an AI; it would make version 1 harder.
 - Prose sits outside the blocks, under fixed subheadings: `### Summary` · `### Thesis` ·
   `### What changed`.
 - `### Thesis` always has two parts: why it is owned (at most 3 points) and 3 things that would break the thesis. The heading stays short so code can find `### Thesis`.
-- Closing a warning: a user note entry (`## 2026-11-06 · note · user` → "U1 kapatıldı, çünkü …"); the agent reads it on the next
+- Closing a warning: a user note entry (`## 2026-11-06 · note · user` → "U1 closed because …"); the agent reads it on the next
   run and does not reopen it unless the condition has changed.
 - Sample skeleton: `BAGLAM.md` section 7 (the current skeleton).
 
@@ -470,14 +473,15 @@ turns my message into a command (section 10.2), and agent 3 answers the drop-ale
 **All figures in USD.** Nothing is converted to TL (the lira's fall would look like a gain). Only my TL entries (gold
 purchases, BES) are converted: TL → USD at that day's rate.
 
-**Prices every night:** at 03:00 Turkey time (UTC+3, after the US close) code fetches the previous day's closes — my stocks,
-the green list, SPY, gold, USD/TRY — into `prices`. The Sunday summary uses Friday's close; `/portfolio` uses the latest close.
+**Prices every night:** agent 4 reads `prices`, filled at 03:00 Turkey time (UTC+3, after the US close) by the shared price job
+(section 5) with the previous day's closes — my stocks, the green list, SPY, gold, USD/TRY. The Sunday summary uses Friday's
+close; `/portfolio` uses the latest close.
 
 1. **Ledger (`holdings`):** one row per event, append-only — `buy` and `sell` from my commands (`/bought`, `/sold`); `dividend`
    and `split` added by code. Positions (quantity, average cost) are computed from the rows. The ledger starts empty (on
    2026-10-04 I hold no stocks).
    - **Dividends:** Yahoo's dividend history × the quantity I held on the ex-date × (1 − withholding). Withholding is one setting
-     in `ayarlar.yaml` (20%, user-confirmed; checked once against the Midas statement).
+     in `settings.yaml` (20%, user-confirmed; checked once against the Midas statement).
    - **Splits:** from Yahoo's split history; code adjusts the quantity and tells me ("NVDA split 10:1 — your 10 shares are now
      100; check it in Midas"). No drop alert in a split week (section 3, "AI auditor").
 2. **Value and weights (weekly):** each holding's value, its weight in the **stock portfolio** (gold and BES not included), and
@@ -492,7 +496,7 @@ the green list, SPY, gold, USD/TRY — into `prices`. The Sunday summary uses Fr
      gold uses the gold price in USD.
    - Information only: it shows whether my picks add anything over SPY and gold. It never moves money.
 4. **Total wealth (`total_wealth`):** stocks (from the ledger) + gold + BES, and its share of the goal (a setting in
-   `ayarlar.yaml`: 800,000 $). I enter each gold purchase and, once a month, my BES payment and BES total; each entry is a new
+   `settings.yaml`: 800,000 $). I enter each gold purchase and, once a month, my BES payment and BES total; each entry is a new
    dated row in `other_assets` (append-only).
    - **Gold:** `/gold 1 4689` = 1 gram bought at 4,689 TL a gram (a sale: minus grams). What I put in = the sum of my purchases
      (TL → USD at that day's rate); value now = my grams × the gold price per gram in USD (Yahoo's ounce price ÷ 31.1035; the
@@ -567,7 +571,7 @@ Free code checks come first; the auditor is the second line. **It never produces
 **Shared engine, one rule card per place.** Shared: the model, the output format (for each item **pass / fail / not_found** + a
 quote + a reason), logging and cost, "check only, never produce figures". Per place a short **rule card** file (task, inputs,
 numbered checklist, known traps, pass criterion, what happens on a fail), read as the AI instruction on every run; full texts are
-written with agent 3's code (under `ortak/`, planned `shared/auditor/`). Four cards:
+written with agent 3's code (under `shared/auditor/`). Four cards:
 
 1. **Agent 3 — figure audit.** Input: the ~10 main figures code took from SEC (revenue, operating profit, operating cash, capex,
    cash, short-term investments, marketable securities, debt, share count, net profit — each with its XBRL name and period) + the
@@ -593,7 +597,8 @@ the error rate).
 **On a fail:** the card gets an **`unverified`** mark, Telegram gets "the auditor disagrees: …"; a sell suggestion is **held back**;
 the figure is not changed; the decision is mine.
 
-**Model:** **DeepSeek V4 Pro**, fallback **GPT-6 Sol** (section 10.1). The auditor must come from a **different model family** than
+**Model:** **DeepSeek V4 Pro** through OpenRouter, non-China providers only (it sees sell suggestions, so my holdings), fallback
+**GPT-6 Sol** (section 10.1). The auditor must come from a **different model family** than
 the writer (Claude Sonnet 5.5): a model checking its own writing tends to share its blind spots. Cost about 0.01 $ per audit — a few
 cents a month.
 
@@ -619,13 +624,16 @@ outside models, like the external review of 2026-10-03 (`docs/reviews/`) — the
 On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents separately. Hermes runs the agents and reads the results.
 
 - **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, the portfolio block of agent 4) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`.
-- **What it can do:** answer questions (it reads the database + the cards: "XYZ'nin karnesi ne diyor?", "bu ay ne harcadık?") and run a command from the **defined command list** ("XYZ'yi takibe al", "ABC'yi portföye ekledim", "XYZ'yi şimdi analiz et", "XYZ'deki U1 uyarısını kapat, çünkü …"). The command list is written in the implementation plan.
+- **What it can do:** answer questions (it reads the database + the cards: "what does the card of XYZ say?", "what did we spend this month?") and run a command from the **defined command list** ("watch XYZ", "I added ABC to the portfolio", "analyze XYZ now", "close warning U1 on XYZ because …"). The command list: section 10.2.
+- **How messages travel (decision: 2026-10-04):** every job writes its message as plain text output; Hermes's script-only
+  scheduler delivers it to Telegram, and I talk to the bots there. This path is built and tested first, in step 0
+  (`docs/AIR_SETUP.md`, phase 7), before any agent.
 - **Asking for missing data (decision: 2026-10-03):** if agent 3 cannot find a figure (one that landed in the ledger), it asks me —
-  **when I say "XYZ'yi analiz et"** and **on Sunday** during the analyses (that run's gaps in one message).
+  **when I say "analyze XYZ"** and **on Sunday** during the analyses (that run's gaps in one message).
   The message is not a cryptic one-liner; it is **plain and clear**; code fills the template, a cheap model simplifies it:
   which stock · which figure · which year · why it is needed (which measure cannot be computed) · where to find it (e.g. "10-K → cash
-  flow statement → 'Stock-based compensation' line") · how to answer (e.g. `XYZ 2025 borç 12,3 milyar`). Code checks the figure I enter
-  (on an inconsistency such as a 10-times gap versus other years, "emin misin?"), and the card records `source: user`;
+  flow statement → 'Stock-based compensation' line") · how to answer (e.g. `/data XYZ 2025 debt 12.3bn`). Code checks the figure I enter
+  (on an inconsistency such as a 10-times gap versus other years, "are you sure?"), and the card records `source: user`;
   if no answer comes, the figure stays `unclear` and is reminded once.
 - **What it does not do:** it does not freely change the database / files (only the command list) · it does not change code or rules (that work is on the development Mac) · it does not trade.
 - Chat with Hermes uses my ChatGPT / Codex subscription if Hermes can log in with it (checked in step 0); otherwise a cheap but strong model (DeepSeek V4 Pro). Details: section 10.
@@ -639,9 +647,9 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
 | Development | On the main Mac (Claude Code / Cursor); each agent is tried by hand here first. Bridge: GitHub |
 | What runs it | Hermes Agent, on the backup MacBook Air M2 (16 GB), 24/7. No code is written on the Air: it is updated with `git pull`; `.env`, the site session, and the real SQLite live there. Hermes only schedules and reports; the calculation / analysis logic is in our code |
 | Communication | One counterpart on Telegram, Hermes (section 3, "Telegram and Hermes") + Drive folders |
-| AI | Agents call models through one client in `ortak/` with an ordered provider list per job: my API credits first, then OpenRouter (section 10). Hermes chat: ChatGPT / Codex subscription if possible. The Claude **subscription** is not connected to Hermes (terms of use); Claude **API credits** are fine |
+| AI | Agents call models through one client in `shared/` with an ordered provider list per job: my API credits first, then OpenRouter (section 10). Hermes chat: ChatGPT / Codex subscription if possible. The Claude **subscription** is not connected to Hermes (terms of use); Claude **API credits** are fine |
 | Site reading | Playwright; I log in once, the session is stored; 3 passes a day, slow (section 3, "Agent 1 rules"). No AI in the page-download step; a cheap model only for the one sentence on the post that was read. **Permission:** the owner of both sites personally allowed reading (scraping) (2026-10-03); no API; condition: do not strain the site / do not abuse it |
-| Model choice | One place: `ayarlar.yaml` |
+| Model choice | One place: `settings.yaml` |
 | Independence | The code does not know Hermes; each agent also runs by hand (`python -m agents.analysis`) |
 | Blog possibility | Every report/card is Markdown + a header (`publish: yes/no`). No web interface for now |
 
@@ -650,9 +658,17 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
 | Place | What | Who reads it |
 |---|---|---|
 | **Drive** (`Investing/`) | PDFs, `card.md`, sector/stock reports, weekly summaries | Me |
-| **SQLite** (Mac disk, **not** on Drive) | Figures, scores, prices, signals, lists, run records | The machine |
+| **SQLite** (the Air's disk, `~/investment-agents-data/`, **not** on Drive) | Figures, scores, prices, signals, lists, run records | The machine |
 
-Every night a **backup copy** of SQLite is sent to Drive.
+Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
+
+**Decided so far (2026-10-04; the rest of the database design is discussed before the implementation plan):**
+
+- **One price job:** every night at 03:00 Turkey time one job in `shared/` fetches every price any agent needs — my stocks, the
+  green list, SPY, gold, USD/TRY, the 11 sector funds and the linked commodities — into `prices`. No agent fetches prices on its own.
+- **Times** are stored in UTC and shown in Turkey time.
+- **TL entries** (gold purchases, BES) keep the TL amount and the USD/TRY rate used; the USD value is computed from them.
+- **Two separate databases:** the real one on the Air, a development one on the main Mac; they never mix.
 
 Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals`, `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
 
@@ -668,15 +684,16 @@ Investing/                                 (Drive)
 investment-agents/                         (code, Git)
 ├── agents/eye/  counter/  research/  analysis/  portfolio/
 ├── shared/                                AI, SEC, price, Drive paths, database
-├── ayarlar.yaml
+├── settings.yaml
 └── docs/  YOL_HARITASI_v2.md  BAGLAM.md  GLOSSARY.md  TASINANLAR.md
 ```
 
-Today's folders are still `ajanlar/` and `ortak/` (the prototype and the backtest). New code uses the names in the tree above.
+New code goes directly under `agents/` and `shared/` (decision: 2026-10-04); `ajanlar/` (the agent 3 prototype and the
+backtests) stays as an archive.
 
 ## 6. Budget
 
-- AI / API: **at most 25–30 $ / month**. Expected once running: ~6–7 $ / month on OpenRouter prices (agent 1 ~0.2 $, agents 2 + 3 ~4–5 $, web search ~0.6 $); while my API credits last, close to 0 (section 10)
+- AI / API: **at most 25–30 $ / month**. Expected once running: ~6–11 $ / month on OpenRouter prices (agent 1 ~1–5 $, measured in the model test; agents 2 + 3 ~4–5 $; web search ~0.6 $); while my API credits last, close to 0 (section 10)
 - Emtia Defteri + Dragonomi subscriptions are **outside** this budget
 - OpenRouter: a fixed monthly limit of **15 $**, a Telegram warning at **10 $**; the `runs` table answers "what did we spend this month?" from Telegram
 
@@ -695,7 +712,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 
 | Step | Work | Counts as done if… |
 |---|---|---|
-| **0. Setup** | Mac settings (sleep off, separate user, FileVault), Hermes, Codex login, OpenRouter limit, Drive on the desktop, Telegram bot | I can exchange messages on Telegram and a scheduled trial job writes a file to Drive |
+| **0. Setup** | Mac settings (sleep off, separate user, FileVault), Hermes, Codex login, OpenRouter limit, Drive on the desktop, Telegram bot | I can exchange messages on Telegram, a scheduled trial job writes a file to Drive, and a scheduled job's message arrives on Telegram |
 | **1. Analysis + card** | `shared/` + SQLite + agent 3, 3–5 US stocks | **Acceptance test of at least 20 stocks, figures compared by hand with the 10-K;** 3 stocks have a card on Drive; a second run appends a new dated entry without deleting the old one; **the trial-set test passes:** 3–5 companies everyone accepts as quality come out solid, 1–2 companies known to be weak do **not** come out solid, trap examples are classified correctly (in the old system no stock could enter the green list; if the quality names do not come out solid the rules are too tight, if the weak names come out solid the rules are too loose) |
 | **2. Eye** | Both sites with Playwright, 3 passes a day | For 1 week every pass fills `articles` (one sentence + full text + mapped tags) and the site never once answers "too many requests" / a block |
 | **3. Research** | 1B Counter + agent 2: reading + web search + score + reason + opening the card | The weekly report is on Drive and on Telegram; cards for candidate stocks open on Drive |
@@ -711,7 +728,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03 / 04: rules + 2 external reviews applied + prototype and golden set 10/10 + AI auditor — section 3). **Left:** third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Renamed **Portfolio** the same day: ledger, benchmark against SPY and gold, total wealth, the 25% note; code only. Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Left: 10.4 coding order
+7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Left: the database discussion, then the implementation plan phase by phase in its own document (replaces "10.4 coding order")
 
 Topic notes:
 
@@ -733,21 +750,21 @@ English — checked in the model test. (My working conversations about the proje
 |---|---|---|---|
 | **Cheap** — agent 1's one sentence, new-tag classification, making Telegram messages plain | **DeepSeek V4 Flash** | — | Gemini Flash-Lite or GPT-6 Luna if the test is poor |
 | **Strong** — agent 2 (tone, news flow, score reasons), agent 3 ("why?" answers with quotes, first thesis, thesis check, drop-alert check) | **Claude Sonnet 5.5** | **high** | **GPT-6 Sol** |
-| **Hermes chat** (Telegram) | my ChatGPT / Codex subscription, if Hermes can log in with it (checked in step 0) | — | **DeepSeek V4 Pro** (cheap, strong for its price) |
-| **Auditor** (agents 2 and 3; section 3, "AI auditor") | **DeepSeek V4 Pro** — a different family from the writer | — | **GPT-6 Sol** |
+| **Hermes chat** (Telegram) | my ChatGPT / Codex subscription, if Hermes can log in with it (checked in step 0) | — | **DeepSeek V4 Pro** through OpenRouter, non-China providers only (cheap, strong for its price) |
+| **Auditor** (agents 2 and 3; section 3, "AI auditor") | **DeepSeek V4 Pro** through OpenRouter, non-China providers only — a different family from the writer | — | **GPT-6 Sol** |
 
 Not needed for routine work: Opus 5.5 / GPT-6 Astra (the code does the arithmetic; the model reads and explains). A one-off use
 (e.g. one first thesis) is possible with a Telegram override.
 
 **Who writes the first thesis:** the AI (strong model), decided in section 3.
 
-**Provider order (per job, in `ayarlar.yaml`):** my API credits first, then OpenRouter. The client in `ortak/` tries the list in
+**Provider order (per job, in `settings.yaml`):** my API credits first, then OpenRouter. The client in `shared/` tries the list in
 order; on an error, exhausted credit or quota it moves to the next one; every call's cost goes to `runs`.
 
 ```yaml
 cheap:  [deepseek: deepseek-v4-flash,          openrouter: deepseek/deepseek-v4-flash]
 strong: [anthropic: claude-sonnet-5.5 (high),  openrouter: anthropic/claude-sonnet-5.5,  openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
-auditor: [deepseek: deepseek-v4-pro,         openrouter: deepseek/deepseek-v4-pro,   openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
+auditor: [openrouter: deepseek/deepseek-v4-pro (non-China providers only),  openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
 ```
 
 **My credits (2026-10-04):** Anthropic API 90 $ (expires 2026-10-19), DeepSeek 10 $, OpenAI API 5 $. The system will not be live
@@ -763,12 +780,14 @@ unclear terms); it can be added as a provider later.
 **Model change from Telegram (Hermes command list):**
 - one job: `analyze XYZ with opus-5.5`
 - from now on: `set strong model to gpt-6-sol`
-The override lives in the database on the Air (not in `ayarlar.yaml` in git, so the repo stays clean); every change is logged; the
+The override lives in the database on the Air (not in `settings.yaml` in git, so the repo stays clean); every change is logged; the
 spend limit still applies.
 
 **Data sent to models — only what the job needs.** Post texts and filings go out; my holdings, trades, amounts and portfolio do not
 go to a model unless a job needs them (e.g. Hermes answering my own question). DeepSeek's own API processes data in China — fine
-for news text, never for my personal data.
+for news text, never for my personal data. So only the cheap jobs (news text) use DeepSeek's own API; the auditor (it sees sell
+suggestions) and Hermes's fallback (it sees my portfolio) use DeepSeek models through OpenRouter, non-China providers only
+(decision: 2026-10-04).
 
 **Spend safety:** OpenRouter monthly limit 15 $, a Telegram warning at 10 $ (section 6).
 
@@ -780,8 +799,9 @@ I can also write a plain sentence ("I bought 10 KO at 85.65"); Hermes maps it to
 confirmation. Clashes with Hermes's own built-in commands are checked in step 0; on a clash ours is renamed.
 
 **Rules:** (1) every command that changes something asks for confirmation first — Hermes lists exactly what will change, and runs
-it only after `yes`; (2) every change is logged (what, when, which command); (3) each command is a small Python function in our code
-(`python -m ortak.komut …` style) — Hermes calls it, it never edits tables or files itself.
+it only after `yes`; (2) every change is logged (what, when, which command) and gets a number, shown in its confirmation;
+(3) each command is a small Python function in our code (`python -m shared.commands …` style) — Hermes calls it, it never edits
+tables or files itself.
 
 **A. Information (changes nothing, no confirmation)**
 
@@ -805,8 +825,8 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 | Stock state | `/watch` | `/watch KO` | `candidate` → `watching`; agent 3 starts the card; a note on the card |
 | | `/archive` | `/archive KO` | `watching` → `archived`; no new analysis or spend; a note on the card |
 | | `/unarchive` | `/unarchive KO` | `archived` → `watching` |
-| Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a BUY row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
-| | `/sold` | `/sold 5 KO 92.10` | a SELL row; when the position reaches 0, `in_portfolio = no` |
+| Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a `buy` row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
+| | `/sold` | `/sold 5 KO 92.10` | a `sell` row; when the position reaches 0, `in_portfolio = no` |
 | | `/gold` | `/gold 1 4689` | a gold purchase: grams and the TL price per gram (a sale: minus grams) → a new dated row in `other_assets` (total wealth); a price more than 20% from that day's gram price → "are you sure?" |
 | | `/bes` | `/bes 8670 245000` | this month's BES payment and the BES total (TL) → a new dated row in `other_assets`; a total more than 50% away from the last one → "are you sure?" |
 | Analysis | `/analyze` | `/analyze KO` or `/analyze KO opus-5.5` | runs agent 3 now (filing + latest news); the confirmation shows the **estimated cost** |
@@ -817,6 +837,7 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 | | `/tag` | `/tag rio-tinto RIO` | fixes a wrong tag mapping; the tag is not asked to the AI again |
 | Settings | `/model` | `/model strong gpt-6-sol` · `/model strong default` | persistent model override (in the Air database), or back to the default |
 | | `/subsector` | `/subsector add Uranium Energy` | approves a new subsector (the answer to "add a new subsector?") |
+| Fix (decision: 2026-10-04) | `/undo` | `/undo` · `/undo 42` | cancels my last change, or change #42; **nothing is deleted:** a ledger row (`holdings`, `other_assets`) is marked `void` and kept; a stock-state change goes back with a dated card note; a card note gets a dated "withdrawn" note. A plain sentence works too: "the KO buy was 10, not 100" → Hermes proposes `/undo` + the right `/bought` and runs both after `yes` |
 
 `/model` appears in both groups: without arguments it only shows; with arguments it changes.
 

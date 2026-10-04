@@ -1,7 +1,7 @@
 ---
 doc: External review prompt — Agent 3 rules and the 10-company trial
 date: 2026-10-03
-status: to be sent for review
+status: used 2026-10-03 — historical (the rules before the two reviews); regenerate from the current rules before the next big review
 publish: no
 ---
 

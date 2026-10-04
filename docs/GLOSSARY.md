@@ -212,7 +212,7 @@ Kapsam dışı iş modeli etiketi: banka → `bank` · sigorta → `insurance` �
 
 ## Ajanlar ve klasörler
 
-Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak ad.
+Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak ad. Yeni kod doğrudan sağ sütundaki klasörlere yazılır; `ajanlar/` arşiv olarak kalır (karar: 2026-10-04).
 
 | Şimdi | İngilizce ad | İleride klasör |
 |---|---|---|
@@ -223,6 +223,7 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 | 4. Portföy (eski: Teknik) | Portfolio | `agents/portfolio` |
 | `ortak/` | shared | `shared/` |
 | `ajanlar/` | agents | `agents/` |
+| `ayarlar.yaml` | settings | `settings.yaml` (dosya ilk kodla oluşturulur) |
 
 ## Tablolar
 
@@ -252,6 +253,8 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 `articles` işaretleri: detaylı okundu → `read_deep` · metin eksik → `text_missing`.
 
 `holdings` satır türü: alış → `buy` · satış → `sell` · temettü → `dividend` · bölünme → `split`.
+
+Geri alınan satır (`/undo`) silinmez, işaretlenir: geçersiz → `void`.
 
 `other_assets` türü: altın alımı (gram + TL gram fiyatı) → `gold` · BES (aylık ödeme + toplam tutar, TL) → `bes`.
 
