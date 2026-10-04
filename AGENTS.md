@@ -42,7 +42,7 @@ archive. Do not move or rename the archive unless that is the task.
 Exists today:
 ajanlar/analiz/prototip/   agent 3 rule trial (archive, not production)
 ajanlar/teknik/backtest/   backtest scripts (archive)
-docs/                      YOL_HARITASI_v2.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md; reviews/ (external reviews)
+docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md; reviews/ (external reviews)
 
 Planned (not created yet):
 agents/eye/         1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
@@ -154,13 +154,17 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   for X alone (card + research entry, web search for news, label "added by me", `added_by: user`), then `watching` and agent 3;
   agent 2's weekly run is unchanged · writing at the same time (WAL + a wait time) and structure changes (version number +
   numbered upgrade steps; data is never lost) — closed.
-- **Next (2026-10-04):** the implementation plan — phase by phase, in its own document (replaces "10.4 coding order"; the
-  database points are settled) — then the phases one by one: building + tests (golden set, auditor error sets, the two
-  model tests, 20-stock UAT), step 0 on the Air, then a few months of real use without changing the rules.
-  Small open items: the subsector list (needed for tag mapping) · prepare `.env.example`, the `/setcommands` text and the Drive
-  test script before the Air setup · the Anthropic API credit expires 2026-10-19 (use it for agent 3's AI parts and the tests) ·
-  a third external review is still running · the agent 4 changes are on the branch `claude/agent4-portfolio`, not yet merged into main.
-- **Pending questions:** None.
+  **Implementation plan approved (2026-10-04):** `docs/IMPLEMENTATION_PLAN.md` — phases 0–6 (foundation and the message
+  path · agent 3 numbers · agent 3 AI and the auditor · Portfolio · Eye · Counter + Research · the Sunday chain and go-live); each
+  phase: built in one session → audited in a separate session (Claude gives the prompt) → fixes → my Mac check (Cursor) → one
+  squash-merge into main → the Air. The sector before the Eye exists: from the SEC industry code (SIC) through a fixed table, I
+  can correct it (roadmap section 3, "Sector list").
+- **Next (2026-10-04):** phase 0 (foundation and the message path) in a new session, branch `claude/phase-0-foundation`.
+  Small open items: the subsector list (before phase 4) · `.env.example`, the `/setcommands` text and the Drive test script are
+  built in phase 0 · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external review
+  is still running · before phase 1: the sample data (plan, section 6).
+- **Pending questions:** (1) before phase 1 — how the sample data is downloaded: the cloud network setting (recommended) or a
+  script on my Mac (plan, section 6).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
-- **Note:** main is on GitHub. The agent 4 (Portfolio) changes of 2026-10-04 are on the branch `claude/agent4-portfolio` (pushed),
-  waiting to be merged into main.
+- **Note:** PR #1 (agent 4, the document audit, the database decisions) was merged into main on 2026-10-04 as one commit; the
+  implementation plan was merged the same day, also as one commit.
