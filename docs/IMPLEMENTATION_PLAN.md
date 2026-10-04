@@ -26,6 +26,8 @@ Every phase goes through the same loop:
 
 A new phase starts only when the previous one is done (`AGENTS.md`, fixed rule 5).
 
+**Exception (my decision, 2026-10-04):** phase 1 is built before phase 0 is done — only phase 0's Mac and Air checks are left, the Air is not ready, and phase 2's real-model runs must happen before the Anthropic credit ends on 2026-10-19; phase 1 does not need the Air (tested here on sample data); the Mac checks of phases 0 and 1 are done together, phase 0's Air check when the Air is ready.
+
 ## 2. Where things run
 
 | Where | Who | What | Data |

@@ -186,6 +186,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   when the Mac and Air checks pass, so phase 1 starts after it — fixed rule 5). Small open items: the subsector list
   (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external
   review is still running · before phase 1: the sample data (plan, section 6).
+- **Exception to fixed rule 5 (my decision, 2026-10-04):** phase 1 is built before phase 0 is done (only its Mac and Air checks are left; the Air is not ready; phase 2's real-model runs must come before 2026-10-19) — Mac checks of phases 0 and 1 together, phase 0's Air check when the Air is ready (plan section 1).
 - **Pending questions:** (1) before phase 1 — how the sample data is downloaded: the cloud network setting (recommended) or a
   script on my Mac (plan, section 6).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
