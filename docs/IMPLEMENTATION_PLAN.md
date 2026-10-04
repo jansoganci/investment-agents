@@ -1,7 +1,7 @@
 ---
 doc: Implementation plan
 date: 2026-10-04
-status: draft — for my review
+status: approved (2026-10-04)
 publish: no
 ---
 
@@ -38,7 +38,8 @@ A new phase starts only when the previous one is done (`AGENTS.md`, fixed rule 5
   upgrade steps. On the Mac and on the Air one command creates or upgrades it (`uv run python -m shared.db init`); no data is
   lost on an upgrade.
 - The cloud environment blocks Yahoo Finance (network setting) and SEC is untested there. Automated tests therefore use saved
-  sample data; anything that needs the real service is part of the Mac check.
+  sample data; anything that needs the real service is part of the Mac check. The one-time download of that sample data:
+  section 6.
 
 ## 3. Rules for every phase
 
@@ -319,8 +320,13 @@ spending" · section 5 (backup) · section 6 (spend limit, the 10 $ warning) · 
 ## 6. Open inputs
 
 - **The subsector list** — needed before phase 4.
-- **The sector before the Eye exists** (proposal, to confirm before phase 1): taken from the SEC industry code (SIC) through a
-  fixed table; I can correct it. The Eye's tag mapping takes over in phase 4.
+- **Sample data for phase 1** — needed before phase 1. The build session downloads real SEC and Yahoo answers once. Claude's
+  recommendation: I allow these hosts in the cloud environment's network setting (environment menu in the session's title bar
+  → Edit → Network access → Custom, keeping the default package-manager list): `data.sec.gov`, `www.sec.gov`,
+  `query1.finance.yahoo.com`, `query2.finance.yahoo.com`, `fc.yahoo.com`. Otherwise Claude writes a download script that I run
+  on my Mac and push. SEC also asks for a contact line (`SEC_UA`); the phase 1 session asks me for it.
+- ~~**The sector before the Eye exists**~~ — decided 2026-10-04 (roadmap section 3, "Sector list"): taken from the SEC
+  industry code (SIC) through a fixed table; I can correct it. The Eye's tag mapping takes over in phase 4.
 - **The third external review** — if it arrives before phase 1 is merged, its accepted points go into phase 1; later, into a fix of
   its own.
 

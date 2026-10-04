@@ -132,6 +132,9 @@ count as different and the count splits).
 
 If none fit, the model writes `other`; the Sunday summary asks "add a new subsector?".
 
+**The sector before the Eye exists (decision: 2026-10-04):** taken from the SEC industry code (SIC) through a fixed table;
+I can correct it. The Eye's tag mapping takes over in phase 4 (`docs/IMPLEMENTATION_PLAN.md`).
+
 ### Agent 1B (Counter) rules (decision: 2026-10-03)
 
 1. Code counts, no AI, cost zero. It runs right before agent 2; Hermes can also be asked "what was mentioned most this week?".
@@ -747,7 +750,7 @@ These steps are built as phases 0–6 in `docs/IMPLEMENTATION_PLAN.md` (2026-10-
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03 / 04: rules + 2 external reviews applied + prototype and golden set 10/10 + AI auditor — section 3). **Left:** third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Renamed **Portfolio** the same day: ledger, benchmark against SPY and gold, total wealth, the 25% note; code only. Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Database points settled (2026-10-04, section 5). ✅ 10.4 the implementation plan, phase by phase: `docs/IMPLEMENTATION_PLAN.md` (draft, 2026-10-04; replaces "10.4 coding order")
+7. ~~**Implementation plan**~~ ✅ — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Database points settled (2026-10-04, section 5). ✅ 10.4 the implementation plan, phase by phase: `docs/IMPLEMENTATION_PLAN.md` (approved 2026-10-04; replaces "10.4 coding order")
 
 Topic notes:
 
