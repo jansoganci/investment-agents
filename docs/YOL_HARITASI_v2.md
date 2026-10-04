@@ -678,6 +678,9 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 - **Times** are stored in UTC and shown in Turkey time.
 - **TL entries** (gold purchases, BES) keep the TL amount and the USD/TRY rate used; the USD value is computed from them.
 - **Two separate databases:** the real one on the Air, a development one on the main Mac; they never mix.
+- **Two Drive folders (decision: 2026-10-04):** only the Air writes to the real `Investing/`; the main Mac writes to
+  `Investing-dev/` (`DRIVE_DIR` in `.env`). Why: `card.md` is append-only — a test card from the Mac mixed into a real card could
+  not be deleted.
 - **Stock identity:** every stock gets a fixed internal number (and, for SEC filers, its SEC number, CIK); the ticker is only a
   label, so a ticker change (e.g. FB → META) does not break the history. I keep typing tickers.
 - **Price history is kept:** each night adds that day's prices as new rows; old prices are never deleted or overwritten, so I can

@@ -280,6 +280,7 @@ Geri alınan satır (`/undo`) silinmez, işaretlenir: geçersiz → `void`.
 | `Hisseler/<KOD> - <Şirket adı>/` | `Stocks/<TICKER> - <Company name>/` |
 | `karne.md` | `card.md` |
 | `raporlar/` | `filings/` |
+| ana Mac'in deneme klasörü (yalnızca Mac yazar; gerçek `Investing/`'e yalnızca Air yazar) | `Investing-dev/` |
 
 ## 5-8-13 sinyal kodları
 

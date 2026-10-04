@@ -33,8 +33,12 @@ A new phase starts only when the previous one is done (`AGENTS.md`, fixed rule 5
 | Where | Who | What | Data |
 |---|---|---|---|
 | Cloud session | Claude | builds the phase, runs the automated tests | saved sample data (`tests/fixtures/`), fake AI |
-| My Mac (Cursor) | me | the real check (UAT): real SEC, Yahoo, AI, Drive, the sites | the development database |
-| The Air (Hermes) | the system | runs everything 24/7 | the real database (`~/investment-agents-data/`) |
+| My Mac (Cursor) | me | the real check (UAT): real SEC, Yahoo, AI, Drive, the sites | the development database · `Investing-dev/` in Drive |
+| The Air (Hermes) | the system | runs everything 24/7 | the real database (`~/investment-agents-data/`) · `Investing/` in Drive |
+
+- **Mac and Air never write to the same Drive folder (decision: 2026-10-04; roadmap section 5):** on the Mac `DRIVE_DIR` is
+  `…/My Drive/Investing-dev`; only the Air writes to the real `Investing/`. Cards are append-only, so a Mac test card mixed into
+  a real card could not be deleted.
 
 - **The database file never goes to GitHub.** GitHub carries the code that creates it: the table structure and the numbered
   upgrade steps. On the Mac and on the Air one command creates or upgrades it (`uv run python -m shared.db init`); no data is
