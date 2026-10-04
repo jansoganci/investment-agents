@@ -735,6 +735,8 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 | **3. Research** | 1B Counter + agent 2: reading + web search + score + reason + opening the card | The weekly report is on Drive and on Telegram; cards for candidate stocks open on Drive |
 | **4. Portfolio** | Ledger, value and weights, benchmark against SPY and gold, total wealth, new-money ranking with the 25% note, drop alert, valuation info; no sell signals; code only | The ledger test passes (section 3, "Agent 4 rules"); the Sunday summary shows the portfolio block (value, return, SPY and gold shadows, weights, total wealth, new money with the 25% note); a drop alert triggers agent 3's check |
 
+These steps are built as phases 0–6 in `docs/IMPLEMENTATION_PLAN.md` (2026-10-04): the order, the checks and when each counts as done.
+
 ## 9. Open topics (decided together before coding)
 
 **Decision order (2026-10-03):** all decisions and plans first, then code.
@@ -745,7 +747,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03 / 04: rules + 2 external reviews applied + prototype and golden set 10/10 + AI auditor — section 3). **Left:** third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Renamed **Portfolio** the same day: ledger, benchmark against SPY and gold, total wealth, the 25% note; code only. Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Database points settled (2026-10-04, section 5). Left: the implementation plan, phase by phase, in its own document (replaces "10.4 coding order")
+7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Database points settled (2026-10-04, section 5). ✅ 10.4 the implementation plan, phase by phase: `docs/IMPLEMENTATION_PLAN.md` (draft, 2026-10-04; replaces "10.4 coding order")
 
 Topic notes:
 
@@ -869,4 +871,9 @@ points: a separate macOS user, FileVault, no sleep on power, Screen Sharing / SS
 key; `.env` with `chmod 600`, never committed; the bot talks only to my Telegram user ID; Hermes logs in with the ChatGPT
 subscription, runs as a launchd service, its terminal powers limited to our command scripts; agents run as script-only cron jobs
 (no LLM); OpenRouter key with a 15 $ monthly limit. Done when the tests in phase 7 pass.
+
+### 10.4 Implementation plan (2026-10-04)
+
+Phase by phase, in its own document: `docs/IMPLEMENTATION_PLAN.md` — how each phase is built, audited in a separate session,
+checked on my Mac and merged into main as one commit.
 
