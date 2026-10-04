@@ -43,6 +43,8 @@ Eski değer → yeni değer: `aday` → `candidate` · `takipte` → `watching` 
 
 Yeşil liste ayrı alan değil: `status = watching` ve `grade = solid`.
 
+Hisseyi kim ekledi (`added_by`): yazılardan geldi → `counter` · ben ekledim → `user` (ekranda "added by me").
+
 `belirsiz` iki yere ayrıldı. Sınıf değeri `unclear` kalır. Karttaki eksik listesinin alan adı `gaps` olur (aşağıda).
 
 ## Kayıt başlığı

@@ -150,17 +150,17 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   nightly backup to `Investing/Backup/` (last 7 daily + 4 weekly).
   **Also decided (2026-10-04):** the missing tables are added (`card_entries`, `audits`, `command_log`, `settings`, `subsectors`,
   a status on `signals`) · free questions: Hermes answers any question I ask, reading the database and the cards read-only;
-  changes only through the command list.
-- **Next (2026-10-04):** the database discussion (open points below), then the implementation plan — phase by phase, in its own
-  document (replaces "10.4 coding order") — then the phases one by one: building + tests (golden set, auditor error sets, the two
+  changes only through the command list · a stock I add myself (e.g. the abi's): `/watch X` with no card → agent 2 runs at once
+  for X alone (card + research entry, web search for news, label "added by me", `added_by: user`), then `watching` and agent 3;
+  agent 2's weekly run is unchanged · writing at the same time (WAL + a wait time) and structure changes (version number +
+  numbered upgrade steps; data is never lost) — closed.
+- **Next (2026-10-04):** the implementation plan — phase by phase, in its own document (replaces "10.4 coding order"; the
+  database points are settled) — then the phases one by one: building + tests (golden set, auditor error sets, the two
   model tests, 20-stock UAT), step 0 on the Air, then a few months of real use without changing the rules.
   Small open items: the subsector list (needed for tag mapping) · prepare `.env.example`, the `/setcommands` text and the Drive
   test script before the Air setup · the Anthropic API credit expires 2026-10-19 (use it for agent 3's AI parts and the tests) ·
   a third external review is still running · the agent 4 changes are on the branch `claude/agent4-portfolio`, not yet merged into main.
-- **Pending questions (2026-10-04):** (1) the abi's stocks that have no card — proposal waiting for the user's OK: `/watch X` opens
-  the card, X shows in the weekly ranking marked "added by me" and goes straight to `watching`; (2) concurrent writes (WAL + a wait
-  time) and table changes (a schema version) — technical settings, no decision needed; the user's condition (data is never lost when
-  the structure changes) is written; close it when the user agrees.
+- **Pending questions:** None.
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** main is on GitHub. The agent 4 (Portfolio) changes of 2026-10-04 are on the branch `claude/agent4-portfolio` (pushed),
   waiting to be merged into main.

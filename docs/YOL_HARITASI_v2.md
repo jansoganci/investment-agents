@@ -88,6 +88,7 @@ Each stock is one row in the `stocks` table:
 | `status` | **candidate** (agent 2 scored it, the card was opened) · **watching** (agent 3 keeps the card) · **archived** (the card stays, no new analysis) | candidate: agent 2 · watching / archived: **only me** |
 | `grade` | solid · mid · weak · unclear (from the latest card) | agent 3 |
 | `in_portfolio` | yes / no | **only me** (the system is not connected to the broker and cannot know) |
+| `added_by` | `counter` (it came from the posts) · `user` (I added it; shown as "added by me") | agent 2 |
 | `exchange` | where the stock trades: NYSE, NASDAQ (later HKEX, SSE, SZSE) | mapping (agent 1) |
 | `country` | where the company is based (e.g. Alibaba: exchange NYSE, country China → ADR) | mapping (agent 1) |
 
@@ -156,6 +157,12 @@ If none fit, the model writes `other`; the Sunday summary asks "add a new subsec
 5. **The card is born here:** `Investing/Stocks/<TICKER> - <Company name>/card.md` is opened on Drive; the first entry is a research
    entry (score, reason, news summaries). The stock becomes **candidate**.
 6. **Score:** below.
+7. **A stock I add myself (decision: 2026-10-04)** — e.g. one the abi recommends: `/watch X` for a stock with **no card** runs
+   agent 2 at once for X alone (its normal weekly run does not change). It opens the card with a research entry: score + reason;
+   with no posts, `mentions` = 0 and `tone` = 1 (neutral); news and the commodity link come from a web search, used only for this
+   card. The stock is marked **"added by me"** (`added_by: user`) and shows with that label in the week's ranking. Then X goes to
+   `watching` and agent 3 writes the first fundamental entry (the balance-sheet analysis). A note can say where it came from
+   (`/watch X recommended by abi`).
 
 ### Score rules (decision: 2026-10-03)
 
@@ -661,7 +668,7 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
 
 Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 
-**Decided so far (2026-10-04; the rest of the database design is discussed before the implementation plan):**
+**Database decisions (2026-10-04):**
 
 - **One price job:** every night at 03:00 Turkey time one job in `shared/` fetches every price any agent needs — my stocks, the
   green list, SPY, gold, USD/TRY, the 11 sector funds and the linked commodities — into `prices`. No agent fetches prices on its own.
@@ -674,6 +681,10 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
   always look back.
 - **Backups:** every night a consistent copy (made with SQLite's own backup command) goes to `Investing/Backup/`; the last 7 daily
   and the last 4 weekly copies are kept.
+- **Writing at the same time:** the database runs in WAL mode with a wait time — readers never wait, and a second writer waits a
+  few seconds instead of failing (e.g. my `/bought` while the 03:00 price job writes).
+- **Structure changes:** the database carries a version number; each change to the tables is a small numbered upgrade step that
+  the code applies on start. **Data is never lost when the structure changes** (my condition).
 
 Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
 Added on 2026-10-04 (decided features had no place for their records): `card_entries` (one row per card entry: date, record, `grade`, `lynch_type`, `thesis_status` — the history behind the sell triggers and the archive reminder), `audits` (the auditor's results and error rate), `command_log` (every change I make: number, command, time; `/undo` uses the number), `settings` (my overrides from Telegram, e.g. `/model`), `subsectors` (the approved subsector list).
@@ -734,7 +745,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03 / 04: rules + 2 external reviews applied + prototype and golden set 10/10 + AI auditor — section 3). **Left:** third review
 6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Renamed **Portfolio** the same day: ledger, benchmark against SPY and gold, total wealth, the 25% note; code only. Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Left: the database discussion, then the implementation plan phase by phase in its own document (replaces "10.4 coding order")
+7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Database points settled (2026-10-04, section 5). Left: the implementation plan, phase by phase, in its own document (replaces "10.4 coding order")
 
 Topic notes:
 
@@ -828,7 +839,7 @@ Beyond these commands I can ask Hermes anything; it answers from the database an
 
 | Group | Command | Example | What changes |
 |---|---|---|---|
-| Stock state | `/watch` | `/watch KO` | `candidate` → `watching`; agent 3 starts the card; a note on the card |
+| Stock state | `/watch` | `/watch KO` | `candidate` → `watching`; agent 3 starts the card; a note on the card. A stock with **no card**: agent 2 opens the card first ("added by me"), then agent 3 — the confirmation shows the estimated cost (section 3, agent 2 rule 7) |
 | | `/archive` | `/archive KO` | `watching` → `archived`; no new analysis or spend; a note on the card |
 | | `/unarchive` | `/unarchive KO` | `archived` → `watching` |
 | Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a `buy` row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
