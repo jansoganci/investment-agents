@@ -42,7 +42,7 @@ ajanlar/goz/        1. Eye — reads Emtia Defteri + Dragonomi, writes one sente
 ajanlar/sayac/      1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
 ajanlar/arastirma/  2. Research — reading + web search + score; opens the card (weekly, Sunday)
 ajanlar/analiz/     3. Analysis — SEC / PDF → card.md (quarterly / annual); prototip/ = a rule trial (not production)
-ajanlar/teknik/     4. Technical — weekly state + market filter; backtest/ is here
+ajanlar/teknik/     4. Portfolio (was Technical) — my money: ledger, benchmark, total wealth, new money; backtest/ is here
 ortak/              AI, SEC, price, Drive paths, SQLite
 ayarlar.yaml        models, budget, hours, stock list
 docs/               YOL_HARITASI_v2.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md; reviews/ (external reviews)
@@ -112,12 +112,17 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   Added (2026-10-04): the crash rule ("I do not sell because the market fell"), the drop-alert check reads the latest filing **and
   the latest news** (news only says "watch"), every sell suggestion comes with its evidence and a "check the figure" warning when a
   `data_check` flag is open.
+  **Agent 4 renamed Portfolio (2026-10-04; roadmap section 3, "Agent 4 rules"):** the only agent that looks at my money — a
+  ledger (`holdings`: buy / sell via Hermes, dividends and splits by code; starts empty, no stocks held), weekly value and weights,
+  a benchmark with SPY and gold shadow portfolios (total return for the first 12 months, then `xirr`), total wealth (stocks + gold +
+  BES; `/gold` and `/bes` about monthly into `other_assets`; weekly `snapshots`) against the 800 thousand $ goal, the new-money
+  ranking weekly with a "Not suggested (25% rule)" line (`weight_cap`). Code only, no AI; all figures in USD.
   Item 7 started — roadmap section 10. **10.1 models and providers decided (2026-10-04):** all system output and commands in
   English; cheap = DeepSeek V4 Flash, strong = Claude Sonnet 5.5 (high) with GPT-6 Sol fallback, Hermes chat = ChatGPT/Codex
   subscription if possible else DeepSeek V4 Pro; provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,
   OpenAI 5 $) then OpenRouter; model change from Telegram via an override in the Air database; only needed data goes to models.
   **10.2 Hermes command list decided (2026-10-04):** 10 information commands + actions (`/watch`, `/archive`, `/unarchive`,
-  `/bought`, `/sold`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`) in the Telegram `/` menu;
+  `/bought`, `/sold`, `/gold`, `/bes`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`) in the Telegram `/` menu;
   every change asks for confirmation and is logged.
   **10.3 Air setup checklist written:** `docs/AIR_SETUP.md` (to prepare before it: `.env.example`, `/setcommands` text, Drive test script).
   **AI auditor decided (2026-10-04; roadmap section 3, "AI auditor"):** one auditor (DeepSeek V4 Pro, fallback GPT-6 Sol — a

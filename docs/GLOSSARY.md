@@ -155,9 +155,14 @@ Hızlı büyüyen güvenlik kuralı: `fast_grower_safety` (faaliyet marjı ❌ +
 | düşüş alarmı | `drop_alert` |
 | pahalı | `expensive` (PEG > 3 veya nakit verimi < %1, 4 hafta) |
 | portföydeki ağırlık | `weight` |
-| pozisyonlar tablosu | `holdings` |
+| pozisyonlar tablosu (defter) | `holdings` |
 | piyasa filtresi | `market_filter` |
 | satışı değerlendir | `consider_selling` |
+| kıyas | `benchmark` |
+| gölge portföy (SPY / altın) | `shadow` |
+| alımları sayan yıllık getiri | `xirr` |
+| toplam servet (hisse + altın + BES) | `total_wealth` |
+| %25 kuralı yüzünden önerilmedi | `weight_cap` |
 
 ## Yapay zekâ denetçi
 
@@ -215,7 +220,7 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 | 1B. Sayaç | Counter | `agents/counter` |
 | 2. Araştırma | Research | `agents/research` |
 | 3. Analiz | Analysis | `agents/analysis` |
-| 4. Teknik | Technical | `agents/technical` |
+| 4. Portföy (eski: Teknik) | Portfolio | `agents/portfolio` |
 | `ortak/` | shared | `shared/` |
 | `ajanlar/` | agents | `agents/` |
 
@@ -233,6 +238,8 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 | `fiyatlar` | `prices` |
 | `sinyaller` | `signals` |
 | `calismalar` | `runs` |
+| haftalık portföy satırı | `snapshots` |
+| altın / BES girişleri | `other_assets` |
 
 `tags` satırı: tür → `kind` (`company` · `commodity` · `sector`) · karşılık → `maps_to` · borsa → `exchange` · ülke → `country` · ana sektör → `sector` · alt sektör → `subsector`.
 
@@ -243,6 +250,10 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 `runs` sonuç: `tamam` → `ok` · `hata` → `error`.
 
 `articles` işaretleri: detaylı okundu → `read_deep` · metin eksik → `text_missing`.
+
+`holdings` satır türü: alış → `buy` · satış → `sell` · temettü → `dividend` · bölünme → `split`.
+
+`other_assets` türü: altın (gram) → `gold` · BES (TL bakiye) → `bes`.
 
 ## Drive yolları
 

@@ -42,7 +42,7 @@ write it, build it, run it; see the mistake, fix it. Building and fixing beats t
 | **1B. Counter** | Counts and ranks which stock / sector / commodity appeared in how many posts over the last 7 days. Code, no AI | Right before agent 2 + on request | ranked list | Does not score, does not read |
 | **2. Research** | Top of the Counter list, at most 10 stocks: reads the full text, web search, score + reason; **opens the card** | Once a week (Sunday morning) | `scores` table + card (`card.md`) + `Weekly/` report | Does not do fundamental analysis, does not visit the site |
 | **3. Analysis** | Builds the card from financial statements for stocks with `status = watching` (US: SEC; HK/A: uploaded PDF) + sets the grade | When a new filing arrives (see below) | `financials` table + `card.md` + grade | Does not forecast price, does not say buy/sell |
-| **4. Technical** | Weekly price watcher: where the new monthly money could go, drop alert, valuation and weight info (section 3, "Agent 4 rules") | Weekly (Sunday) | `prices` / `signals` tables + Telegram Sunday summary | Does not trade; gives **no** per-stock technical sell signal |
+| **4. Portfolio** | My money, not companies: ledger, value and weights, benchmark against SPY and gold, total wealth against the goal, where the new money could go, drop alert, valuation info (section 3, "Agent 4 rules") | Weekly (Sunday) | `holdings`, `prices`, `signals`, `other_assets`, `snapshots` + the portfolio block of the Sunday summary | Does not trade; gives **no** sell signal; uses no AI |
 
 **The card is the stock card.** Each stock has one card; everything about it is there. The card **is born in agent 2**
 (first entry: research — score, reason, news summaries); when I start watching it, agent 3 appends fundamental entries
@@ -66,9 +66,9 @@ to the same file. As quarters pass, new dated entries are appended at the end an
                                           │              │
                          grade = solid → GREEN LIST      │
                                           ▼              │
- 4. TECHNICAL (weekly)                                   │
- Green list + market filter                              │
- signals table → Sunday Telegram summary ────────────────┘
+ 4. PORTFOLIO (weekly)                                   │
+ Green list + my holdings + SPY / gold shadows           │
+ new money, alerts, total wealth → Sunday summary ───────┘
                                           │
                                           ▼
                               ME: buy / sell / wait (at the broker)
@@ -454,34 +454,87 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
-### Agent 4 (Technical) rules (decision: 2026-10-04)
+### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)
 
 **Why the role changed:** the backtests (`BAGLAM.md` section 3) show that buying and selling single stocks on technical signals
 loses. Daily 5-8-13 lagged buy-and-hold in 24 of 24 stocks; a market filter with short averages loses money; a stock's own trend
 exit sells quality companies on every dip and buys them back late. The way to get **more shares** is not to sell and buy back,
-but to **send the new monthly money to a quality stock while it is down**. So agent 4 is a **price watcher**, not a trading
-signal. It runs weekly (Sunday), with the Friday close and the last 4 quarters' figures.
+but to **send the new monthly money to a quality stock while it is down**. So agent 4 is not a trading signal. It is the only
+agent that looks at **my money**, not at companies: what I bought, what it is worth, whether my picks beat SPY and gold, how far
+total wealth is from the goal, and where the new money could go. It runs weekly (Sunday), with the Friday close and the last 4
+quarters' figures.
 
-1. **Where the new money could go:** each month it ranks the green-list stocks — down from their high + thesis intact + a fair price
-   line come first. Message: "this month's money could go to …". It never buys. A stock that is already above **25%** of the portfolio
-   gets no new money (the portfolio rebalances itself with new money, no selling, no tax); being above 25% is fine and triggers no
-   sell alert (Lynch: do not cut the flowers).
-2. **Drop alert:** a stock I hold falls **20%** from its highest weekly close of the last 52 weeks → Telegram, and agent 3 runs a
+**Code only, no AI.** Every figure is arithmetic; the only data is free Yahoo data. The AI around it is decided elsewhere: Hermes
+turns my message into a command (section 10.2), and agent 3 answers the drop-alert check (rule 6).
+
+**All figures in USD.** Nothing is converted to TL (the lira's fall would look like a gain). The only conversion is the BES
+balance: TL → USD at that week's rate.
+
+1. **Ledger (`holdings`):** one row per event, append-only — `buy` and `sell` from my commands (`/bought`, `/sold`); `dividend`
+   and `split` added by code. Positions (quantity, average cost) are computed from the rows. The ledger starts empty (on
+   2026-10-04 I hold no stocks).
+   - **Dividends:** Yahoo's dividend history × the quantity I held on the ex-date × (1 − withholding). Withholding is one setting
+     in `ayarlar.yaml` (default 20%; checked once against the Midas statement).
+   - **Splits:** from Yahoo's split history; code adjusts the quantity and tells me ("NVDA split 10:1 — your 10 shares are now
+     100; check it in Midas"). No drop alert in a split week (section 3, "AI auditor").
+2. **Value and weights (weekly):** each holding's value, its weight in the **stock portfolio** (gold and BES not included), and
+   its gain / loss in $ and %; the stock portfolio's total.
+3. **Benchmark — shadow portfolios (weekly):** every money movement is copied on the same day, for the same dollars, into a
+   **SPY shadow** and a **gold shadow**: a buy puts money in; a sale or a dividend takes money out. Cash waiting at the broker
+   is not counted (simple first).
+   - For me and for each shadow: **put in**, **got back** (sales + dividends), **value now**, and the return.
+   - **Return:** for the first 12 months only the total return (%), because a short gain turned into a yearly figure misleads
+     (+1% in one week ≈ +68% a year). After 12 months, also the yearly return that counts every buy (`xirr`).
+   - SPY uses Yahoo's adjusted close (dividends reinvested; a small advantage for the shadow, whose dividends are not taxed);
+     gold uses the gold price in USD.
+   - Information only: it shows whether my picks add anything over SPY and gold. It never moves money.
+4. **Total wealth (`total_wealth`):** stocks (from the ledger) + gold (grams × the gold price per gram) + BES (TL balance ÷
+   USD/TRY), and its share of the goal (a setting in `ayarlar.yaml`: 800,000 $). I enter my gold grams and BES balance about once
+   a month (`/gold 52`, `/bes 245000`); each entry is a new dated row in `other_assets` (append-only; the latest row counts). An
+   entry older than 45 days is shown with its date ("gold value from 2026-08-30"). Emergency cash is not counted.
+5. **Where the new money could go (weekly; was monthly — same work, no extra cost):** it ranks the green-list stocks — down from
+   their high + thesis intact + a fair price line come first. Message: "this month's money could go to …". It never buys. A stock
+   that is already above **25%** of the stock portfolio gets no new money (the portfolio rebalances itself with new money, no
+   selling, no tax); being above 25% is fine and triggers no sell alert (Lynch: do not cut the flowers). **A stock skipped only
+   because of the 25% rule is not dropped silently:** the summary lists it under "Not suggested (25% rule)" with the rank it would
+   have had and its weight — "Not a sell signal. Your call." (`weight_cap`).
+6. **Drop alert:** a stock I hold falls **20%** from its highest weekly close of the last 52 weeks → Telegram, and agent 3 runs a
    "did the fundamentals break?" check at once. Filings are slower than the price, so the check reads **the latest filing and the
    latest news** (agent 1's `articles` for that stock + a short web search: e.g. "sales are slowing", "management cut its outlook").
    The answer: "thesis intact, the drop is the market" or "thesis point 2 broke" or "news says watch: …". News can only say "watch";
    a sell suggestion still needs agent 3's filing-based triggers. It never says "sell".
-3. **Valuation watch:** PEG > 3 **or** free-cash-flow yield < 1% for **4 weeks in a row** → information only ("expensive for now") and
-   the stock goes to the back of the queue for new money. **No sell suggestion.** Weekly figures live in the database (`prices` / `signals`), not in
+7. **Valuation watch:** PEG > 3 **or** free-cash-flow yield < 1% for **4 weeks in a row** → information only ("expensive for now") and
+   the stock goes to the back of the queue for new money. **No sell suggestion.** Weekly figures live in the database, not in
    the card; the card gets a dated note only when an alert fires.
-4. **Weights in the Sunday summary:** each holding's share of the portfolio (e.g. "NVDA 32% of the portfolio") — information only.
-   This needs my position sizes: a Hermes command such as "ABC 10 adet aldım" fills a `holdings` table (command list: implementation plan).
-5. **Market filter: not used in version 1** (decision: 2026-10-04 — option A, no insurance). Tests (`BAGLAM.md` section 3): an
+8. **Market filter: not used in version 1** (decision: 2026-10-04 — option A, no insurance). Tests (`BAGLAM.md` section 3): an
    S&P 500 average of about 21–55 weeks (40 in the middle) roughly halves the largest drop but costs return; with monthly buying,
    "new money waits" protects almost nothing, "sell half" costs about 4 points a year, "sell all" about 7–8. Later idea (not now):
    **shrink, do not sell** the portfolio on a macro reason (e.g. rising interest rates) — to be discussed later.
-6. **No sell signals at all from agent 4** — no per-stock technical signal, no market-filter selling. Selling is suggested only by
+9. **No sell signals at all from agent 4** — no per-stock technical signal, no market-filter selling. Selling is suggested only by
    agent 3's triggers (above); the decision is mine.
+
+**Storage (SQLite):** `holdings` (the ledger) · `prices` (Friday closes: my stocks, the green list, SPY, gold, USD/TRY) ·
+`signals` (`new_money_rank`, `weight_cap`, `drop_alert`, `expensive`) · `other_assets` (my gold / BES entries) · `snapshots`
+(one row per week: stock value, put in, got back, return, SPY shadow, gold shadow, gold, BES, `total_wealth`, share of the
+goal — the frozen weekly history).
+
+**Output:** the portfolio block of the Sunday summary; the same on demand with `/portfolio`. Example (made-up figures):
+
+```text
+PORTFOLIO — week ending 2026-11-06
+Value $14,820 · week +1.2% · put in $13,000 · got back $40 (dividends)
+Return so far: +14.3%   (yearly figure after 12 months)
+Same money, same days → SPY $14,310 (+10.4%) · Gold $13,650 (+5.3%)
+You vs SPY: +$510
+Weights: NVDA 31% · V 22% · KO 18% · COST 15% · RIO 14%
+Drop alerts: none · Expensive 4 weeks: NVDA (PEG 3.4)
+New money: 1) V  2) COST
+Not suggested (25% rule): NVDA — would rank 1st, 31% of the stock portfolio. Not a sell signal. Your call.
+Total wealth: stocks $14.8k + gold 52 g $6.8k + BES $5.3k = $26.9k · 3.4% of $800k
+```
+
+**Test:** a hand-checked ledger (two buys, a sale, a dividend, a split) gives the same value, weights, shadow values and return
+as a spreadsheet.
 
 ### AI auditor (decision: 2026-10-04)
 
@@ -497,7 +550,7 @@ Free code checks come first; the auditor is the second line. **It never produces
 | 1B Counter | — (pure code) | tests |
 | **Agent 2 (Research)** | an invented or misread **serious negative event** forces news-flow to 0 (medium) | **code + AI auditor** (only these events) |
 | **Agent 3 (Analysis)** | a wrong figure, a wrong reading, an invented quote → a wrong grade, **a wrong sell suggestion** (high) | **code + AI auditor** (the main place) |
-| Agent 4 (price watcher) | a split shows as a fake −50% drop (low) | **code:** no drop alert in a week with a split in Yahoo's history |
+| Agent 4 (Portfolio) | a split shows as a fake −50% drop (low) | **code:** no drop alert in a week with a split in Yahoo's history |
 | Hermes commands | a message misunderstood ("15" vs "50") (medium) | **me** (every change asks for confirmation) + **code:** `/sold` cannot exceed what I hold; `/bought` / `/sold` price more than 20% from that day's close → "are you sure?"; an unknown ticker is refused |
 
 **Shared engine, one rule card per place.** Shared: the model, the output format (for each item **pass / fail / not_found** + a
@@ -554,7 +607,7 @@ outside models, like the external review of 2026-10-03 (`docs/reviews/`) — the
 
 On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents separately. Hermes runs the agents and reads the results.
 
-- **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, technical state) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`.
+- **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, the portfolio block of agent 4) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`.
 - **What it can do:** answer questions (it reads the database + the cards: "XYZ'nin karnesi ne diyor?", "bu ay ne harcadık?") and run a command from the **defined command list** ("XYZ'yi takibe al", "ABC'yi portföye ekledim", "XYZ'yi şimdi analiz et", "XYZ'deki U1 uyarısını kapat, çünkü …"). The command list is written in the implementation plan.
 - **Asking for missing data (decision: 2026-10-03):** if agent 3 cannot find a figure (one that landed in the ledger), it asks me —
   **when I say "XYZ'yi analiz et"** and **on Sunday** during the analyses (that run's gaps in one message).
@@ -590,7 +643,7 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
 
 Every night a **backup copy** of SQLite is sent to Drive.
 
-Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals`, `holdings` (my positions, entered via Hermes), `runs` (dollars spent included).
+Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals`, `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
 
 ```text
 Investing/                                 (Drive)
@@ -602,7 +655,7 @@ Investing/                                 (Drive)
     └── filings/                           HK / A-share PDFs (I upload them by hand)
 
 investment-agents/                         (code, Git)
-├── agents/eye/  counter/  research/  analysis/  technical/
+├── agents/eye/  counter/  research/  analysis/  portfolio/
 ├── shared/                                AI, SEC, price, Drive paths, database
 ├── ayarlar.yaml
 └── docs/  YOL_HARITASI_v2.md  BAGLAM.md  GLOSSARY.md  TASINANLAR.md
@@ -635,7 +688,7 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 | **1. Analysis + card** | `shared/` + SQLite + agent 3, 3–5 US stocks | **Acceptance test of at least 20 stocks, figures compared by hand with the 10-K;** 3 stocks have a card on Drive; a second run appends a new dated entry without deleting the old one; **the trial-set test passes:** 3–5 companies everyone accepts as quality come out solid, 1–2 companies known to be weak do **not** come out solid, trap examples are classified correctly (in the old system no stock could enter the green list; if the quality names do not come out solid the rules are too tight, if the weak names come out solid the rules are too loose) |
 | **2. Eye** | Both sites with Playwright, 3 passes a day | For 1 week every pass fills `articles` (one sentence + full text + mapped tags) and the site never once answers "too many requests" / a block |
 | **3. Research** | 1B Counter + agent 2: reading + web search + score + reason + opening the card | The weekly report is on Drive and on Telegram; cards for candidate stocks open on Drive |
-| **4. Technical** | Weekly price watcher (new-money ranking, drop alert, valuation and weight info; no sell signals) | The Sunday Telegram summary shows the new-money ranking, weights and valuation alerts; a drop alert triggers agent 3's check |
+| **4. Portfolio** | Ledger, value and weights, benchmark against SPY and gold, total wealth, new-money ranking with the 25% note, drop alert, valuation info; no sell signals; code only | The ledger test passes (section 3, "Agent 4 rules"); the Sunday summary shows the portfolio block (value, return, SPY and gold shadows, weights, total wealth, new money with the 25% note); a drop alert triggers agent 3's check |
 
 ## 9. Open topics (decided together before coding)
 
@@ -646,13 +699,13 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 3. ~~Agent 1 (Eye)~~ ✅ (2026-10-03: section 3, "Agent 1 rules")
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03 / 04: rules + 2 external reviews applied + prototype and golden set 10/10 + AI auditor — section 3). **Left:** third review
-6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Later: a macro "shrink, do not sell" idea
+6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Renamed **Portfolio** the same day: ledger, benchmark against SPY and gold, total wealth, the 25% note; code only. Later: a macro "shrink, do not sell" idea
 7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Left: 10.4 coding order
 
 Topic notes:
 
 - ~~**Agent 2 score rules.**~~ ✅ section 3, "Score rules".
-- **Card format.** Which metrics, which checks, how the "reason" section is written. Fundamental-analysis result in 3 classes: **solid / mid / weak**; only solid ones go to technical analysis (the green list). **To be discussed with agent 3:** if data is missing, Hermes asks me for it on Telegram (I find it and provide it, the agent continues the calculation) — control stays with me, the work stays with the agent.
+- **Card format.** Which metrics, which checks, how the "reason" section is written. Fundamental-analysis result in 3 classes: **solid / mid / weak**; only solid ones go to agent 4 (the green list). **To be discussed with agent 3:** if data is missing, Hermes asks me for it on Telegram (I find it and provide it, the agent continues the calculation) — control stays with me, the work stays with the agent.
 - ~~**Agent 4 rules.**~~ ✅ section 3, "Agent 4 rules". No market-filter selling in v1; later idea: shrink the portfolio on a macro reason (e.g. rising rates).
 - ~~**Site terms of use.**~~ ✅ The site owner gave permission (see section 4, Site reading).
 - **HK / A-share data** (⏸ deferred — version 1 is US only). Which figures will be taken from the PDF by hand / by AI. Note: US filings do not need PDF / OCR (SEC figures are a ready table). Most HK / A PDFs contain text → read with a free Python library; OCR only for a scanned (image) PDF, and that too is free on the computer.
@@ -728,7 +781,7 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 | `/green` | the green list: type, grade, price line |
 | `/candidates` | this week's candidates with scores and reasons |
 | `/card KO` | summary of the latest card entry + Drive link |
-| `/portfolio` | holdings: quantity, average cost, weight in the portfolio, gain / loss |
+| `/portfolio` | the portfolio block: holdings (quantity, average cost, weight, gain / loss), benchmark against SPY and gold, total wealth and its share of the goal |
 | `/missing` | missing figures waiting for me |
 | `/spend` | this month's AI spend by provider; how much is left of the limit |
 | `/model` | which job runs on which model now |
@@ -743,6 +796,8 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 | | `/unarchive` | `/unarchive KO` | `archived` → `watching` |
 | Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a BUY row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
 | | `/sold` | `/sold 5 KO 92.10` | a SELL row; when the position reaches 0, `in_portfolio = no` |
+| | `/gold` | `/gold 52` | my gold balance in grams → a new dated row in `other_assets` (total wealth); more than 50% away from the last entry → "are you sure?" |
+| | `/bes` | `/bes 245000` | my BES balance in TL → a new dated row in `other_assets`; the same 50% check |
 | Analysis | `/analyze` | `/analyze KO` or `/analyze KO opus-5.5` | runs agent 3 now (filing + latest news); the confirmation shows the **estimated cost** |
 | Card | `/closewarning` | `/closewarning KO U1 one-off tax deposit, not recurring` | the warning closes; a note with the reason; it does not reopen unless the condition changes |
 | | `/thesis` | `/thesis KO <corrected point>` | my correction of the AI's thesis as a note; the old thesis is not deleted |
