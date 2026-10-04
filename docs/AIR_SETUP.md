@@ -36,19 +36,24 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [ ] **`.env`** (secrets): Anthropic, DeepSeek, OpenAI, OpenRouter keys + the SEC contact (`SEC_UA`). `chmod 600 .env`.
       **Never committed.** Template: `.env.example` (Claude).
 - [ ] Database folder `~/investment-agents-data/` — **outside Drive** (rule: SQLite never goes in the Drive folder).
+- [ ] In `~/investment-agents`: `uv sync`, then `uv run python -m shared.db init` (creates the database in that folder) and
+      `uv run python -m shared.db info` (version 1, every table with 0 rows).
 
 ## Phase 3 — Google Drive (~15 min) · me
 
 - [ ] Install "Google Drive for desktop", sign in.
 - [ ] Setting: **Mirror files** (files also on disk; no trouble when the internet drops; our files are small).
-- [ ] Folders: `Investing/` with `Inbox/`, `Weekly/`, `Backup/`, `Stocks/`.
+- [ ] Folders: `Investing/` with `Inbox/`, `Weekly/`, `Backup/`, `Stocks/` (the test script below also creates any that are missing).
+- [ ] Put the full path of `Investing/` into `.env` as `DRIVE_DIR` (e.g.
+      `/Users/agents/Library/CloudStorage/GoogleDrive-<account>/My Drive/Investing`).
 
 ## Phase 4 — Telegram bot (~15 min) · me (menu text from Claude)
 
 - [ ] **@BotFather** → `/newbot` → a name → copy the **bot token**. It is a password: never paste it into any chat; it goes
       straight into `.env` on the Air.
 - [ ] My Telegram **user ID** (e.g. via @userinfobot): the bot talks **only to me**.
-- [ ] `/` menu: @BotFather → `/setcommands` with the command list of roadmap section 10.2 (copy-paste text from Claude).
+- [ ] `/` menu: @BotFather → `/setcommands` → choose the bot → paste the whole of `docs/telegram_setcommands.txt`
+      (also printed by `uv run python -m shared.commands --setcommands`).
 
 ## Phase 5 — Hermes (~30 min) · me, checked together
 
@@ -75,21 +80,29 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 |---|---|---|
 | 1 | Write "hello" to Hermes on Telegram | an answer comes (from the ChatGPT subscription) |
 | 2 | Write to the bot from another Telegram account | **no answer** (the bot is mine only) |
-| 3 | Scheduled test script (no AI, hourly) | a dated test file appears in `Investing/Inbox/` and **shows up in Drive on my phone** (script from Claude) |
+| 3 | Scheduled test script (no AI, hourly): `cd ~/investment-agents && uv run python -m shared.drive test` | a dated test file `drive-test-….md` appears in `Investing/Inbox/` and **shows up in Drive on my phone** |
 | 4 | Restart the Air | after my password, Hermes starts by itself and Telegram works |
 | 5 | Screen Sharing from the main Mac | it connects |
-| 6 | A scheduled test script prints a short message | the message arrives on Telegram — the path every agent's messages will use (roadmap section 3, "How messages travel") |
+| 6 | The same scheduled script prints a short message ("DRIVE TEST …") | the message arrives on Telegram — the path every agent's messages will use (roadmap section 3, "How messages travel") |
 
 ## Prepared by Claude before the setup
 
-1. `.env.example` — which keys go where (empty template).
-2. The Telegram `/setcommands` text (copy-paste).
-3. The test script that writes a file to Drive.
+Built in phase 0 (2026-10-04):
+
+1. `.env.example` (repo root) — which keys go where (empty template). Copy it to `.env` and fill it in.
+2. The Telegram `/setcommands` text: `docs/telegram_setcommands.txt` (copy-paste).
+3. The test script that writes a file to Drive and prints a message: `uv run python -m shared.drive test` (code in
+   `shared/drive/__main__.py`). It also writes a `runs` row, so `/status` shows it (needs `shared.db init` first).
+
+Other step-0 helpers in the code: `/help`, `/status`, `/undo` work (`uv run python -m shared.commands status`); the read-only
+path for free questions is `uv run python -m shared.ask tables | sql "SELECT …" | card KO` — this is what Hermes's terminal
+is limited to, together with `shared.commands`.
 
 ## Later (not step 0)
 
 - Playwright + the one-time logins to Emtia Defteri and Dragonomi (with agent 1).
-- The nightly SQLite backup to `Investing/Backup/` (with the first agent that writes to the database).
+- The nightly SQLite backup to `Investing/Backup/` is built (`uv run python -m shared.backup`); it is scheduled with the other
+  jobs in phase 6.
 
 ## Sources
 

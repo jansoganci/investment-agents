@@ -334,7 +334,7 @@ spending" · section 5 (backup) · section 6 (spend limit, the 10 $ warning) · 
 
 | Phase | Status | Branch | Merged as |
 |---|---|---|---|
-| 0 | not started | — | — |
+| 0 | built, waiting for the audit | `claude/phase-0-foundation-arj800` | — |
 | 1 | not started | — | — |
 | 2 | not started | — | — |
 | 3 | not started | — | — |
