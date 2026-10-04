@@ -129,24 +129,25 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   staleness rule for gold / BES (I enter them every month).
   Item 7 started — roadmap section 10. **10.1 models and providers decided (2026-10-04):** all system output and commands in
   English; cheap = DeepSeek V4 Flash, strong = Claude Sonnet 5.5 (high) with GPT-6 Sol fallback, Hermes chat = ChatGPT/Codex
-  subscription if possible else DeepSeek V4 Pro (through OpenRouter, non-China providers); provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,
+  subscription if possible else DeepSeek V4 Pro; provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,
   OpenAI 5 $) then OpenRouter; model change from Telegram via an override in the Air database; only needed data goes to models.
   **10.2 Hermes command list decided (2026-10-04):** 10 information commands + actions (`/watch`, `/archive`, `/unarchive`,
   `/bought`, `/sold`, `/gold`, `/bes`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`, `/undo`) in the Telegram `/` menu;
   every change asks for confirmation, is logged and gets a number (`/undo` uses it; nothing is deleted, rows are marked `void`).
   **10.3 Air setup checklist written:** `docs/AIR_SETUP.md` (to prepare before it: `.env.example`, `/setcommands` text, Drive test script).
-  **AI auditor decided (2026-10-04; roadmap section 3, "AI auditor"):** one auditor (DeepSeek V4 Pro through OpenRouter, non-China
-  providers; fallback GPT-6 Sol — a different family from the writer), used only in agent 3 (figure, reading, sell audits) and
+  **AI auditor decided (2026-10-04; roadmap section 3, "AI auditor"):** one auditor (DeepSeek V4 Pro, fallback GPT-6 Sol — a
+  different family from the writer), used only in agent 3 (figure, reading, sell audits) and
   agent 2 (serious-negative events); code checks elsewhere; one rule card per place with known traps and an error test set; on a
   fail `unverified` + Telegram, a sell suggestion is held; a big review every 6 months.
   **Document audit (2026-10-04):** all documents and the prototype checked; no rule error; stale lines fixed (golden-set line,
   SPY filter line, project map, agent 1 cost, Turkish example messages → English, `ortak` → `shared`, `buy` / `sell` names, the
-  review prompt marked historical). Decided: DeepSeek models for the auditor and Hermes's fallback run through OpenRouter on
-  non-China providers (my personal data never goes to DeepSeek's own API) · `/undo` added · `ayarlar.yaml` → `settings.yaml` ·
+  review prompt marked historical). Decided: DeepSeek's own API is used directly — where data is processed does not matter to the
+  user; no more comments on model choices · `/undo` added (a correction always waits for my `yes`) · `ayarlar.yaml` → `settings.yaml` ·
   Sunday order: Counter → agent 2 → agent 3 → agent 4 → summary · messages reach Telegram through Hermes, built and tested first
   (step 0) · one shared nightly price job (03:00) for all prices · new code under `agents/` and `shared/`, `ajanlar/` is an archive ·
   database so far: times in UTC (shown in Turkey time), TL entries keep the TL amount and the rate, the Air's and the development
-  databases never mix, nightly backup to `Investing/Backup/`.
+  databases never mix, stock identity = internal number + CIK (the ticker is a label), price history is kept (never overwritten),
+  nightly backup to `Investing/Backup/` (last 7 daily + 4 weekly).
 - **Next (2026-10-04):** the database discussion (open points below), then the implementation plan — phase by phase, in its own
   document (replaces "10.4 coding order") — then the phases one by one: building + tests (golden set, auditor error sets, the two
   model tests, 20-stock UAT), step 0 on the Air, then a few months of real use without changing the rules.
@@ -154,9 +155,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   test script before the Air setup · the Anthropic API credit expires 2026-10-19 (use it for agent 3's AI parts and the tests) ·
   a third external review is still running · the agent 4 changes are on the branch `claude/agent4-portfolio`, not yet merged into main.
 - **Pending questions (left open by the user, 2026-10-04):** (1) the abi's stocks that have no card — the user will ask for something;
-  (2) Hermes and free questions (can Hermes only answer through the information commands?); (3) the database, in its own talk: the
-  tables still missing (`settings`, `command_log`, `subsectors`, `audits`, grade / thesis history per card entry, a status on
-  `signals`), stock identity (internal number + SEC CIK instead of the ticker), price history vs overwriting old prices, how long
-  backups are kept (proposal: the last 7 days + 4 weeks).
+  (2) Hermes and free questions (can Hermes only answer through the information commands?) — not clear yet, explain more simply;
+  (3) the missing tables — waiting for the user's OK (`settings`, `command_log`, `subsectors`, `audits`, grade / thesis history per
+  card entry, a status on `signals`); (4) concurrent writes (WAL + a wait time) and table changes (a schema version) — not clear
+  yet, explain more simply; the user's requirement: data is never lost when the structure changes.
+  **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** main is on GitHub. The agent 4 (Portfolio) changes of 2026-10-04 are on the branch `claude/agent4-portfolio` (pushed),
   waiting to be merged into main.

@@ -55,8 +55,7 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [ ] Install: `curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash`,
       then `hermes --version`.
 - [ ] **Log in with the ChatGPT subscription:** `hermes auth add openai-codex` → open the link, sign in to ChatGPT, paste the
-      code back. Hermes never sees the password. If it fails: fallback DeepSeek V4 Pro through OpenRouter, non-China providers only (my portfolio data never goes to
-      DeepSeek's own API — section 10.1).
+      code back. Hermes never sees the password. If it fails: fallback DeepSeek V4 Pro with its API key (section 10.1).
 - [ ] **Connect Telegram:** `hermes gateway setup` → the bot token and **only my user ID**.
 - [ ] **Run as a service:** `hermes gateway install`, `hermes gateway start` (a launchd service; starts again after a restart).
 - [ ] ⚠️ **Limit Hermes's powers.** By default Hermes is an agent that can run terminal commands; our rule is "the command list

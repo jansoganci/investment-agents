@@ -597,8 +597,7 @@ the error rate).
 **On a fail:** the card gets an **`unverified`** mark, Telegram gets "the auditor disagrees: …"; a sell suggestion is **held back**;
 the figure is not changed; the decision is mine.
 
-**Model:** **DeepSeek V4 Pro** through OpenRouter, non-China providers only (it sees sell suggestions, so my holdings), fallback
-**GPT-6 Sol** (section 10.1). The auditor must come from a **different model family** than
+**Model:** **DeepSeek V4 Pro**, fallback **GPT-6 Sol** (section 10.1). The auditor must come from a **different model family** than
 the writer (Claude Sonnet 5.5): a model checking its own writing tends to share its blind spots. Cost about 0.01 $ per audit — a few
 cents a month.
 
@@ -669,6 +668,12 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 - **Times** are stored in UTC and shown in Turkey time.
 - **TL entries** (gold purchases, BES) keep the TL amount and the USD/TRY rate used; the USD value is computed from them.
 - **Two separate databases:** the real one on the Air, a development one on the main Mac; they never mix.
+- **Stock identity:** every stock gets a fixed internal number (and, for SEC filers, its SEC number, CIK); the ticker is only a
+  label, so a ticker change (e.g. FB → META) does not break the history. I keep typing tickers.
+- **Price history is kept:** each night adds that day's prices as new rows; old prices are never deleted or overwritten, so I can
+  always look back.
+- **Backups:** every night a consistent copy (made with SQLite's own backup command) goes to `Investing/Backup/`; the last 7 daily
+  and the last 4 weekly copies are kept.
 
 Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals`, `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
 
@@ -750,8 +755,8 @@ English — checked in the model test. (My working conversations about the proje
 |---|---|---|---|
 | **Cheap** — agent 1's one sentence, new-tag classification, making Telegram messages plain | **DeepSeek V4 Flash** | — | Gemini Flash-Lite or GPT-6 Luna if the test is poor |
 | **Strong** — agent 2 (tone, news flow, score reasons), agent 3 ("why?" answers with quotes, first thesis, thesis check, drop-alert check) | **Claude Sonnet 5.5** | **high** | **GPT-6 Sol** |
-| **Hermes chat** (Telegram) | my ChatGPT / Codex subscription, if Hermes can log in with it (checked in step 0) | — | **DeepSeek V4 Pro** through OpenRouter, non-China providers only (cheap, strong for its price) |
-| **Auditor** (agents 2 and 3; section 3, "AI auditor") | **DeepSeek V4 Pro** through OpenRouter, non-China providers only — a different family from the writer | — | **GPT-6 Sol** |
+| **Hermes chat** (Telegram) | my ChatGPT / Codex subscription, if Hermes can log in with it (checked in step 0) | — | **DeepSeek V4 Pro** (cheap, strong for its price) |
+| **Auditor** (agents 2 and 3; section 3, "AI auditor") | **DeepSeek V4 Pro** — a different family from the writer | — | **GPT-6 Sol** |
 
 Not needed for routine work: Opus 5.5 / GPT-6 Astra (the code does the arithmetic; the model reads and explains). A one-off use
 (e.g. one first thesis) is possible with a Telegram override.
@@ -764,7 +769,7 @@ order; on an error, exhausted credit or quota it moves to the next one; every ca
 ```yaml
 cheap:  [deepseek: deepseek-v4-flash,          openrouter: deepseek/deepseek-v4-flash]
 strong: [anthropic: claude-sonnet-5.5 (high),  openrouter: anthropic/claude-sonnet-5.5,  openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
-auditor: [openrouter: deepseek/deepseek-v4-pro (non-China providers only),  openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
+auditor: [deepseek: deepseek-v4-pro,         openrouter: deepseek/deepseek-v4-pro,   openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
 ```
 
 **My credits (2026-10-04):** Anthropic API 90 $ (expires 2026-10-19), DeepSeek 10 $, OpenAI API 5 $. The system will not be live
@@ -784,10 +789,8 @@ The override lives in the database on the Air (not in `settings.yaml` in git, so
 spend limit still applies.
 
 **Data sent to models — only what the job needs.** Post texts and filings go out; my holdings, trades, amounts and portfolio do not
-go to a model unless a job needs them (e.g. Hermes answering my own question). DeepSeek's own API processes data in China — fine
-for news text, never for my personal data. So only the cheap jobs (news text) use DeepSeek's own API; the auditor (it sees sell
-suggestions) and Hermes's fallback (it sees my portfolio) use DeepSeek models through OpenRouter, non-China providers only
-(decision: 2026-10-04).
+go to a model unless a job needs them (e.g. Hermes answering my own question). Where a provider processes the data (US, Europe
+or China) does not matter to me; DeepSeek's own API is used directly (decision: 2026-10-04).
 
 **Spend safety:** OpenRouter monthly limit 15 $, a Telegram warning at 10 $ (section 6).
 
@@ -798,7 +801,7 @@ All commands are registered in the Telegram `/` menu with a short description (n
 I can also write a plain sentence ("I bought 10 KO at 85.65"); Hermes maps it to a command and shows the exact command in its
 confirmation. Clashes with Hermes's own built-in commands are checked in step 0; on a clash ours is renamed.
 
-**Rules:** (1) every command that changes something asks for confirmation first — Hermes lists exactly what will change, and runs
+**Rules:** (1) every command that changes something — a correction too — asks for confirmation first — Hermes lists exactly what will change, and runs
 it only after `yes`; (2) every change is logged (what, when, which command) and gets a number, shown in its confirmation;
 (3) each command is a small Python function in our code (`python -m shared.commands …` style) — Hermes calls it, it never edits
 tables or files itself.
@@ -837,7 +840,7 @@ tables or files itself.
 | | `/tag` | `/tag rio-tinto RIO` | fixes a wrong tag mapping; the tag is not asked to the AI again |
 | Settings | `/model` | `/model strong gpt-6-sol` · `/model strong default` | persistent model override (in the Air database), or back to the default |
 | | `/subsector` | `/subsector add Uranium Energy` | approves a new subsector (the answer to "add a new subsector?") |
-| Fix (decision: 2026-10-04) | `/undo` | `/undo` · `/undo 42` | cancels my last change, or change #42; **nothing is deleted:** a ledger row (`holdings`, `other_assets`) is marked `void` and kept; a stock-state change goes back with a dated card note; a card note gets a dated "withdrawn" note. A plain sentence works too: "the KO buy was 10, not 100" → Hermes proposes `/undo` + the right `/bought` and runs both after `yes` |
+| Fix (decision: 2026-10-04) | `/undo` | `/undo` · `/undo 42` | cancels my last change, or change #42; **nothing is deleted:** a ledger row (`holdings`, `other_assets`) is marked `void` and kept; a stock-state change goes back with a dated card note; a card note gets a dated "withdrawn" note. **A correction in a plain sentence:** I write "my KO buy was wrong, 10 not 100" → Hermes prepares two commands (`/undo` for the wrong row + the right `/bought`) and shows them to me → **nothing changes until I say `yes`** → then both run |
 
 `/model` appears in both groups: without arguments it only shows; with arguments it changes.
 
