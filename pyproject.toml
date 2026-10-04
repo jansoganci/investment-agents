@@ -1,0 +1,20 @@
+[project]
+name = "investment-agents"
+version = "0.1.0"
+description = "Personal investment-advisor agents: read, research, analyze, suggest. The user decides."
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

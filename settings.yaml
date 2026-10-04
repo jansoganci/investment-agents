@@ -1,0 +1,52 @@
+# settings.yaml — the one place for models, budget, hours and paths (AGENTS.md, roadmap section 4).
+# Secrets never go here; they live in .env (template: .env.example).
+# Machine-specific paths (the Drive folder) also come from .env.
+
+timezone: Europe/Istanbul          # times are stored in UTC and shown in Turkey time (roadmap section 5)
+
+paths:
+  data_dir: ~/investment-agents-data   # SQLite lives here, never in Drive; override with DATA_DIR in .env
+  database: investment-agents.sqlite
+  # The Drive root (`Investing/`) comes from DRIVE_DIR in .env.
+
+database:
+  busy_timeout_ms: 5000            # a second writer waits a few seconds instead of failing (WAL mode)
+
+backup:
+  keep_daily: 7                    # roadmap section 5: the last 7 daily copies …
+  keep_weekly: 4                   # … and the last 4 weekly copies, in Investing/Backup/
+
+hours:                             # Turkey time
+  prices: "03:00"                  # the one nightly price job (previous day's close)
+  backup: after prices
+  eye: ["07:00", "13:00", "20:00"] # agent 1, 3 passes a day
+
+portfolio:
+  goal_usd: 800000                 # total wealth goal (agent 4 rule 4)
+  dividend_withholding: 0.20       # 20%, user-confirmed (agent 4 rule 1)
+
+budget:
+  ai_monthly_max_usd: 30           # roadmap section 6: at most 25–30 $ / month
+  openrouter_monthly_limit_usd: 15 # set in the OpenRouter dashboard, not from Telegram
+  openrouter_warning_usd: 10       # Telegram warning
+
+# Models and providers — roadmap section 10.1, copied as decided (2026-10-04).
+# Each job tries its list in order: my API credits first, then OpenRouter.
+# A Telegram override (/model) lives in the Air database (`settings` table), not here.
+models:
+  cheap:        # agent 1's one sentence, new-tag classification, making Telegram messages plain
+    - {provider: deepseek,   model: deepseek-v4-flash}
+    - {provider: openrouter, model: deepseek/deepseek-v4-flash}
+  strong:       # agent 2 (tone, news flow, score reasons), agent 3 (why answers, thesis, drop-alert check)
+    - {provider: anthropic,  model: claude-sonnet-5.5, effort: high}
+    - {provider: openrouter, model: anthropic/claude-sonnet-5.5}
+    - {provider: openai,     model: gpt-6-sol}
+    - {provider: openrouter, model: openai/gpt-6-sol}
+  auditor:      # agents 2 and 3; a different family from the writer
+    - {provider: deepseek,   model: deepseek-v4-pro}
+    - {provider: openrouter, model: deepseek/deepseek-v4-pro}
+    - {provider: openai,     model: gpt-6-sol}
+    - {provider: openrouter, model: openai/gpt-6-sol}
+  hermes_chat:  # set in Hermes itself, listed here for reference
+    - {provider: openai-codex, model: chatgpt-subscription}
+    - {provider: deepseek,     model: deepseek-v4-pro}
