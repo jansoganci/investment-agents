@@ -2,7 +2,10 @@
 
 Rules (roadmap section 5, "Structure changes"):
 - A step is never edited after it is merged; a change is a new step with the next number.
-- A step only adds (tables, columns, indexes) or rebuilds a table by copying every row. Data is never lost.
+- A step only adds (tables, columns, indexes, triggers) or rebuilds a table by copying every row. Data is never lost.
+  A rebuild: CREATE TABLE x_new … · INSERT INTO x_new SELECT … FROM x · DROP TABLE x · ALTER TABLE x_new RENAME TO x ·
+  then the indexes and triggers of x again. The upgrade runs with the foreign-key check off and checks every link
+  (`PRAGMA foreign_key_check`) before it commits.
 - Times are UTC text (`2026-10-04T20:15:03Z`). A missing figure is NULL, never 0.
 - Names and values follow docs/GLOSSARY.md; CHECK lists hold the glossary values.
 """
@@ -257,9 +260,54 @@ CREATE TABLE subsectors (
 );
 """
 
+STEP_2 = """
+-- Phase 0 audit fixes (2026-10-04).
+
+-- card_entries.lynch_type gets the same value list as stocks.lynch_type.
+-- SQLite cannot add a CHECK to a column, so the table is rebuilt; every row is copied.
+CREATE TABLE card_entries_new (
+    id             INTEGER PRIMARY KEY,
+    stock_id       INTEGER NOT NULL REFERENCES stocks (id),
+    date           TEXT NOT NULL,
+    record         TEXT NOT NULL CHECK (record IN ('research', 'fundamental', 'note')),
+    who            TEXT NOT NULL CHECK (who IN ('agent_2', 'agent_3', 'user')),
+    source         TEXT,
+    grade          TEXT CHECK (grade IN ('solid', 'mid', 'weak', 'unclear')),
+    lynch_type     TEXT CHECK (lynch_type IN ('fast_grower', 'stalwart', 'slow_grower', 'cyclical', 'unprofitable',
+                                              'turnaround', 'asset_play')),
+    thesis_status  TEXT CHECK (thesis_status IN ('intact', 'broken', 'watch')),
+    command_id     INTEGER REFERENCES command_log (id),
+    created_at     TEXT NOT NULL
+);
+INSERT INTO card_entries_new (id, stock_id, date, record, who, source, grade, lynch_type, thesis_status, command_id,
+                              created_at)
+    SELECT id, stock_id, date, record, who, source, grade, lynch_type, thesis_status, command_id, created_at
+    FROM card_entries;
+DROP TABLE card_entries;
+ALTER TABLE card_entries_new RENAME TO card_entries;
+
+-- Append-only, enforced by the database itself: these rows are never deleted.
+-- (A wrong ledger row is marked void with /undo; a card entry is answered with a new dated note.)
+CREATE TRIGGER holdings_no_delete BEFORE DELETE ON holdings
+BEGIN SELECT RAISE(ABORT, 'holdings is append-only: rows are never deleted (/undo marks a row void)'); END;
+CREATE TRIGGER other_assets_no_delete BEFORE DELETE ON other_assets
+BEGIN SELECT RAISE(ABORT, 'other_assets is append-only: rows are never deleted (/undo marks a row void)'); END;
+CREATE TRIGGER card_entries_no_delete BEFORE DELETE ON card_entries
+BEGIN SELECT RAISE(ABORT, 'card_entries is append-only: rows are never deleted'); END;
+CREATE TRIGGER command_log_no_delete BEFORE DELETE ON command_log
+BEGIN SELECT RAISE(ABORT, 'command_log is append-only: rows are never deleted'); END;
+
+-- Price history is kept: never deleted, never overwritten (a day that is already there is skipped).
+CREATE TRIGGER prices_no_delete BEFORE DELETE ON prices
+BEGIN SELECT RAISE(ABORT, 'prices: history is never deleted'); END;
+CREATE TRIGGER prices_no_update BEFORE UPDATE ON prices
+BEGIN SELECT RAISE(ABORT, 'prices: history is never overwritten'); END;
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
+    (2, STEP_2),
 ]
 
 

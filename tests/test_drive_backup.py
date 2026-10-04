@@ -104,3 +104,13 @@ def test_backup_job_writes_runs_row(db, env, capsys):
     assert main([]) == 0
     assert db.execute("SELECT status FROM runs WHERE job='backup'").fetchone()[0] == "ok"
     assert len(list((env["drive"] / "Backup").glob("*.sqlite"))) == 1
+
+
+def test_backup_is_one_self_contained_file(db, env):
+    # no -wal / -shm next to the copy in Drive, and no half-written file under the final name
+    path = backup.make_copy(date(2026, 10, 4))
+    copy = sqlite3.connect(path)
+    assert copy.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+    assert copy.execute("SELECT count(*) FROM stocks").fetchone()[0] == 0
+    copy.close()
+    assert sorted(p.name for p in (env["drive"] / "Backup").iterdir()) == [path.name]

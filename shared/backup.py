@@ -2,7 +2,8 @@
 
 The nightly copy of SQLite into `Investing/Backup/` with SQLite's own backup command (consistent even while
 another job writes). Keeps the last 7 daily copies + the latest copy of each of the 4 weeks before them
-(roadmap section 5). Only files named `investment-agents-YYYY-MM-DD.sqlite` are ever removed.
+(roadmap section 5). Only files named `investment-agents-YYYY-MM-DD.sqlite` are ever removed. Each copy is one
+self-contained file, written under a temporary name first.
 Prints nothing when all is well (no message); an error prints an error message for Telegram.
 """
 

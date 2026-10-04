@@ -11,6 +11,7 @@ paths:
 
 database:
   busy_timeout_ms: 5000            # a second writer waits a few seconds instead of failing (WAL mode)
+  ask_time_limit_s: 5              # a free question (shared.ask) is stopped after this many seconds
 
 backup:
   keep_daily: 7                    # roadmap section 5: the last 7 daily copies …

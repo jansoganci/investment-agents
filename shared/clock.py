@@ -5,7 +5,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-LOCAL = ZoneInfo("Europe/Istanbul")
+from shared import config
+
+LOCAL = ZoneInfo(config.settings()["timezone"])  # Europe/Istanbul
 
 
 def now_utc() -> datetime:
@@ -34,5 +36,5 @@ def show(text_or_dt: str | datetime | None) -> str:
     return local(dt).strftime("%Y-%m-%d %H:%M")
 
 
-def today_local() -> str:
-    return local().strftime("%Y-%m-%d")
+def today_local(dt: datetime | None = None) -> str:
+    return local(dt).strftime("%Y-%m-%d")

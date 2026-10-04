@@ -5,14 +5,17 @@
     uv run python -m shared.ask card KO           the text of a card
 
 Three locks: the file is opened read-only (`mode=ro`), `query_only` is on, and an authorizer allows only reading
-(no ATTACH, no PRAGMA, no writes).
+(no ATTACH, no PRAGMA, no writes). A question is stopped after `database.ask_time_limit_s` seconds (settings.yaml),
+so a runaway query cannot block Hermes or keep a read open.
 """
 
 from __future__ import annotations
 
 import sqlite3
 import sys
+import time
 
+from shared import config
 from shared import db as dbmod
 from shared import drive
 
@@ -25,18 +28,29 @@ def _authorizer(action, *_):
     return sqlite3.SQLITE_OK if action in _ALLOWED else sqlite3.SQLITE_DENY
 
 
-def _connect() -> sqlite3.Connection:
+def time_limit() -> float:
+    return float(config.settings()["database"]["ask_time_limit_s"])
+
+
+def _connect(limit_s: float) -> sqlite3.Connection:
     conn = dbmod.connect_readonly()
     conn.set_authorizer(_authorizer)
+    deadline = time.monotonic() + limit_s
+    conn.set_progress_handler(lambda: 1 if time.monotonic() > deadline else 0, 1000)
     return conn
 
 
-def query(sql: str, params: tuple = ()) -> tuple[list[str], list[tuple]]:
-    conn = _connect()
+def query(sql: str, params: tuple = (), limit_s: float | None = None) -> tuple[list[str], list[tuple]]:
+    limit_s = time_limit() if limit_s is None else limit_s
+    conn = _connect(limit_s)
     try:
         cur = conn.execute(sql, params)
         cols = [d[0] for d in cur.description or []]
         return cols, cur.fetchmany(MAX_ROWS)
+    except sqlite3.OperationalError as exc:
+        if "interrupted" in str(exc):
+            raise sqlite3.OperationalError(f"stopped after {limit_s:g} s (the question is too slow)") from exc
+        raise
     finally:
         conn.close()
 

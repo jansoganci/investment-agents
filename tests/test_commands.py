@@ -170,3 +170,25 @@ def test_setcommands_text_is_valid_for_telegram():
 def test_setcommands_file_is_up_to_date():
     path = Path(__file__).resolve().parent.parent / "docs" / "telegram_setcommands.txt"
     assert path.read_text(encoding="utf-8") == commands.setcommands_text() + "\n"
+
+
+def test_failed_change_writes_nothing(db):
+    def plan(conn, args):
+        def apply(conn, command_id):
+            conn.execute(
+                "INSERT INTO other_assets (kind, date, grams, price_try, command_id, created_at) "
+                "VALUES ('gold', '2026-10-04', 1, 4689, ?, 'x')",
+                (command_id,),
+            )
+            raise RuntimeError("broke halfway")
+
+        return Plan(["add a gold purchase"], ["testbroken"], apply)
+
+    commands.REGISTRY["testbroken"] = commands.Command("testbroken", "test only", "/testbroken", changes=True, plan=plan)
+    try:
+        with pytest.raises(RuntimeError):
+            commands.run(["testbroken", "--yes"])
+    finally:
+        del commands.REGISTRY["testbroken"]
+    assert db.execute("SELECT count(*) FROM command_log").fetchone()[0] == 0
+    assert db.execute("SELECT count(*) FROM other_assets").fetchone()[0] == 0

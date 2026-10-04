@@ -19,14 +19,39 @@ class SettingMissing(RuntimeError):
     pass
 
 
+class UnsafePath(RuntimeError):
+    pass
+
+
+# folder names that mean "this is a cloud-synced folder"
+_CLOUD_PARTS = ("CloudStorage", "Google Drive", "My Drive")
+
+
 def settings() -> dict:
     with open(SETTINGS_FILE, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
+def _refuse_drive(path: Path) -> None:
+    """SQLite never goes in the Drive folder: sync can corrupt it (AGENTS.md, "Technical")."""
+    full = path.resolve()
+    inside = False
+    if os.environ.get("DRIVE_DIR"):
+        drive = Path(os.environ["DRIVE_DIR"]).expanduser().resolve()
+        inside = full == drive or drive in full.parents
+    cloud = any(part in _CLOUD_PARTS or part.startswith("GoogleDrive") for part in full.parts)
+    if inside or cloud:
+        raise UnsafePath(
+            f"DATA_DIR {path} is inside Drive. SQLite never goes in Drive (sync can corrupt it); "
+            "use ~/investment-agents-data."
+        )
+
+
 def data_dir() -> Path:
     value = os.environ.get("DATA_DIR") or settings()["paths"]["data_dir"]
-    return Path(value).expanduser()
+    path = Path(value).expanduser()
+    _refuse_drive(path)
+    return path
 
 
 def db_path() -> Path:

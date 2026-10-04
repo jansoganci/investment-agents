@@ -48,3 +48,19 @@ def test_cli_refuses_a_write(db, capsys):
 
     assert main(["sql", "DELETE FROM runs"]) == 1
     assert "read-only" in capsys.readouterr().out.lower()
+
+
+def test_slow_question_is_stopped(db):
+    import time
+
+    endless = "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT count(*) FROM c"
+    start = time.monotonic()
+    with pytest.raises(sqlite3.OperationalError, match="stopped"):
+        ask.query(endless, limit_s=0.3)
+    assert time.monotonic() - start < 5
+
+
+def test_time_limit_comes_from_settings():
+    from shared import config
+
+    assert ask.time_limit() == config.settings()["database"]["ask_time_limit_s"] > 0
