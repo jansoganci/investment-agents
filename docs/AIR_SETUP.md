@@ -59,7 +59,8 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [ ] **Connect Telegram:** `hermes gateway setup` → the bot token and **only my user ID**.
 - [ ] **Run as a service:** `hermes gateway install`, `hermes gateway start` (a launchd service; starts again after a restart).
 - [ ] ⚠️ **Limit Hermes's powers.** By default Hermes is an agent that can run terminal commands; our rule is "the command list
-      only" (section 10.2). Turn on its approval mode and restrict terminal use to our command scripts — done together, from its docs.
+      only" (section 10.2). Turn on its approval mode and restrict terminal use to our command scripts plus one read-only way to look at the
+      database and the cards (for my free questions) — done together, from its docs.
 - [ ] **Command clashes:** compare Hermes's built-in commands with ours (`/help`, `/model`, `/status` may clash); rename ours if so.
 - [ ] Agents run as **script-only cron jobs (no LLM)** — scheduling costs no tokens.
 

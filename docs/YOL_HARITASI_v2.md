@@ -623,7 +623,7 @@ outside models, like the external review of 2026-10-03 (`docs/reviews/`) — the
 On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents separately. Hermes runs the agents and reads the results.
 
 - **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, the portfolio block of agent 4) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`.
-- **What it can do:** answer questions (it reads the database + the cards: "what does the card of XYZ say?", "what did we spend this month?") and run a command from the **defined command list** ("watch XYZ", "I added ABC to the portfolio", "analyze XYZ now", "close warning U1 on XYZ because …"). The command list: section 10.2.
+- **What it can do:** answer **any question I ask** (decision: 2026-10-04) — it reads the database and the cards through a **read-only** path: it can look, never change ("what does the card of XYZ say?", "what did we spend this month?") — and run a command from the **defined command list** ("watch XYZ", "I added ABC to the portfolio", "analyze XYZ now", "close warning U1 on XYZ because …"). The command list: section 10.2.
 - **How messages travel (decision: 2026-10-04):** every job writes its message as plain text output; Hermes's script-only
   scheduler delivers it to Telegram, and I talk to the bots there. This path is built and tested first, in step 0
   (`docs/AIR_SETUP.md`, phase 7), before any agent.
@@ -675,7 +675,8 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 - **Backups:** every night a consistent copy (made with SQLite's own backup command) goes to `Investing/Backup/`; the last 7 daily
   and the last 4 weekly copies are kept.
 
-Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals`, `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
+Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
+Added on 2026-10-04 (decided features had no place for their records): `card_entries` (one row per card entry: date, record, `grade`, `lynch_type`, `thesis_status` — the history behind the sell triggers and the archive reminder), `audits` (the auditor's results and error rate), `command_log` (every change I make: number, command, time; `/undo` uses the number), `settings` (my overrides from Telegram, e.g. `/model`), `subsectors` (the approved subsector list).
 
 ```text
 Investing/                                 (Drive)
@@ -820,6 +821,8 @@ tables or files itself.
 | `/spend` | this month's AI spend by provider; how much is left of the limit |
 | `/model` | which job runs on which model now |
 | `/status` | system health: when each agent last ran, any errors |
+
+Beyond these commands I can ask Hermes anything; it answers from the database and the cards, read-only (section 3, "Telegram and Hermes").
 
 **B. Actions (change something, ask for confirmation)**
 

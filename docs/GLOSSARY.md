@@ -241,6 +241,11 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 | `calismalar` | `runs` |
 | haftalık portföy satırı | `snapshots` |
 | altın / BES girişleri | `other_assets` |
+| kart kayıtları (not + tez durumu) | `card_entries` |
+| denetçi sonuçları | `audits` |
+| komut kaydı | `command_log` |
+| Telegram'dan ayarlar (ör. model) | `settings` |
+| onaylı alt sektörler | `subsectors` |
 
 `tags` satırı: tür → `kind` (`company` · `commodity` · `sector`) · karşılık → `maps_to` · borsa → `exchange` · ülke → `country` · ana sektör → `sector` · alt sektör → `subsector`.
 
@@ -251,6 +256,10 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 `runs` sonuç: `tamam` → `ok` · `hata` → `error`.
 
 `articles` işaretleri: detaylı okundu → `read_deep` · metin eksik → `text_missing`.
+
+`signals` durumu: bekliyor → `pending` · bitti → `done`.
+
+`card_entries` tez durumu (`thesis_status`): sağlam → `intact` · bozuldu → `broken` · izle → `watch`.
 
 `holdings` satır türü: alış → `buy` · satış → `sell` · temettü → `dividend` · bölünme → `split`.
 
