@@ -467,8 +467,11 @@ quarters' figures.
 **Code only, no AI.** Every figure is arithmetic; the only data is free Yahoo data. The AI around it is decided elsewhere: Hermes
 turns my message into a command (section 10.2), and agent 3 answers the drop-alert check (rule 6).
 
-**All figures in USD.** Nothing is converted to TL (the lira's fall would look like a gain). The only conversion is the BES
-balance: TL → USD at that week's rate.
+**All figures in USD.** Nothing is converted to TL (the lira's fall would look like a gain). Only my TL entries (gold
+purchases, BES) are converted: TL → USD at that day's rate.
+
+**Prices every night:** at 03:00 Turkey time (UTC+3, after the US close) code fetches the previous day's closes — my stocks,
+the green list, SPY, gold, USD/TRY — into `prices`. The Sunday summary uses Friday's close; `/portfolio` uses the latest close.
 
 1. **Ledger (`holdings`):** one row per event, append-only — `buy` and `sell` from my commands (`/bought`, `/sold`); `dividend`
    and `split` added by code. Positions (quantity, average cost) are computed from the rows. The ledger starts empty (on
@@ -492,10 +495,13 @@ balance: TL → USD at that week's rate.
    `ayarlar.yaml`: 800,000 $). I enter each gold purchase and, once a month, my BES payment and BES total; each entry is a new
    dated row in `other_assets` (append-only).
    - **Gold:** `/gold 1 4689` = 1 gram bought at 4,689 TL a gram (a sale: minus grams). What I put in = the sum of my purchases
-     (TL → USD at that day's rate); value now = my grams × today's gold price per gram, fetched by code.
+     (TL → USD at that day's rate); value now = my grams × the gold price per gram in USD (Yahoo's ounce price ÷ 31.1035; the
+     ticker is checked when coding). This is the world price; a bank sells a gram a few percent higher, so a fresh purchase
+     shows a small loss — the bank's spread, a real cost.
    - **BES:** `/bes 8670 245000` = this month's payment and the total shown in the BES app (TL). Value now = the latest total
-     (TL → USD at that week's rate). Fund switches inside BES are not entered; the total already includes them, the returns and
-     the company and state contributions.
+     (TL → USD at that day's rate). Fund switches inside BES are not entered; the total already includes them, the returns and
+     the company and state contributions. Each month is a new row; nothing is overwritten. The latest total is the value now;
+     the rows are the history (gain = latest total − first total − payments since). Several BES accounts: one row with their sum.
    - Emergency cash is not counted (user-confirmed).
 5. **Where the new money could go (weekly, user-confirmed; was monthly — same work, no extra cost):** it ranks the green-list stocks — down from
    their high + thesis intact + a fair price line come first. Message: "this month's money could go to …". It never buys. A stock
@@ -518,7 +524,7 @@ balance: TL → USD at that week's rate.
 9. **No sell signals at all from agent 4** — no per-stock technical signal, no market-filter selling. Selling is suggested only by
    agent 3's triggers (above); the decision is mine.
 
-**Storage (SQLite):** `holdings` (the ledger) · `prices` (Friday closes: my stocks, the green list, SPY, gold, USD/TRY) ·
+**Storage (SQLite):** `holdings` (the ledger) · `prices` (daily closes: my stocks, the green list, SPY, gold, USD/TRY) ·
 `signals` (`new_money_rank`, `weight_cap`, `drop_alert`, `expensive`) · `other_assets` (my gold / BES entries) · `snapshots`
 (one row per week: stock value, put in, got back, return, SPY shadow, gold shadow, gold, BES, `total_wealth`, share of the
 goal — the frozen weekly history).

@@ -117,7 +117,8 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   a benchmark with SPY and gold shadow portfolios (total return for the first 12 months, then `xirr`), total wealth (stocks + gold +
   BES; `/gold` per purchase with grams and the TL price, `/bes` monthly with the payment and the BES total, into `other_assets`;
   weekly `snapshots`) against the 800 thousand $ goal, the new-money
-  ranking weekly with a "Not suggested (25% rule)" line (`weight_cap`). Code only, no AI; all figures in USD.
+  ranking weekly with a "Not suggested (25% rule)" line (`weight_cap`). Code only, no AI; all figures in USD; prices fetched
+  every night at 03:00 Turkey time (the previous day's close).
   User-confirmed: emergency cash is not counted as wealth; dividend withholding 20%; the new-money list stays weekly; no
   staleness rule for gold / BES (I enter them every month).
   Item 7 started — roadmap section 10. **10.1 models and providers decided (2026-10-04):** all system output and commands in
