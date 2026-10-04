@@ -29,33 +29,39 @@ Names of fields, tables, grades, and folders follow `docs/GLOSSARY.md`.
 - The decision is the user's: if there is a choice, state your recommendation and leave the decision to them.
 - Simplicity first: if something feels complicated, simplify it before adding it.
 - "Think fast, iterate faster": if version 1 of a rule is good enough, move on. Do not wait for perfect. Build it and fix it.
-- Each agent is its own module. Code used by more than one agent goes under `ortak/` (planned name `shared/`).
-- The code does not know Hermes. Each agent must also run by hand. Planned command: `python -m agents.<agent>`. Until the folders are renamed, the code that exists is under `ajanlar/`.
+- Each agent is its own module. Code used by more than one agent goes under `shared/`.
+- The code does not know Hermes. Each agent must also run by hand. Planned command: `python -m agents.<agent>`. New code lives under `agents/` and `shared/`; `ajanlar/` keeps only the archived prototype and backtests.
 - At the end of the session, update the **Current status** section.
 
 ## Project map
 
-Today's folders. The locked future names are in `docs/GLOSSARY.md` (`agents/eye`, `shared/`, and the rest). Do not rename folders unless that is the task.
+Names follow `docs/GLOSSARY.md`. New code goes directly under `agents/` and `shared/` (decision: 2026-10-04); `ajanlar/` is an
+archive. Do not move or rename the archive unless that is the task.
 
 ```text
-ajanlar/goz/        1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
-ajanlar/sayac/      1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
-ajanlar/arastirma/  2. Research — reading + web search + score; opens the card (weekly, Sunday)
-ajanlar/analiz/     3. Analysis — SEC / PDF → card.md (quarterly / annual); prototip/ = a rule trial (not production)
-ajanlar/teknik/     4. Technical — weekly state + market filter; backtest/ is here
-ortak/              AI, SEC, price, Drive paths, SQLite
-ayarlar.yaml        models, budget, hours, stock list
-docs/               YOL_HARITASI_v2.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md; reviews/ (external reviews)
+Exists today:
+ajanlar/analiz/prototip/   agent 3 rule trial (archive, not production)
+ajanlar/teknik/backtest/   backtest scripts (archive)
+docs/                      YOL_HARITASI_v2.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md; reviews/ (external reviews)
+
+Planned (not created yet):
+agents/eye/         1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
+agents/counter/     1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
+agents/research/    2. Research — reading + web search + score; opens the card (weekly, Sunday)
+agents/analysis/    3. Analysis — SEC / PDF → card.md (quarterly / annual)
+agents/portfolio/   4. Portfolio — my money: ledger, benchmark, total wealth, new money
+shared/             AI, SEC, prices, Drive paths, database, commands, the Sunday summary
+settings.yaml       models, budget, hours, stock list
 ```
 
 ## Technical
 
 - Python, environment managed with `uv`. Example: `uv run --with pytest pytest -q`
 - Development is on the main Mac. The system runs on the backup MacBook Air (Hermes). The bridge is GitHub. No code is written on the Air.
-- SQLite stays on the Mac disk. It does **not** go in the Drive folder (sync can corrupt it). A backup is copied to Drive at night.
+- SQLite lives on the Air's disk (`~/investment-agents-data/`). It does **not** go in the Drive folder (sync can corrupt it). A backup is copied to Drive at night. The main Mac has its own development database; the two never mix.
 - Reports and the card are Markdown plus a header (`ticker`, `sector`, `opened`, `publish: no`). The format is roadmap section 3, "Card format". Figures live only in the YAML data block.
 - On Telegram the user's only counterpart is Hermes. Hermes runs only the defined command list. It does not change code or rules.
-- Model and budget settings live in one place: `ayarlar.yaml`. The AI budget is at most 25–30 $ / month.
+- Model and budget settings live in one place: `settings.yaml` (renamed from `ayarlar.yaml` on 2026-10-04; the file is created with the first code). The AI budget is at most 25–30 $ / month.
 - Secrets (API keys) are in `.env`. They are never committed.
 
 ## Old project
@@ -97,14 +103,14 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   Two external reviews read and applied (`docs/reviews/`; `BAGLAM.md` section 9): liquid-asset extraction fixed in the rules,
   missing ≠ 0, capital return = worse of 3y / 5y (cyclical 5y), new margin-stability definition, new type order + cyclical SIC list,
   fast-grower safety, 20-F + IFRS, FCF yield on 3-year average, PEG on EPS growth, flags, the AI writes the first thesis.
-  Expected golden set: `solid` KO, NVDA · `mid` NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN.
+  The reviews expected `solid` KO, NVDA · `mid` NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN; after the rerun KO is `mid` (below).
   Prototype updated to the post-review rules; golden set 10/10 (`ajanlar/analiz/prototip/altin_set.py`): `solid` NVDA · `mid` KO
   (borderline, user-approved), NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN. IFRS / 20-F works (NVO). Rivian rule: a sector /
   SIC cyclical needs at least 1 profit year in 5 (user-approved, may be revised).
   Item 6, **agent 4**, mostly closed (roadmap section 3, "Agent 4 rules", 2026-10-04): a weekly price watcher, not a trading signal —
   new-money ranking (no new money above 25% weight; above 25% is fine), drop alert (−20% from the 52-week high → agent 3 thesis
-  check), valuation watch (PEG > 3 or FCF yield < 1%, 4 weeks), weights in the Sunday summary (`holdings` via Hermes), optional
-  SPY 40-week filter. Agent 3 reads 10-Q too (last 4 quarters, TTM); sell-review triggers recorded. SPY filter tests (34 / 40 / 55,
+  check), valuation watch (PEG > 3 or FCF yield < 1%, 4 weeks), weights in the Sunday summary (`holdings` via Hermes); the
+  SPY 40-week filter was tested, not used (option A, below). Agent 3 reads 10-Q too (last 4 quarters, TTM); sell-review triggers recorded. SPY filter tests (34 / 40 / 55,
   Fibonacci daily / weekly) in `BAGLAM.md` section 3: plateau 21–55 weeks, 40 is the robust middle.
   Insurance simulation with monthly buying (`BAGLAM.md` section 3): user chose **A — no market-filter selling**. Agent 4 never says
   "sell" (valuation watch = info + back of the new-money queue); sell suggestions come only from agent 3 (thesis broke, `weak`,
@@ -112,23 +118,49 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   Added (2026-10-04): the crash rule ("I do not sell because the market fell"), the drop-alert check reads the latest filing **and
   the latest news** (news only says "watch"), every sell suggestion comes with its evidence and a "check the figure" warning when a
   `data_check` flag is open.
+  **Agent 4 renamed Portfolio (2026-10-04; roadmap section 3, "Agent 4 rules"):** the only agent that looks at my money — a
+  ledger (`holdings`: buy / sell via Hermes, dividends and splits by code; starts empty, no stocks held), weekly value and weights,
+  a benchmark with SPY and gold shadow portfolios (total return for the first 12 months, then `xirr`), total wealth (stocks + gold +
+  BES; `/gold` per purchase with grams and the TL price, `/bes` monthly with the payment and the BES total, into `other_assets`;
+  weekly `snapshots`) against the 800 thousand $ goal, the new-money
+  ranking weekly with a "Not suggested (25% rule)" line (`weight_cap`). Code only, no AI; all figures in USD; prices fetched
+  every night at 03:00 Turkey time (the previous day's close).
+  User-confirmed: emergency cash is not counted as wealth; dividend withholding 20%; the new-money list stays weekly; no
+  staleness rule for gold / BES (I enter them every month).
   Item 7 started — roadmap section 10. **10.1 models and providers decided (2026-10-04):** all system output and commands in
   English; cheap = DeepSeek V4 Flash, strong = Claude Sonnet 5.5 (high) with GPT-6 Sol fallback, Hermes chat = ChatGPT/Codex
   subscription if possible else DeepSeek V4 Pro; provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,
   OpenAI 5 $) then OpenRouter; model change from Telegram via an override in the Air database; only needed data goes to models.
   **10.2 Hermes command list decided (2026-10-04):** 10 information commands + actions (`/watch`, `/archive`, `/unarchive`,
-  `/bought`, `/sold`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`) in the Telegram `/` menu;
-  every change asks for confirmation and is logged.
+  `/bought`, `/sold`, `/gold`, `/bes`, `/analyze`, `/closewarning`, `/thesis`, `/note`, `/data`, `/tag`, `/model`, `/subsector`, `/undo`) in the Telegram `/` menu;
+  every change asks for confirmation, is logged and gets a number (`/undo` uses it; nothing is deleted, rows are marked `void`).
   **10.3 Air setup checklist written:** `docs/AIR_SETUP.md` (to prepare before it: `.env.example`, `/setcommands` text, Drive test script).
   **AI auditor decided (2026-10-04; roadmap section 3, "AI auditor"):** one auditor (DeepSeek V4 Pro, fallback GPT-6 Sol — a
-  different family from the writer), used only in agent 3 (figure, reading, sell audits) and agent 2 (serious-negative events);
-  code checks elsewhere; one rule card per place with known traps and an error test set; on a fail `unverified` + Telegram, a sell
-  suggestion is held; a big review every 6 months.
-- **Next (after the break, 2026-10-04):** 10.4 coding order — the last planning item (the auditor is already decided). Then the
-  implementation plan and the UAT plan, building + tests (golden set, auditor error sets, the two model tests, 20-stock UAT),
-  step 0 on the Air, then a few months of real use without changing the rules.
+  different family from the writer), used only in agent 3 (figure, reading, sell audits) and
+  agent 2 (serious-negative events); code checks elsewhere; one rule card per place with known traps and an error test set; on a
+  fail `unverified` + Telegram, a sell suggestion is held; a big review every 6 months.
+  **Document audit (2026-10-04):** all documents and the prototype checked; no rule error; stale lines fixed (golden-set line,
+  SPY filter line, project map, agent 1 cost, Turkish example messages → English, `ortak` → `shared`, `buy` / `sell` names, the
+  review prompt marked historical). Decided: DeepSeek's own API is used directly — where data is processed does not matter to the
+  user; no more comments on model choices · `/undo` added (a correction always waits for my `yes`) · `ayarlar.yaml` → `settings.yaml` ·
+  Sunday order: Counter → agent 2 → agent 3 → agent 4 → summary · messages reach Telegram through Hermes, built and tested first
+  (step 0) · one shared nightly price job (03:00) for all prices · new code under `agents/` and `shared/`, `ajanlar/` is an archive ·
+  database so far: times in UTC (shown in Turkey time), TL entries keep the TL amount and the rate, the Air's and the development
+  databases never mix, stock identity = internal number + CIK (the ticker is a label), price history is kept (never overwritten),
+  nightly backup to `Investing/Backup/` (last 7 daily + 4 weekly).
+  **Also decided (2026-10-04):** the missing tables are added (`card_entries`, `audits`, `command_log`, `settings`, `subsectors`,
+  a status on `signals`) · free questions: Hermes answers any question I ask, reading the database and the cards read-only;
+  changes only through the command list · a stock I add myself (e.g. the abi's): `/watch X` with no card → agent 2 runs at once
+  for X alone (card + research entry, web search for news, label "added by me", `added_by: user`), then `watching` and agent 3;
+  agent 2's weekly run is unchanged · writing at the same time (WAL + a wait time) and structure changes (version number +
+  numbered upgrade steps; data is never lost) — closed.
+- **Next (2026-10-04):** the implementation plan — phase by phase, in its own document (replaces "10.4 coding order"; the
+  database points are settled) — then the phases one by one: building + tests (golden set, auditor error sets, the two
+  model tests, 20-stock UAT), step 0 on the Air, then a few months of real use without changing the rules.
   Small open items: the subsector list (needed for tag mapping) · prepare `.env.example`, the `/setcommands` text and the Drive
   test script before the Air setup · the Anthropic API credit expires 2026-10-19 (use it for agent 3's AI parts and the tests) ·
-  a third external review is still running · local commits are not pushed to GitHub yet.
+  a third external review is still running · the agent 4 changes are on the branch `claude/agent4-portfolio`, not yet merged into main.
 - **Pending questions:** None.
-- **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.
+  **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
+- **Note:** main is on GitHub. The agent 4 (Portfolio) changes of 2026-10-04 are on the branch `claude/agent4-portfolio` (pushed),
+  waiting to be merged into main.

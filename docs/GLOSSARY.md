@@ -43,6 +43,8 @@ Eski değer → yeni değer: `aday` → `candidate` · `takipte` → `watching` 
 
 Yeşil liste ayrı alan değil: `status = watching` ve `grade = solid`.
 
+Hisseyi kim ekledi (`added_by`): yazılardan geldi → `counter` · ben ekledim → `user` (ekranda "added by me").
+
 `belirsiz` iki yere ayrıldı. Sınıf değeri `unclear` kalır. Karttaki eksik listesinin alan adı `gaps` olur (aşağıda).
 
 ## Kayıt başlığı
@@ -155,9 +157,14 @@ Hızlı büyüyen güvenlik kuralı: `fast_grower_safety` (faaliyet marjı ❌ +
 | düşüş alarmı | `drop_alert` |
 | pahalı | `expensive` (PEG > 3 veya nakit verimi < %1, 4 hafta) |
 | portföydeki ağırlık | `weight` |
-| pozisyonlar tablosu | `holdings` |
+| pozisyonlar tablosu (defter) | `holdings` |
 | piyasa filtresi | `market_filter` |
 | satışı değerlendir | `consider_selling` |
+| kıyas | `benchmark` |
+| gölge portföy (SPY / altın) | `shadow` |
+| alımları sayan yıllık getiri | `xirr` |
+| toplam servet (hisse + altın + BES) | `total_wealth` |
+| %25 kuralı yüzünden önerilmedi | `weight_cap` |
 
 ## Yapay zekâ denetçi
 
@@ -207,7 +214,7 @@ Kapsam dışı iş modeli etiketi: banka → `bank` · sigorta → `insurance` �
 
 ## Ajanlar ve klasörler
 
-Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak ad.
+Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak ad. Yeni kod doğrudan sağ sütundaki klasörlere yazılır; `ajanlar/` arşiv olarak kalır (karar: 2026-10-04).
 
 | Şimdi | İngilizce ad | İleride klasör |
 |---|---|---|
@@ -215,9 +222,10 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 | 1B. Sayaç | Counter | `agents/counter` |
 | 2. Araştırma | Research | `agents/research` |
 | 3. Analiz | Analysis | `agents/analysis` |
-| 4. Teknik | Technical | `agents/technical` |
+| 4. Portföy (eski: Teknik) | Portfolio | `agents/portfolio` |
 | `ortak/` | shared | `shared/` |
 | `ajanlar/` | agents | `agents/` |
+| `ayarlar.yaml` | settings | `settings.yaml` (dosya ilk kodla oluşturulur) |
 
 ## Tablolar
 
@@ -233,6 +241,13 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 | `fiyatlar` | `prices` |
 | `sinyaller` | `signals` |
 | `calismalar` | `runs` |
+| haftalık portföy satırı | `snapshots` |
+| altın / BES girişleri | `other_assets` |
+| kart kayıtları (not + tez durumu) | `card_entries` |
+| denetçi sonuçları | `audits` |
+| komut kaydı | `command_log` |
+| Telegram'dan ayarlar (ör. model) | `settings` |
+| onaylı alt sektörler | `subsectors` |
 
 `tags` satırı: tür → `kind` (`company` · `commodity` · `sector`) · karşılık → `maps_to` · borsa → `exchange` · ülke → `country` · ana sektör → `sector` · alt sektör → `subsector`.
 
@@ -243,6 +258,16 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 `runs` sonuç: `tamam` → `ok` · `hata` → `error`.
 
 `articles` işaretleri: detaylı okundu → `read_deep` · metin eksik → `text_missing`.
+
+`signals` durumu: bekliyor → `pending` · bitti → `done`.
+
+`card_entries` tez durumu (`thesis_status`): sağlam → `intact` · bozuldu → `broken` · izle → `watch`.
+
+`holdings` satır türü: alış → `buy` · satış → `sell` · temettü → `dividend` · bölünme → `split`.
+
+Geri alınan satır (`/undo`) silinmez, işaretlenir: geçersiz → `void`.
+
+`other_assets` türü: altın alımı (gram + TL gram fiyatı) → `gold` · BES (aylık ödeme + toplam tutar, TL) → `bes`.
 
 ## Drive yolları
 

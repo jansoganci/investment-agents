@@ -42,7 +42,7 @@ write it, build it, run it; see the mistake, fix it. Building and fixing beats t
 | **1B. Counter** | Counts and ranks which stock / sector / commodity appeared in how many posts over the last 7 days. Code, no AI | Right before agent 2 + on request | ranked list | Does not score, does not read |
 | **2. Research** | Top of the Counter list, at most 10 stocks: reads the full text, web search, score + reason; **opens the card** | Once a week (Sunday morning) | `scores` table + card (`card.md`) + `Weekly/` report | Does not do fundamental analysis, does not visit the site |
 | **3. Analysis** | Builds the card from financial statements for stocks with `status = watching` (US: SEC; HK/A: uploaded PDF) + sets the grade | When a new filing arrives (see below) | `financials` table + `card.md` + grade | Does not forecast price, does not say buy/sell |
-| **4. Technical** | Weekly price watcher: where the new monthly money could go, drop alert, valuation and weight info (section 3, "Agent 4 rules") | Weekly (Sunday) | `prices` / `signals` tables + Telegram Sunday summary | Does not trade; gives **no** per-stock technical sell signal |
+| **4. Portfolio** | My money, not companies: ledger, value and weights, benchmark against SPY and gold, total wealth against the goal, where the new money could go, drop alert, valuation info (section 3, "Agent 4 rules") | Weekly (Sunday) | `holdings`, `prices`, `signals`, `other_assets`, `snapshots` + the portfolio block of the Sunday summary | Does not trade; gives **no** sell signal; uses no AI |
 
 **The card is the stock card.** Each stock has one card; everything about it is there. The card **is born in agent 2**
 (first entry: research — score, reason, news summaries); when I start watching it, agent 3 appends fundamental entries
@@ -57,7 +57,7 @@ to the same file. As quarters pass, new dated entries are appended at the end an
                                              scores table + CARD opens (candidate)
                                           │
                                           ▼
-                              ┌─ ME: "XYZ'yi takibe al" ─┐
+                              ┌─ ME: "watch XYZ" ────────┐
                               ▼                          │
  3. ANALYSIS (when a new filing arrives)                 │
  Only stocks with status = watching                      │
@@ -66,15 +66,18 @@ to the same file. As quarters pass, new dated entries are appended at the end an
                                           │              │
                          grade = solid → GREEN LIST      │
                                           ▼              │
- 4. TECHNICAL (weekly)                                   │
- Green list + market filter                              │
- signals table → Sunday Telegram summary ────────────────┘
+ 4. PORTFOLIO (weekly)                                   │
+ Green list + my holdings + SPY / gold shadows           │
+ new money, alerts, total wealth → Sunday summary ───────┘
                                           │
                                           ▼
                               ME: buy / sell / wait (at the broker)
 ```
 
 The process is not 100% automatic; an agent does not run when there is nothing to do.
+
+**Sunday order (decision: 2026-10-04):** 1B Counter → agent 2 → agent 3 (asks SEC for new filings) → agent 4 → the summary (code
+in `shared/`, reads the database) → Telegram.
 
 ### Stock states
 
@@ -85,12 +88,13 @@ Each stock is one row in the `stocks` table:
 | `status` | **candidate** (agent 2 scored it, the card was opened) · **watching** (agent 3 keeps the card) · **archived** (the card stays, no new analysis) | candidate: agent 2 · watching / archived: **only me** |
 | `grade` | solid · mid · weak · unclear (from the latest card) | agent 3 |
 | `in_portfolio` | yes / no | **only me** (the system is not connected to the broker and cannot know) |
+| `added_by` | `counter` (it came from the posts) · `user` (I added it; shown as "added by me") | agent 2 |
 | `exchange` | where the stock trades: NYSE, NASDAQ (later HKEX, SSE, SZSE) | mapping (agent 1) |
 | `country` | where the company is based (e.g. Alibaba: exchange NYSE, country China → ADR) | mapping (agent 1) |
 
 - The **green list** is not a separate status: stocks with `status = watching` and `grade = solid`. A stock that comes out solid **enters automatically**, and Telegram sends a message.
-- `status` and `in_portfolio` live in the database; code updates the card header at the same time and appends a dated note (e.g. `2026-10-10 · Portföye eklendi`).
-- **Archive reminder:** watching + not in the portfolio + not solid on the last 2 cards → the Sunday summary asks "arşive alalım mı?". The decision is mine.
+- `status` and `in_portfolio` live in the database; code updates the card header at the same time and appends a dated note (e.g. `2026-10-10 · Added to portfolio`).
+- **Archive reminder:** watching + not in the portfolio + not solid on the last 2 cards → the Sunday summary asks "archive it?". The decision is mine.
 
 ### Agent 1 (Eye) rules (decision: 2026-10-03)
 
@@ -98,7 +102,7 @@ Sites: Ghost; about 100–150 posts a day in total (Emtia Defteri ~30–90, Drag
 No RSS; the **sitemap** (`/sitemap-posts.xml`) gives every post's address and time with no login.
 Title, date, and tags are public; the rest of the post requires a member login.
 
-1. **3 passes a day:** 07:00, 13:00, 20:00 (changed from `ayarlar.yaml`).
+1. **3 passes a day:** 07:00, 13:00, 20:00 (changed from `settings.yaml`).
 2. **Finding new posts:** from the sitemap, posts since the previous pass (one request).
 3. **Reading:** with my member session (Playwright, log in once on the Air) the **full** post is read.
 4. **Not straining the site / not getting blocked:** ~20–30 seconds between pages, a little different each time → a pass ~20 minutes, about 1 hour a day.
@@ -126,17 +130,17 @@ count as different and the count splits).
 | **Sector** | The 11 sectors of GICS, the classification used most widely: Energy · Materials · Industrials · Consumer Discretionary · Consumer Staples · Health Care · Financials · Information Technology · Communication Services · Utilities · Real Estate | Never |
 | **Subsector / theme** | A list we will write together (e.g. Aviation, Semiconductors, Artificial intelligence, Lithium) | Only **with my approval** |
 
-If none fit, the model writes `other`; the Sunday summary asks "Yeni alt sektör eklensin mi?".
+If none fit, the model writes `other`; the Sunday summary asks "add a new subsector?".
 
 ### Agent 1B (Counter) rules (decision: 2026-10-03)
 
-1. Code counts, no AI, cost zero. It runs right before agent 2; Hermes can also be asked "bu hafta en çok ne geçti?".
+1. Code counts, no AI, cost zero. It runs right before agent 2; Hermes can also be asked "what was mentioned most this week?".
 2. **Rolling window:** each run looks back 7 days from that day; the count does not accumulate, it starts from zero every time. The 30-day count sits beside it as information.
 3. No matter how many times a stock appears in the same post, it counts as **1** (number of distinct posts). Sectors and commodities are counted separately too.
 4. **Only US-listed stocks enter the scoring order** (ADRs included). Non-US stocks are counted too, but on the Sunday
-   summary they appear only as an information line: "ABD dışı çok geçenler" (the data is ready when the China add-on comes).
-5. **A stock that already has a card does not enter the ranking** (it is not scored again). But the Sunday summary has one line: "Kartı olup bu hafta çok
-   geçenler: XYZ (12 yazı)" — I decide whether it gets scored again.
+   summary they appear only as an information line: "Non-US names mentioned a lot" (the data is ready when the China add-on comes).
+5. **A stock that already has a card does not enter the ranking** (it is not scored again). But the Sunday summary has one line: "Stocks with
+   a card mentioned a lot this week: XYZ (12 posts)" — I decide whether it gets scored again.
 
 ### Agent 2 (Research) rules (decision: 2026-10-03)
 
@@ -153,6 +157,12 @@ If none fit, the model writes `other`; the Sunday summary asks "Yeni alt sektör
 5. **The card is born here:** `Investing/Stocks/<TICKER> - <Company name>/card.md` is opened on Drive; the first entry is a research
    entry (score, reason, news summaries). The stock becomes **candidate**.
 6. **Score:** below.
+7. **A stock I add myself (decision: 2026-10-04)** — e.g. one the abi recommends: `/watch X` for a stock with **no card** runs
+   agent 2 at once for X alone (its normal weekly run does not change). It opens the card with a research entry: score + reason;
+   with no posts, `mentions` = 0 and `tone` = 1 (neutral); news and the commodity link come from a web search, used only for this
+   card. The stock is marked **"added by me"** (`added_by: user`) and shows with that label in the week's ranking. Then X goes to
+   `watching` and agent 3 writes the first fundamental entry (the balance-sheet analysis). A note can say where it came from
+   (`/watch X recommended by abi`).
 
 ### Score rules (decision: 2026-10-03)
 
@@ -415,7 +425,7 @@ is hard and error-prone for an AI; it would make version 1 harder.
 - Prose sits outside the blocks, under fixed subheadings: `### Summary` · `### Thesis` ·
   `### What changed`.
 - `### Thesis` always has two parts: why it is owned (at most 3 points) and 3 things that would break the thesis. The heading stays short so code can find `### Thesis`.
-- Closing a warning: a user note entry (`## 2026-11-06 · note · user` → "U1 kapatıldı, çünkü …"); the agent reads it on the next
+- Closing a warning: a user note entry (`## 2026-11-06 · note · user` → "U1 closed because …"); the agent reads it on the next
   run and does not reopen it unless the condition has changed.
 - Sample skeleton: `BAGLAM.md` section 7 (the current skeleton).
 
@@ -454,34 +464,99 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
-### Agent 4 (Technical) rules (decision: 2026-10-04)
+### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)
 
 **Why the role changed:** the backtests (`BAGLAM.md` section 3) show that buying and selling single stocks on technical signals
 loses. Daily 5-8-13 lagged buy-and-hold in 24 of 24 stocks; a market filter with short averages loses money; a stock's own trend
 exit sells quality companies on every dip and buys them back late. The way to get **more shares** is not to sell and buy back,
-but to **send the new monthly money to a quality stock while it is down**. So agent 4 is a **price watcher**, not a trading
-signal. It runs weekly (Sunday), with the Friday close and the last 4 quarters' figures.
+but to **send the new monthly money to a quality stock while it is down**. So agent 4 is not a trading signal. It is the only
+agent that looks at **my money**, not at companies: what I bought, what it is worth, whether my picks beat SPY and gold, how far
+total wealth is from the goal, and where the new money could go. It runs weekly (Sunday), with the Friday close and the last 4
+quarters' figures.
 
-1. **Where the new money could go:** each month it ranks the green-list stocks — down from their high + thesis intact + a fair price
-   line come first. Message: "this month's money could go to …". It never buys. A stock that is already above **25%** of the portfolio
-   gets no new money (the portfolio rebalances itself with new money, no selling, no tax); being above 25% is fine and triggers no
-   sell alert (Lynch: do not cut the flowers).
-2. **Drop alert:** a stock I hold falls **20%** from its highest weekly close of the last 52 weeks → Telegram, and agent 3 runs a
+**Code only, no AI.** Every figure is arithmetic; the only data is free Yahoo data. The AI around it is decided elsewhere: Hermes
+turns my message into a command (section 10.2), and agent 3 answers the drop-alert check (rule 6).
+
+**All figures in USD.** Nothing is converted to TL (the lira's fall would look like a gain). Only my TL entries (gold
+purchases, BES) are converted: TL → USD at that day's rate.
+
+**Prices every night:** agent 4 reads `prices`, filled at 03:00 Turkey time (UTC+3, after the US close) by the shared price job
+(section 5) with the previous day's closes — my stocks, the green list, SPY, gold, USD/TRY. The Sunday summary uses Friday's
+close; `/portfolio` uses the latest close.
+
+1. **Ledger (`holdings`):** one row per event, append-only — `buy` and `sell` from my commands (`/bought`, `/sold`); `dividend`
+   and `split` added by code. Positions (quantity, average cost) are computed from the rows. The ledger starts empty (on
+   2026-10-04 I hold no stocks).
+   - **Dividends:** Yahoo's dividend history × the quantity I held on the ex-date × (1 − withholding). Withholding is one setting
+     in `settings.yaml` (20%, user-confirmed; checked once against the Midas statement).
+   - **Splits:** from Yahoo's split history; code adjusts the quantity and tells me ("NVDA split 10:1 — your 10 shares are now
+     100; check it in Midas"). No drop alert in a split week (section 3, "AI auditor").
+2. **Value and weights (weekly):** each holding's value, its weight in the **stock portfolio** (gold and BES not included), and
+   its gain / loss in $ and %; the stock portfolio's total.
+3. **Benchmark — shadow portfolios (weekly):** every money movement is copied on the same day, for the same dollars, into a
+   **SPY shadow** and a **gold shadow**: a buy puts money in; a sale or a dividend takes money out. Cash waiting at the broker
+   is not counted (simple first).
+   - For me and for each shadow: **put in**, **got back** (sales + dividends), **value now**, and the return.
+   - **Return:** for the first 12 months only the total return (%), because a short gain turned into a yearly figure misleads
+     (+1% in one week ≈ +68% a year). After 12 months, also the yearly return that counts every buy (`xirr`).
+   - SPY uses Yahoo's adjusted close (dividends reinvested; a small advantage for the shadow, whose dividends are not taxed);
+     gold uses the gold price in USD.
+   - Information only: it shows whether my picks add anything over SPY and gold. It never moves money.
+4. **Total wealth (`total_wealth`):** stocks (from the ledger) + gold + BES, and its share of the goal (a setting in
+   `settings.yaml`: 800,000 $). I enter each gold purchase and, once a month, my BES payment and BES total; each entry is a new
+   dated row in `other_assets` (append-only).
+   - **Gold:** `/gold 1 4689` = 1 gram bought at 4,689 TL a gram (a sale: minus grams). What I put in = the sum of my purchases
+     (TL → USD at that day's rate); value now = my grams × the gold price per gram in USD (Yahoo's ounce price ÷ 31.1035; the
+     ticker is checked when coding). This is the world price; a bank sells a gram a few percent higher, so a fresh purchase
+     shows a small loss — the bank's spread, a real cost.
+   - **BES:** `/bes 8670 245000` = this month's payment and the total shown in the BES app (TL). Value now = the latest total
+     (TL → USD at that day's rate). Fund switches inside BES are not entered; the total already includes them, the returns and
+     the company and state contributions. Each month is a new row; nothing is overwritten. The latest total is the value now;
+     the rows are the history (gain = latest total − first total − payments since). Several BES accounts: one row with their sum.
+   - Emergency cash is not counted (user-confirmed).
+5. **Where the new money could go (weekly, user-confirmed; was monthly — same work, no extra cost):** it ranks the green-list stocks — down from
+   their high + thesis intact + a fair price line come first. Message: "this month's money could go to …". It never buys. A stock
+   that is already above **25%** of the stock portfolio gets no new money (the portfolio rebalances itself with new money, no
+   selling, no tax); being above 25% is fine and triggers no sell alert (Lynch: do not cut the flowers). **A stock skipped only
+   because of the 25% rule is not dropped silently:** the summary lists it under "Not suggested (25% rule)" with the rank it would
+   have had and its weight — "Not a sell signal. Your call." (`weight_cap`).
+6. **Drop alert:** a stock I hold falls **20%** from its highest weekly close of the last 52 weeks → Telegram, and agent 3 runs a
    "did the fundamentals break?" check at once. Filings are slower than the price, so the check reads **the latest filing and the
    latest news** (agent 1's `articles` for that stock + a short web search: e.g. "sales are slowing", "management cut its outlook").
    The answer: "thesis intact, the drop is the market" or "thesis point 2 broke" or "news says watch: …". News can only say "watch";
    a sell suggestion still needs agent 3's filing-based triggers. It never says "sell".
-3. **Valuation watch:** PEG > 3 **or** free-cash-flow yield < 1% for **4 weeks in a row** → information only ("expensive for now") and
-   the stock goes to the back of the queue for new money. **No sell suggestion.** Weekly figures live in the database (`prices` / `signals`), not in
+7. **Valuation watch:** PEG > 3 **or** free-cash-flow yield < 1% for **4 weeks in a row** → information only ("expensive for now") and
+   the stock goes to the back of the queue for new money. **No sell suggestion.** Weekly figures live in the database, not in
    the card; the card gets a dated note only when an alert fires.
-4. **Weights in the Sunday summary:** each holding's share of the portfolio (e.g. "NVDA 32% of the portfolio") — information only.
-   This needs my position sizes: a Hermes command such as "ABC 10 adet aldım" fills a `holdings` table (command list: implementation plan).
-5. **Market filter: not used in version 1** (decision: 2026-10-04 — option A, no insurance). Tests (`BAGLAM.md` section 3): an
+8. **Market filter: not used in version 1** (decision: 2026-10-04 — option A, no insurance). Tests (`BAGLAM.md` section 3): an
    S&P 500 average of about 21–55 weeks (40 in the middle) roughly halves the largest drop but costs return; with monthly buying,
    "new money waits" protects almost nothing, "sell half" costs about 4 points a year, "sell all" about 7–8. Later idea (not now):
    **shrink, do not sell** the portfolio on a macro reason (e.g. rising interest rates) — to be discussed later.
-6. **No sell signals at all from agent 4** — no per-stock technical signal, no market-filter selling. Selling is suggested only by
+9. **No sell signals at all from agent 4** — no per-stock technical signal, no market-filter selling. Selling is suggested only by
    agent 3's triggers (above); the decision is mine.
+
+**Storage (SQLite):** `holdings` (the ledger) · `prices` (daily closes: my stocks, the green list, SPY, gold, USD/TRY) ·
+`signals` (`new_money_rank`, `weight_cap`, `drop_alert`, `expensive`) · `other_assets` (my gold / BES entries) · `snapshots`
+(one row per week: stock value, put in, got back, return, SPY shadow, gold shadow, gold, BES, `total_wealth`, share of the
+goal — the frozen weekly history).
+
+**Output:** the portfolio block of the Sunday summary; the same on demand with `/portfolio`. Example (made-up figures):
+
+```text
+PORTFOLIO — week ending 2026-11-06
+Value $14,820 · week +1.2% · put in $13,000 · got back $40 (dividends)
+Return so far: +14.3%   (yearly figure after 12 months)
+Same money, same days → SPY $14,310 (+10.4%) · Gold $13,650 (+5.3%)
+You vs SPY: +$510
+Weights: NVDA 31% · V 22% · KO 18% · COST 15% · RIO 14%
+Drop alerts: none · Expensive 4 weeks: NVDA (PEG 3.4)
+New money: 1) V  2) COST
+Not suggested (25% rule): NVDA — would rank 1st, 31% of the stock portfolio. Not a sell signal. Your call.
+Total wealth: stocks $14.8k + gold 52 g $6.8k + BES $5.3k = $26.9k · 3.4% of $800k
+```
+
+**Test:** a hand-checked ledger (two buys, a sale, a dividend, a split) gives the same value, weights, shadow values and return
+as a spreadsheet.
 
 ### AI auditor (decision: 2026-10-04)
 
@@ -497,13 +572,13 @@ Free code checks come first; the auditor is the second line. **It never produces
 | 1B Counter | — (pure code) | tests |
 | **Agent 2 (Research)** | an invented or misread **serious negative event** forces news-flow to 0 (medium) | **code + AI auditor** (only these events) |
 | **Agent 3 (Analysis)** | a wrong figure, a wrong reading, an invented quote → a wrong grade, **a wrong sell suggestion** (high) | **code + AI auditor** (the main place) |
-| Agent 4 (price watcher) | a split shows as a fake −50% drop (low) | **code:** no drop alert in a week with a split in Yahoo's history |
+| Agent 4 (Portfolio) | a split shows as a fake −50% drop (low) | **code:** no drop alert in a week with a split in Yahoo's history |
 | Hermes commands | a message misunderstood ("15" vs "50") (medium) | **me** (every change asks for confirmation) + **code:** `/sold` cannot exceed what I hold; `/bought` / `/sold` price more than 20% from that day's close → "are you sure?"; an unknown ticker is refused |
 
 **Shared engine, one rule card per place.** Shared: the model, the output format (for each item **pass / fail / not_found** + a
 quote + a reason), logging and cost, "check only, never produce figures". Per place a short **rule card** file (task, inputs,
 numbered checklist, known traps, pass criterion, what happens on a fail), read as the AI instruction on every run; full texts are
-written with agent 3's code (under `ortak/`, planned `shared/auditor/`). Four cards:
+written with agent 3's code (under `shared/auditor/`). Four cards:
 
 1. **Agent 3 — figure audit.** Input: the ~10 main figures code took from SEC (revenue, operating profit, operating cash, capex,
    cash, short-term investments, marketable securities, debt, share count, net profit — each with its XBRL name and period) + the
@@ -554,14 +629,17 @@ outside models, like the external review of 2026-10-03 (`docs/reviews/`) — the
 
 On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents separately. Hermes runs the agents and reads the results.
 
-- **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, technical state) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`.
-- **What it can do:** answer questions (it reads the database + the cards: "XYZ'nin karnesi ne diyor?", "bu ay ne harcadık?") and run a command from the **defined command list** ("XYZ'yi takibe al", "ABC'yi portföye ekledim", "XYZ'yi şimdi analiz et", "XYZ'deki U1 uyarısını kapat, çünkü …"). The command list is written in the implementation plan.
+- **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, the portfolio block of agent 4) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`.
+- **What it can do:** answer **any question I ask** (decision: 2026-10-04) — it reads the database and the cards through a **read-only** path: it can look, never change ("what does the card of XYZ say?", "what did we spend this month?") — and run a command from the **defined command list** ("watch XYZ", "I added ABC to the portfolio", "analyze XYZ now", "close warning U1 on XYZ because …"). The command list: section 10.2.
+- **How messages travel (decision: 2026-10-04):** every job writes its message as plain text output; Hermes's script-only
+  scheduler delivers it to Telegram, and I talk to the bots there. This path is built and tested first, in step 0
+  (`docs/AIR_SETUP.md`, phase 7), before any agent.
 - **Asking for missing data (decision: 2026-10-03):** if agent 3 cannot find a figure (one that landed in the ledger), it asks me —
-  **when I say "XYZ'yi analiz et"** and **on Sunday** during the analyses (that run's gaps in one message).
+  **when I say "analyze XYZ"** and **on Sunday** during the analyses (that run's gaps in one message).
   The message is not a cryptic one-liner; it is **plain and clear**; code fills the template, a cheap model simplifies it:
   which stock · which figure · which year · why it is needed (which measure cannot be computed) · where to find it (e.g. "10-K → cash
-  flow statement → 'Stock-based compensation' line") · how to answer (e.g. `XYZ 2025 borç 12,3 milyar`). Code checks the figure I enter
-  (on an inconsistency such as a 10-times gap versus other years, "emin misin?"), and the card records `source: user`;
+  flow statement → 'Stock-based compensation' line") · how to answer (e.g. `/data XYZ 2025 debt 12.3bn`). Code checks the figure I enter
+  (on an inconsistency such as a 10-times gap versus other years, "are you sure?"), and the card records `source: user`;
   if no answer comes, the figure stays `unclear` and is reminded once.
 - **What it does not do:** it does not freely change the database / files (only the command list) · it does not change code or rules (that work is on the development Mac) · it does not trade.
 - Chat with Hermes uses my ChatGPT / Codex subscription if Hermes can log in with it (checked in step 0); otherwise a cheap but strong model (DeepSeek V4 Pro). Details: section 10.
@@ -575,9 +653,9 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
 | Development | On the main Mac (Claude Code / Cursor); each agent is tried by hand here first. Bridge: GitHub |
 | What runs it | Hermes Agent, on the backup MacBook Air M2 (16 GB), 24/7. No code is written on the Air: it is updated with `git pull`; `.env`, the site session, and the real SQLite live there. Hermes only schedules and reports; the calculation / analysis logic is in our code |
 | Communication | One counterpart on Telegram, Hermes (section 3, "Telegram and Hermes") + Drive folders |
-| AI | Agents call models through one client in `ortak/` with an ordered provider list per job: my API credits first, then OpenRouter (section 10). Hermes chat: ChatGPT / Codex subscription if possible. The Claude **subscription** is not connected to Hermes (terms of use); Claude **API credits** are fine |
+| AI | Agents call models through one client in `shared/` with an ordered provider list per job: my API credits first, then OpenRouter (section 10). Hermes chat: ChatGPT / Codex subscription if possible. The Claude **subscription** is not connected to Hermes (terms of use); Claude **API credits** are fine |
 | Site reading | Playwright; I log in once, the session is stored; 3 passes a day, slow (section 3, "Agent 1 rules"). No AI in the page-download step; a cheap model only for the one sentence on the post that was read. **Permission:** the owner of both sites personally allowed reading (scraping) (2026-10-03); no API; condition: do not strain the site / do not abuse it |
-| Model choice | One place: `ayarlar.yaml` |
+| Model choice | One place: `settings.yaml` |
 | Independence | The code does not know Hermes; each agent also runs by hand (`python -m agents.analysis`) |
 | Blog possibility | Every report/card is Markdown + a header (`publish: yes/no`). No web interface for now |
 
@@ -586,11 +664,30 @@ On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents sep
 | Place | What | Who reads it |
 |---|---|---|
 | **Drive** (`Investing/`) | PDFs, `card.md`, sector/stock reports, weekly summaries | Me |
-| **SQLite** (Mac disk, **not** on Drive) | Figures, scores, prices, signals, lists, run records | The machine |
+| **SQLite** (the Air's disk, `~/investment-agents-data/`, **not** on Drive) | Figures, scores, prices, signals, lists, run records | The machine |
 
-Every night a **backup copy** of SQLite is sent to Drive.
+Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 
-Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals`, `holdings` (my positions, entered via Hermes), `runs` (dollars spent included).
+**Database decisions (2026-10-04):**
+
+- **One price job:** every night at 03:00 Turkey time one job in `shared/` fetches every price any agent needs — my stocks, the
+  green list, SPY, gold, USD/TRY, the 11 sector funds and the linked commodities — into `prices`. No agent fetches prices on its own.
+- **Times** are stored in UTC and shown in Turkey time.
+- **TL entries** (gold purchases, BES) keep the TL amount and the USD/TRY rate used; the USD value is computed from them.
+- **Two separate databases:** the real one on the Air, a development one on the main Mac; they never mix.
+- **Stock identity:** every stock gets a fixed internal number (and, for SEC filers, its SEC number, CIK); the ticker is only a
+  label, so a ticker change (e.g. FB → META) does not break the history. I keep typing tickers.
+- **Price history is kept:** each night adds that day's prices as new rows; old prices are never deleted or overwritten, so I can
+  always look back.
+- **Backups:** every night a consistent copy (made with SQLite's own backup command) goes to `Investing/Backup/`; the last 7 daily
+  and the last 4 weekly copies are kept.
+- **Writing at the same time:** the database runs in WAL mode with a wait time — readers never wait, and a second writer waits a
+  few seconds instead of failing (e.g. my `/bought` while the 03:00 price job writes).
+- **Structure changes:** the database carries a version number; each change to the tables is a small numbered upgrade step that
+  the code applies on start. **Data is never lost when the structure changes** (my condition).
+
+Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
+Added on 2026-10-04 (decided features had no place for their records): `card_entries` (one row per card entry: date, record, `grade`, `lynch_type`, `thesis_status` — the history behind the sell triggers and the archive reminder), `audits` (the auditor's results and error rate), `command_log` (every change I make: number, command, time; `/undo` uses the number), `settings` (my overrides from Telegram, e.g. `/model`), `subsectors` (the approved subsector list).
 
 ```text
 Investing/                                 (Drive)
@@ -602,17 +699,18 @@ Investing/                                 (Drive)
     └── filings/                           HK / A-share PDFs (I upload them by hand)
 
 investment-agents/                         (code, Git)
-├── agents/eye/  counter/  research/  analysis/  technical/
+├── agents/eye/  counter/  research/  analysis/  portfolio/
 ├── shared/                                AI, SEC, price, Drive paths, database
-├── ayarlar.yaml
+├── settings.yaml
 └── docs/  YOL_HARITASI_v2.md  BAGLAM.md  GLOSSARY.md  TASINANLAR.md
 ```
 
-Today's folders are still `ajanlar/` and `ortak/` (the prototype and the backtest). New code uses the names in the tree above.
+New code goes directly under `agents/` and `shared/` (decision: 2026-10-04); `ajanlar/` (the agent 3 prototype and the
+backtests) stays as an archive.
 
 ## 6. Budget
 
-- AI / API: **at most 25–30 $ / month**. Expected once running: ~6–7 $ / month on OpenRouter prices (agent 1 ~0.2 $, agents 2 + 3 ~4–5 $, web search ~0.6 $); while my API credits last, close to 0 (section 10)
+- AI / API: **at most 25–30 $ / month**. Expected once running: ~6–11 $ / month on OpenRouter prices (agent 1 ~1–5 $, measured in the model test; agents 2 + 3 ~4–5 $; web search ~0.6 $); while my API credits last, close to 0 (section 10)
 - Emtia Defteri + Dragonomi subscriptions are **outside** this budget
 - OpenRouter: a fixed monthly limit of **15 $**, a Telegram warning at **10 $**; the `runs` table answers "what did we spend this month?" from Telegram
 
@@ -631,11 +729,11 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 
 | Step | Work | Counts as done if… |
 |---|---|---|
-| **0. Setup** | Mac settings (sleep off, separate user, FileVault), Hermes, Codex login, OpenRouter limit, Drive on the desktop, Telegram bot | I can exchange messages on Telegram and a scheduled trial job writes a file to Drive |
+| **0. Setup** | Mac settings (sleep off, separate user, FileVault), Hermes, Codex login, OpenRouter limit, Drive on the desktop, Telegram bot | I can exchange messages on Telegram, a scheduled trial job writes a file to Drive, and a scheduled job's message arrives on Telegram |
 | **1. Analysis + card** | `shared/` + SQLite + agent 3, 3–5 US stocks | **Acceptance test of at least 20 stocks, figures compared by hand with the 10-K;** 3 stocks have a card on Drive; a second run appends a new dated entry without deleting the old one; **the trial-set test passes:** 3–5 companies everyone accepts as quality come out solid, 1–2 companies known to be weak do **not** come out solid, trap examples are classified correctly (in the old system no stock could enter the green list; if the quality names do not come out solid the rules are too tight, if the weak names come out solid the rules are too loose) |
 | **2. Eye** | Both sites with Playwright, 3 passes a day | For 1 week every pass fills `articles` (one sentence + full text + mapped tags) and the site never once answers "too many requests" / a block |
 | **3. Research** | 1B Counter + agent 2: reading + web search + score + reason + opening the card | The weekly report is on Drive and on Telegram; cards for candidate stocks open on Drive |
-| **4. Technical** | Weekly price watcher (new-money ranking, drop alert, valuation and weight info; no sell signals) | The Sunday Telegram summary shows the new-money ranking, weights and valuation alerts; a drop alert triggers agent 3's check |
+| **4. Portfolio** | Ledger, value and weights, benchmark against SPY and gold, total wealth, new-money ranking with the 25% note, drop alert, valuation info; no sell signals; code only | The ledger test passes (section 3, "Agent 4 rules"); the Sunday summary shows the portfolio block (value, return, SPY and gold shadows, weights, total wealth, new money with the 25% note); a drop alert triggers agent 3's check |
 
 ## 9. Open topics (decided together before coding)
 
@@ -646,13 +744,13 @@ Not brought: the 9-stage gate system, the final FA color logic, the handoff docu
 3. ~~Agent 1 (Eye)~~ ✅ (2026-10-03: section 3, "Agent 1 rules")
 4. ~~Agent 2~~ ✅ (2026-10-03: Counter, sector list, reading, commodity link, birth of the card, score rules — section 3)
 5. **Agent 3** — ✅ (2026-10-03 / 04: rules + 2 external reviews applied + prototype and golden set 10/10 + AI auditor — section 3). **Left:** third review
-6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Later: a macro "shrink, do not sell" idea
-7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Left: 10.4 coding order
+6. ~~**Agent 4**~~ ✅ (2026-10-04: weekly price watcher — new-money ranking, drop alert, valuation and weight info; no sell signals; market filter not used in v1 — section 3). Renamed **Portfolio** the same day: ledger, benchmark against SPY and gold, total wealth, the 25% note; code only. Later: a macro "shrink, do not sell" idea
+7. **Implementation plan** — section 10. ✅ 10.1 models and providers, ✅ 10.2 Hermes command list, ✅ 10.3 Air setup checklist (2026-10-04). Database points settled (2026-10-04, section 5). Left: the implementation plan, phase by phase, in its own document (replaces "10.4 coding order")
 
 Topic notes:
 
 - ~~**Agent 2 score rules.**~~ ✅ section 3, "Score rules".
-- **Card format.** Which metrics, which checks, how the "reason" section is written. Fundamental-analysis result in 3 classes: **solid / mid / weak**; only solid ones go to technical analysis (the green list). **To be discussed with agent 3:** if data is missing, Hermes asks me for it on Telegram (I find it and provide it, the agent continues the calculation) — control stays with me, the work stays with the agent.
+- **Card format.** Which metrics, which checks, how the "reason" section is written. Fundamental-analysis result in 3 classes: **solid / mid / weak**; only solid ones go to agent 4 (the green list). **To be discussed with agent 3:** if data is missing, Hermes asks me for it on Telegram (I find it and provide it, the agent continues the calculation) — control stays with me, the work stays with the agent.
 - ~~**Agent 4 rules.**~~ ✅ section 3, "Agent 4 rules". No market-filter selling in v1; later idea: shrink the portfolio on a macro reason (e.g. rising rates).
 - ~~**Site terms of use.**~~ ✅ The site owner gave permission (see section 4, Site reading).
 - **HK / A-share data** (⏸ deferred — version 1 is US only). Which figures will be taken from the PDF by hand / by AI. Note: US filings do not need PDF / OCR (SEC figures are a ready table). Most HK / A PDFs contain text → read with a free Python library; OCR only for a scanned (image) PDF, and that too is free on the computer.
@@ -677,7 +775,7 @@ Not needed for routine work: Opus 5.5 / GPT-6 Astra (the code does the arithmeti
 
 **Who writes the first thesis:** the AI (strong model), decided in section 3.
 
-**Provider order (per job, in `ayarlar.yaml`):** my API credits first, then OpenRouter. The client in `ortak/` tries the list in
+**Provider order (per job, in `settings.yaml`):** my API credits first, then OpenRouter. The client in `shared/` tries the list in
 order; on an error, exhausted credit or quota it moves to the next one; every call's cost goes to `runs`.
 
 ```yaml
@@ -699,12 +797,12 @@ unclear terms); it can be added as a provider later.
 **Model change from Telegram (Hermes command list):**
 - one job: `analyze XYZ with opus-5.5`
 - from now on: `set strong model to gpt-6-sol`
-The override lives in the database on the Air (not in `ayarlar.yaml` in git, so the repo stays clean); every change is logged; the
+The override lives in the database on the Air (not in `settings.yaml` in git, so the repo stays clean); every change is logged; the
 spend limit still applies.
 
 **Data sent to models — only what the job needs.** Post texts and filings go out; my holdings, trades, amounts and portfolio do not
-go to a model unless a job needs them (e.g. Hermes answering my own question). DeepSeek's own API processes data in China — fine
-for news text, never for my personal data.
+go to a model unless a job needs them (e.g. Hermes answering my own question). Where a provider processes the data (US, Europe
+or China) does not matter to me; DeepSeek's own API is used directly (decision: 2026-10-04).
 
 **Spend safety:** OpenRouter monthly limit 15 $, a Telegram warning at 10 $ (section 6).
 
@@ -715,9 +813,10 @@ All commands are registered in the Telegram `/` menu with a short description (n
 I can also write a plain sentence ("I bought 10 KO at 85.65"); Hermes maps it to a command and shows the exact command in its
 confirmation. Clashes with Hermes's own built-in commands are checked in step 0; on a clash ours is renamed.
 
-**Rules:** (1) every command that changes something asks for confirmation first — Hermes lists exactly what will change, and runs
-it only after `yes`; (2) every change is logged (what, when, which command); (3) each command is a small Python function in our code
-(`python -m ortak.komut …` style) — Hermes calls it, it never edits tables or files itself.
+**Rules:** (1) every command that changes something — a correction too — asks for confirmation first — Hermes lists exactly what will change, and runs
+it only after `yes`; (2) every change is logged (what, when, which command) and gets a number, shown in its confirmation;
+(3) each command is a small Python function in our code (`python -m shared.commands …` style) — Hermes calls it, it never edits
+tables or files itself.
 
 **A. Information (changes nothing, no confirmation)**
 
@@ -728,21 +827,25 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 | `/green` | the green list: type, grade, price line |
 | `/candidates` | this week's candidates with scores and reasons |
 | `/card KO` | summary of the latest card entry + Drive link |
-| `/portfolio` | holdings: quantity, average cost, weight in the portfolio, gain / loss |
+| `/portfolio` | the portfolio block: holdings (quantity, average cost, weight, gain / loss), benchmark against SPY and gold, total wealth and its share of the goal |
 | `/missing` | missing figures waiting for me |
 | `/spend` | this month's AI spend by provider; how much is left of the limit |
 | `/model` | which job runs on which model now |
 | `/status` | system health: when each agent last ran, any errors |
 
+Beyond these commands I can ask Hermes anything; it answers from the database and the cards, read-only (section 3, "Telegram and Hermes").
+
 **B. Actions (change something, ask for confirmation)**
 
 | Group | Command | Example | What changes |
 |---|---|---|---|
-| Stock state | `/watch` | `/watch KO` | `candidate` → `watching`; agent 3 starts the card; a note on the card |
+| Stock state | `/watch` | `/watch KO` | `candidate` → `watching`; agent 3 starts the card; a note on the card. A stock with **no card**: agent 2 opens the card first ("added by me"), then agent 3 — the confirmation shows the estimated cost (section 3, agent 2 rule 7) |
 | | `/archive` | `/archive KO` | `watching` → `archived`; no new analysis or spend; a note on the card |
 | | `/unarchive` | `/unarchive KO` | `archived` → `watching` |
-| Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a BUY row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
-| | `/sold` | `/sold 5 KO 92.10` | a SELL row; when the position reaches 0, `in_portfolio = no` |
+| Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a `buy` row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
+| | `/sold` | `/sold 5 KO 92.10` | a `sell` row; when the position reaches 0, `in_portfolio = no` |
+| | `/gold` | `/gold 1 4689` | a gold purchase: grams and the TL price per gram (a sale: minus grams) → a new dated row in `other_assets` (total wealth); a price more than 20% from that day's gram price → "are you sure?" |
+| | `/bes` | `/bes 8670 245000` | this month's BES payment and the BES total (TL) → a new dated row in `other_assets`; a total more than 50% away from the last one → "are you sure?" |
 | Analysis | `/analyze` | `/analyze KO` or `/analyze KO opus-5.5` | runs agent 3 now (filing + latest news); the confirmation shows the **estimated cost** |
 | Card | `/closewarning` | `/closewarning KO U1 one-off tax deposit, not recurring` | the warning closes; a note with the reason; it does not reopen unless the condition changes |
 | | `/thesis` | `/thesis KO <corrected point>` | my correction of the AI's thesis as a note; the old thesis is not deleted |
@@ -751,6 +854,7 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 | | `/tag` | `/tag rio-tinto RIO` | fixes a wrong tag mapping; the tag is not asked to the AI again |
 | Settings | `/model` | `/model strong gpt-6-sol` · `/model strong default` | persistent model override (in the Air database), or back to the default |
 | | `/subsector` | `/subsector add Uranium Energy` | approves a new subsector (the answer to "add a new subsector?") |
+| Fix (decision: 2026-10-04) | `/undo` | `/undo` · `/undo 42` | cancels my last change, or change #42; **nothing is deleted:** a ledger row (`holdings`, `other_assets`) is marked `void` and kept; a stock-state change goes back with a dated card note; a card note gets a dated "withdrawn" note. **A correction in a plain sentence:** I write "my KO buy was wrong, 10 not 100" → Hermes prepares two commands (`/undo` for the wrong row + the right `/bought`) and shows them to me → **nothing changes until I say `yes`** → then both run |
 
 `/model` appears in both groups: without arguments it only shows; with arguments it changes.
 

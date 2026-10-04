@@ -8,7 +8,8 @@ publish: no
 # Step 0 — MacBook Air setup checklist
 
 Roadmap section 10.3. The Air (M2, 16 GB, 256 GB) runs the system 7/24; no code is written on it (it only `git pull`s).
-**Done when** (roadmap section 8): I can message Hermes on Telegram, and a scheduled test job writes a file to Drive.
+**Done when** (roadmap section 8): I can message Hermes on Telegram, a scheduled test job writes a file to Drive, and a
+scheduled job's message arrives on Telegram.
 Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the development session.
 
 ## Phase 1 — The Mac itself (~20 min) · me
@@ -58,7 +59,8 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [ ] **Connect Telegram:** `hermes gateway setup` → the bot token and **only my user ID**.
 - [ ] **Run as a service:** `hermes gateway install`, `hermes gateway start` (a launchd service; starts again after a restart).
 - [ ] ⚠️ **Limit Hermes's powers.** By default Hermes is an agent that can run terminal commands; our rule is "the command list
-      only" (section 10.2). Turn on its approval mode and restrict terminal use to our command scripts — done together, from its docs.
+      only" (section 10.2). Turn on its approval mode and restrict terminal use to our command scripts plus one read-only way to look at the
+      database and the cards (for my free questions) — done together, from its docs.
 - [ ] **Command clashes:** compare Hermes's built-in commands with ours (`/help`, `/model`, `/status` may clash); rename ours if so.
 - [ ] Agents run as **script-only cron jobs (no LLM)** — scheduling costs no tokens.
 
@@ -76,6 +78,7 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 | 3 | Scheduled test script (no AI, hourly) | a dated test file appears in `Investing/Inbox/` and **shows up in Drive on my phone** (script from Claude) |
 | 4 | Restart the Air | after my password, Hermes starts by itself and Telegram works |
 | 5 | Screen Sharing from the main Mac | it connects |
+| 6 | A scheduled test script prints a short message | the message arrives on Telegram — the path every agent's messages will use (roadmap section 3, "How messages travel") |
 
 ## Prepared by Claude before the setup
 
