@@ -334,7 +334,7 @@ spending" · section 5 (backup) · section 6 (spend limit, the 10 $ warning) · 
 
 | Phase | Status | Branch | Merged as |
 |---|---|---|---|
-| 0 | built, waiting for the audit | `claude/phase-0-foundation-arj800` | — |
+| 0 | built; audited (no blocker); fixes pushed — waiting for my Mac check | `claude/phase-0-foundation-arj800` (PR #3) | — |
 | 1 | not started | — | — |
 | 2 | not started | — | — |
 | 3 | not started | — | — |

@@ -162,22 +162,28 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   phase: built in one session → audited in a separate session (Claude gives the prompt) → fixes → my Mac check (Cursor) → one
   squash-merge into main → the Air. The sector before the Eye exists: from the SEC industry code (SIC) through a fixed table, I
   can correct it (roadmap section 3, "Sector list").
-- **Phase 0 built (2026-10-04)** on branch `claude/phase-0-foundation-arj800`, pull request open, not merged:
-  `pyproject.toml` (uv), `settings.yaml`, `.env.example`; `shared/db` (all 18 tables, version 1 + numbered upgrade steps with a
-  copy before each upgrade, WAL + 5 s wait, UTC times, stock = internal number + CIK; `init | upgrade | info`); `shared/backup`
-  (SQLite backup command → `Investing/Backup/`, 7 daily + the latest copy of each of the 4 weeks before them); `shared/runlog`
-  (`runs` row: `running` → `ok` / `error`, dollars); `shared/notify` (title line + plain lines, cut at Telegram's 4,096); `shared/drive`
-  (paths + the step-0 test script `python -m shared.drive test`); `shared/commands` (all 25 menu commands listed; `/help`,
-  `/status`, `/undo` built; a change prints a preview and runs only with `--yes`; `command_log` number; `/undo` marks `void`);
-  `shared/ask` (read-only: `mode=ro` + `query_only` + an authorizer); `docs/telegram_setcommands.txt`. New names in `GLOSSARY.md`
-  ("Kod ve veritabanı adları"). 62 tests pass.
-  Small choices made in code (no rule changed; to confirm in the audit): the done message shows the change number (the preview
-  shows the exact command to run on `yes`); an undo cannot itself be undone; commands do not write `runs` (their log is
-  `command_log`); the backup prints nothing when all is well.
-- **Next:** the phase 0 audit in a separate session (prompt given in chat) → fixes → my Mac check → squash-merge → the Air
-  (`AIR_SETUP.md`). Then phase 1. Small open items: the subsector list (before phase 4) · the Anthropic API credit expires
-  2026-10-19 (phase 2's real-model runs before it) · a third external review is still running · before phase 1: the sample data
-  (plan, section 6).
+- **Phase 0 built and audited (2026-10-04)** on branch `claude/phase-0-foundation-arj800`, PR #3 open, not merged:
+  `pyproject.toml` (uv), `settings.yaml`, `.env.example`; `shared/db` (all 18 tables, version 2, numbered upgrade steps; an
+  upgrade takes the write lock, runs with the foreign-key check off, checks every link before it commits and saves a copy first;
+  WAL + 5 s wait; UTC times; stock = internal number + CIK; triggers refuse DELETE on `holdings`, `other_assets`, `card_entries`,
+  `command_log`, `prices` and UPDATE on `prices`; `init | upgrade | info`); `shared/backup` (SQLite backup command →
+  `Investing/Backup/`, one self-contained file, 7 daily + the latest copy of each of the 4 weeks before them); `shared/runlog`
+  (`runs` row: `running` → `ok` / `error`, dollars); `shared/notify` (title line + plain lines, cut at Telegram's 4,096);
+  `shared/drive` (paths + the step-0 test script `python -m shared.drive test`); `shared/commands` (all 25 menu commands
+  listed; `/help`, `/status`, `/undo` built; a change prints a preview and runs only with `--yes`; `command_log` number; `/undo`
+  marks `void`); `shared/ask` (read-only: `mode=ro` + `query_only` + an authorizer + a 5 s limit); `shared/config` refuses a
+  database inside Drive; `docs/telegram_setcommands.txt`. New names in `GLOSSARY.md` ("Kod ve veritabanı adları"). 85 tests pass.
+  **Audit (separate session):** no blocker; all findings fixed except the ones below. **Decided (2026-10-04):** the lock on my
+  `yes` is Hermes's own approval mode (fallback: a one-time code from the preview) — roadmap 10.2 rule 4, tested in
+  `AIR_SETUP.md` phase 7 · the change number is shown when it is done · an `/undo` itself cannot be undone (roadmap 10.2).
+  Accepted as they are: commands do not write `runs` (their log is `command_log`; `/analyze` writes `runs` through the agent it
+  runs) · the backup prints nothing when all is well (Air test 8 checks Hermes does not forward stderr).
+  **Left for later:** a real time for the backup in `settings.yaml` and `/status` warnings for a job stuck in `running` or a
+  backup older than 36 hours (phase 6) · where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`)
+  is stored (phase 1).
+- **Next:** my Mac check (Cursor) → squash-merge → the Air (`AIR_SETUP.md`). Then phase 1. Small open items: the subsector list
+  (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external
+  review is still running · before phase 1: the sample data (plan, section 6).
 - **Pending questions:** (1) before phase 1 — how the sample data is downloaded: the cloud network setting (recommended) or a
   script on my Mac (plan, section 6).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).

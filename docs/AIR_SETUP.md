@@ -15,6 +15,8 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 ## Phase 1 — The Mac itself (~20 min) · me
 
 - [ ] Update macOS, restart.
+- [ ] **Time zone Istanbul** (System Settings → General → Date & Time). Hermes's schedules use the system clock; our code
+      always shows Turkey time.
 - [ ] **A separate macOS user** (e.g. `agents`) so the agents cannot see my personal files.
 - [ ] **FileVault on** (disk encryption). Side effect: after a power cut the Mac does nothing until I enter the password —
       log in over Screen Sharing after an outage.
@@ -29,7 +31,8 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 ## Phase 2 — Tools and the project (~20 min) · me (commands from Claude)
 
 - [ ] Developer tools: `xcode-select --install` (brings git).
-- [ ] `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- [ ] `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh`. Note its full path: `command -v uv`
+      (e.g. `/Users/agents/.local/bin/uv`) — scheduled jobs need it (phase 5).
 - [ ] **GitHub, read-only:** add a read-only **deploy key** for the repo (the Air only pulls; if it were compromised nobody could
       write to the code).
 - [ ] `git clone … ~/investment-agents`
@@ -37,7 +40,7 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
       **Never committed.** Template: `.env.example` (Claude).
 - [ ] Database folder `~/investment-agents-data/` — **outside Drive** (rule: SQLite never goes in the Drive folder).
 - [ ] In `~/investment-agents`: `uv sync`, then `uv run python -m shared.db init` (creates the database in that folder) and
-      `uv run python -m shared.db info` (version 1, every table with 0 rows).
+      `uv run python -m shared.db info` (version 2, every table with 0 rows).
 
 ## Phase 3 — Google Drive (~15 min) · me
 
@@ -66,8 +69,16 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [ ] ⚠️ **Limit Hermes's powers.** By default Hermes is an agent that can run terminal commands; our rule is "the command list
       only" (section 10.2). Turn on its approval mode and restrict terminal use to our command scripts plus one read-only way to look at the
       database and the cards (for my free questions) — done together, from its docs.
+      **Approval (roadmap 10.2, rule 4):** a command with `--yes` must wait for my OK on Telegram. If Hermes cannot do this,
+      tell Claude (fallback: a one-time code from the preview).
+- [ ] Hermes runs as the **same macOS user** as the agents (`agents`) — the read-only path to the database needs it.
 - [ ] **Command clashes:** compare Hermes's built-in commands with ours (`/help`, `/model`, `/status` may clash); rename ours if so.
-- [ ] Agents run as **script-only cron jobs (no LLM)** — scheduling costs no tokens.
+- [ ] Agents run as **script-only cron jobs (no LLM)** — scheduling costs no tokens. Write **full paths** in every job
+      (`cd /Users/agents/investment-agents && /Users/agents/.local/bin/uv run python -m …`): a launchd service does not see
+      `~/.local/bin` (or add that folder to the service's PATH).
+- [ ] **Drive access for the service:** macOS may block a background service from `~/Library/CloudStorage/…`
+      ("Operation not permitted"). If test 3 fails that way: System Settings → Privacy & Security → Full Disk Access (or Files
+      and Folders) → allow the program the Hermes service runs, restart the service, run test 3 again.
 
 ## Phase 6 — OpenRouter (~5 min) · me
 
@@ -80,10 +91,12 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 |---|---|---|
 | 1 | Write "hello" to Hermes on Telegram | an answer comes (from the ChatGPT subscription) |
 | 2 | Write to the bot from another Telegram account | **no answer** (the bot is mine only) |
-| 3 | Scheduled test script (no AI, hourly): `cd ~/investment-agents && uv run python -m shared.drive test` | a dated test file `drive-test-….md` appears in `Investing/Inbox/` and **shows up in Drive on my phone** |
+| 3 | Scheduled test script (no AI, hourly): `cd /Users/agents/investment-agents && /Users/agents/.local/bin/uv run python -m shared.drive test` | a dated test file `drive-test-….md` appears in `Investing/Inbox/` and **shows up in Drive on my phone** |
 | 4 | Restart the Air | after my password, Hermes starts by itself and Telegram works |
 | 5 | Screen Sharing from the main Mac | it connects |
 | 6 | The same scheduled script prints a short message ("DRIVE TEST …") | the message arrives on Telegram — the path every agent's messages will use (roadmap section 3, "How messages travel") |
+| 7 | Ask Hermes on Telegram to run `uv run python -m shared.commands undo --yes` | Hermes **asks for my approval first**; if I refuse, nothing runs (roadmap 10.2, rule 4) |
+| 8 | Schedule the backup once: `… uv run python -m shared.backup` | a copy appears in `Investing/Backup/` and **no** message arrives (a message "Backup written …" means Hermes forwards stderr — tell Claude) |
 
 ## Prepared by Claude before the setup
 
