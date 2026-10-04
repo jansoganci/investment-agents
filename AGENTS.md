@@ -115,9 +115,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   **Agent 4 renamed Portfolio (2026-10-04; roadmap section 3, "Agent 4 rules"):** the only agent that looks at my money — a
   ledger (`holdings`: buy / sell via Hermes, dividends and splits by code; starts empty, no stocks held), weekly value and weights,
   a benchmark with SPY and gold shadow portfolios (total return for the first 12 months, then `xirr`), total wealth (stocks + gold +
-  BES; `/gold` and `/bes` about monthly into `other_assets`; weekly `snapshots`) against the 800 thousand $ goal, the new-money
+  BES; `/gold` per purchase with grams and the TL price, `/bes` monthly with the payment and the BES total, into `other_assets`;
+  weekly `snapshots`) against the 800 thousand $ goal, the new-money
   ranking weekly with a "Not suggested (25% rule)" line (`weight_cap`). Code only, no AI; all figures in USD.
-  User-confirmed: emergency cash is not counted as wealth; dividend withholding 20%.
+  User-confirmed: emergency cash is not counted as wealth; dividend withholding 20%; the new-money list stays weekly; no
+  staleness rule for gold / BES (I enter them every month).
   Item 7 started — roadmap section 10. **10.1 models and providers decided (2026-10-04):** all system output and commands in
   English; cheap = DeepSeek V4 Flash, strong = Claude Sonnet 5.5 (high) with GPT-6 Sol fallback, Hermes chat = ChatGPT/Codex
   subscription if possible else DeepSeek V4 Pro; provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,

@@ -253,7 +253,7 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 
 `holdings` satır türü: alış → `buy` · satış → `sell` · temettü → `dividend` · bölünme → `split`.
 
-`other_assets` türü: altın (gram) → `gold` · BES (TL bakiye) → `bes`.
+`other_assets` türü: altın alımı (gram + TL gram fiyatı) → `gold` · BES (aylık ödeme + toplam tutar, TL) → `bes`.
 
 ## Drive yolları
 

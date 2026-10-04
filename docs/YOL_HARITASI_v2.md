@@ -488,12 +488,16 @@ balance: TL → USD at that week's rate.
    - SPY uses Yahoo's adjusted close (dividends reinvested; a small advantage for the shadow, whose dividends are not taxed);
      gold uses the gold price in USD.
    - Information only: it shows whether my picks add anything over SPY and gold. It never moves money.
-4. **Total wealth (`total_wealth`):** stocks (from the ledger) + gold (grams × the gold price per gram) + BES (TL balance ÷
-   USD/TRY), and its share of the goal (a setting in `ayarlar.yaml`: 800,000 $). I enter my gold grams and BES balance about once
-   a month (`/gold 52`, `/bes 245000`); each entry is a new dated row in `other_assets` (append-only; the latest row counts). The
-   system cannot know a newer balance until I enter it, so an entry older than 45 days is shown with its date and a reminder
-   ("BES from 2026-08-30 — update with /bes"). Emergency cash is not counted (user-confirmed).
-5. **Where the new money could go (weekly; was monthly — same work, no extra cost):** it ranks the green-list stocks — down from
+4. **Total wealth (`total_wealth`):** stocks (from the ledger) + gold + BES, and its share of the goal (a setting in
+   `ayarlar.yaml`: 800,000 $). I enter each gold purchase and, once a month, my BES payment and BES total; each entry is a new
+   dated row in `other_assets` (append-only).
+   - **Gold:** `/gold 1 4689` = 1 gram bought at 4,689 TL a gram (a sale: minus grams). What I put in = the sum of my purchases
+     (TL → USD at that day's rate); value now = my grams × today's gold price per gram, fetched by code.
+   - **BES:** `/bes 8670 245000` = this month's payment and the total shown in the BES app (TL). Value now = the latest total
+     (TL → USD at that week's rate). Fund switches inside BES are not entered; the total already includes them, the returns and
+     the company and state contributions.
+   - Emergency cash is not counted (user-confirmed).
+5. **Where the new money could go (weekly, user-confirmed; was monthly — same work, no extra cost):** it ranks the green-list stocks — down from
    their high + thesis intact + a fair price line come first. Message: "this month's money could go to …". It never buys. A stock
    that is already above **25%** of the stock portfolio gets no new money (the portfolio rebalances itself with new money, no
    selling, no tax); being above 25% is fine and triggers no sell alert (Lynch: do not cut the flowers). **A stock skipped only
@@ -797,8 +801,8 @@ it only after `yes`; (2) every change is logged (what, when, which command); (3)
 | | `/unarchive` | `/unarchive KO` | `archived` → `watching` |
 | Portfolio | `/bought` | `/bought 10 KO 85.65` (date and fee optional) | a BUY row in `holdings`; on the first buy `in_portfolio = yes` and a card note |
 | | `/sold` | `/sold 5 KO 92.10` | a SELL row; when the position reaches 0, `in_portfolio = no` |
-| | `/gold` | `/gold 52` | my gold balance in grams → a new dated row in `other_assets` (total wealth); more than 50% away from the last entry → "are you sure?" |
-| | `/bes` | `/bes 245000` | my BES balance in TL → a new dated row in `other_assets`; the same 50% check |
+| | `/gold` | `/gold 1 4689` | a gold purchase: grams and the TL price per gram (a sale: minus grams) → a new dated row in `other_assets` (total wealth); a price more than 20% from that day's gram price → "are you sure?" |
+| | `/bes` | `/bes 8670 245000` | this month's BES payment and the BES total (TL) → a new dated row in `other_assets`; a total more than 50% away from the last one → "are you sure?" |
 | Analysis | `/analyze` | `/analyze KO` or `/analyze KO opus-5.5` | runs agent 3 now (filing + latest news); the confirmation shows the **estimated cost** |
 | Card | `/closewarning` | `/closewarning KO U1 one-off tax deposit, not recurring` | the warning closes; a note with the reason; it does not reopen unless the condition changes |
 | | `/thesis` | `/thesis KO <corrected point>` | my correction of the AI's thesis as a note; the old thesis is not deleted |
