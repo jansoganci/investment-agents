@@ -75,7 +75,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-04 (phase 0 built)
+- **Last update:** 2026-10-04 (phase 0 built, audited and fixed)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -180,8 +180,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   runs) · the backup prints nothing when all is well (Air test 8 checks Hermes does not forward stderr).
   **Left for later:** a real time for the backup in `settings.yaml` and `/status` warnings for a job stuck in `running` or a
   backup older than 36 hours (phase 6) · where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`)
-  is stored (phase 1).
-- **Next:** my Mac check (Cursor) → squash-merge → the Air (`AIR_SETUP.md`). Then phase 1. Small open items: the subsector list
+  is stored (phase 1) · every new changing command also gets its `/undo` path. All of these are written into
+  `docs/IMPLEMENTATION_PLAN.md` (sections 3 and 6, phases 1 and 6, marked "from phase 0").
+- **Next:** my Mac check (Cursor) → squash-merge → the Air (`AIR_SETUP.md`); the Air check closes phase 0 (phase 0 is done only
+  when the Mac and Air checks pass, so phase 1 starts after it — fixed rule 5). Small open items: the subsector list
   (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external
   review is still running · before phase 1: the sample data (plan, section 6).
 - **Pending questions:** (1) before phase 1 — how the sample data is downloaded: the cloud network setting (recommended) or a
