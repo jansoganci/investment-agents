@@ -117,6 +117,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   a benchmark with SPY and gold shadow portfolios (total return for the first 12 months, then `xirr`), total wealth (stocks + gold +
   BES; `/gold` and `/bes` about monthly into `other_assets`; weekly `snapshots`) against the 800 thousand $ goal, the new-money
   ranking weekly with a "Not suggested (25% rule)" line (`weight_cap`). Code only, no AI; all figures in USD.
+  User-confirmed: emergency cash is not counted as wealth; dividend withholding 20%.
   Item 7 started — roadmap section 10. **10.1 models and providers decided (2026-10-04):** all system output and commands in
   English; cheap = DeepSeek V4 Flash, strong = Claude Sonnet 5.5 (high) with GPT-6 Sol fallback, Hermes chat = ChatGPT/Codex
   subscription if possible else DeepSeek V4 Pro; provider order = my API credits (Anthropic 90 $ until 10-19, DeepSeek 10 $,
@@ -134,6 +135,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   step 0 on the Air, then a few months of real use without changing the rules.
   Small open items: the subsector list (needed for tag mapping) · prepare `.env.example`, the `/setcommands` text and the Drive
   test script before the Air setup · the Anthropic API credit expires 2026-10-19 (use it for agent 3's AI parts and the tests) ·
-  a third external review is still running · local commits are not pushed to GitHub yet.
+  a third external review is still running · the agent 4 changes are on the branch `claude/agent4-portfolio`, not yet merged into main.
 - **Pending questions:** None.
-- **Note:** Commits have not been pushed to GitHub yet. The user wants to push them all together at the end.
+- **Note:** main is on GitHub. The agent 4 (Portfolio) changes of 2026-10-04 are on the branch `claude/agent4-portfolio` (pushed),
+  waiting to be merged into main.

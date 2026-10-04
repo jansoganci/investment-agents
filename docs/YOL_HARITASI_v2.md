@@ -474,7 +474,7 @@ balance: TL → USD at that week's rate.
    and `split` added by code. Positions (quantity, average cost) are computed from the rows. The ledger starts empty (on
    2026-10-04 I hold no stocks).
    - **Dividends:** Yahoo's dividend history × the quantity I held on the ex-date × (1 − withholding). Withholding is one setting
-     in `ayarlar.yaml` (default 20%; checked once against the Midas statement).
+     in `ayarlar.yaml` (20%, user-confirmed; checked once against the Midas statement).
    - **Splits:** from Yahoo's split history; code adjusts the quantity and tells me ("NVDA split 10:1 — your 10 shares are now
      100; check it in Midas"). No drop alert in a split week (section 3, "AI auditor").
 2. **Value and weights (weekly):** each holding's value, its weight in the **stock portfolio** (gold and BES not included), and
@@ -490,8 +490,9 @@ balance: TL → USD at that week's rate.
    - Information only: it shows whether my picks add anything over SPY and gold. It never moves money.
 4. **Total wealth (`total_wealth`):** stocks (from the ledger) + gold (grams × the gold price per gram) + BES (TL balance ÷
    USD/TRY), and its share of the goal (a setting in `ayarlar.yaml`: 800,000 $). I enter my gold grams and BES balance about once
-   a month (`/gold 52`, `/bes 245000`); each entry is a new dated row in `other_assets` (append-only; the latest row counts). An
-   entry older than 45 days is shown with its date ("gold value from 2026-08-30"). Emergency cash is not counted.
+   a month (`/gold 52`, `/bes 245000`); each entry is a new dated row in `other_assets` (append-only; the latest row counts). The
+   system cannot know a newer balance until I enter it, so an entry older than 45 days is shown with its date and a reminder
+   ("BES from 2026-08-30 — update with /bes"). Emergency cash is not counted (user-confirmed).
 5. **Where the new money could go (weekly; was monthly — same work, no extra cost):** it ranks the green-list stocks — down from
    their high + thesis intact + a fair price line come first. Message: "this month's money could go to …". It never buys. A stock
    that is already above **25%** of the stock portfolio gets no new money (the portfolio rebalances itself with new money, no
