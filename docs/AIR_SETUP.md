@@ -17,16 +17,19 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [ ] Update macOS, restart.
 - [ ] **Time zone Istanbul** (System Settings → General → Date & Time). Hermes's schedules use the system clock; our code
       always shows Turkey time.
-- [ ] **A separate macOS user** (e.g. `agents`) so the agents cannot see my personal files.
+- [x] **The user account:** the system runs in my main account `jans.` (decision 2026-10-05). A separate `agents` user
+      would be a second wall (Hermes could not see my files) — not chosen for now; instead iCloud is off on the Air and my
+      personal notes and photos are not on it. The limits on Hermes (phase 5) are the wall. Examples below say `/Users/agents`;
+      on the Air it is `/Users/jans.` and the repo is `~/projects/investment-agents`.
 - [ ] **FileVault on** (disk encryption). Side effect: after a power cut the Mac does nothing until I enter the password —
-      log in over Screen Sharing after an outage.
+      enter it at the Air after an outage (remote access is off).
 - [ ] Firewall on (System Settings → Network → Firewall).
 - [ ] **No sleep:** System Settings → Battery → Options → "Prevent automatic sleeping on power adapter when the display is off";
       "Wake for network access" if offered.
 - [ ] Charger always connected, lid open; "Optimized battery charging" stays on.
 - [ ] **Automatic updates:** download only, do not install (otherwise the Mac restarts by itself at night).
-- [ ] **Remote access:** System Settings → General → Sharing → **Screen Sharing** and **Remote Login (SSH)** on, so I can reach
-      the Air from the main Mac.
+- [x] **Remote access: off** (decision 2026-10-05). Remote Login (SSH) and Screen Sharing stay **off** — fewer open doors.
+      I reach the system from anywhere through Telegram (Hermes); for anything else I sit at the Air. Test 5 is dropped.
 
 ## Phase 2 — Tools and the project (~20 min) · me (commands from Claude)
 
@@ -72,7 +75,11 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
       database and the cards (for my free questions) — done together, from its docs.
       **Approval (roadmap 10.2, rule 4):** a command with `--yes` must wait for my OK on Telegram. If Hermes cannot do this,
       tell Claude (fallback: a one-time code from the preview).
-- [ ] Hermes runs as the **same macOS user** as the agents (`agents`) — the read-only path to the database needs it.
+- [ ] Hermes runs as the **same macOS user** as the agents (`jans.`) — the read-only path to the database needs it.
+- [ ] **How tight (decision 2026-10-05): limited, not painful.** I talk in plain words, no command syntax needed: questions
+      are answered at once (read-only path, no approval); a change ("watch KO", "I bought 3 NVDA") is turned into our command,
+      Hermes shows the preview and runs it after one "yes". Hard limits: no other terminal commands, no `sudo`, no reading
+      outside the repo, `~/investment-agents-data/` and `Investing/`, never `.env`, no code changes.
 - [ ] **Command clashes:** compare Hermes's built-in commands with ours (`/help`, `/model`, `/status` may clash); rename ours if so.
 - [ ] Agents run as **script-only cron jobs (no LLM)** — scheduling costs no tokens. Write **full paths** in every job
       (`cd /Users/agents/investment-agents && /Users/agents/.local/bin/uv run python -m …`): a launchd service does not see
@@ -94,7 +101,7 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 | 2 | Write to the bot from another Telegram account | **no answer** (the bot is mine only) |
 | 3 | Scheduled test script (no AI, hourly): `cd /Users/agents/investment-agents && /Users/agents/.local/bin/uv run python -m shared.drive test` | a dated test file `drive-test-….md` appears in `Investing/Inbox/` and **shows up in Drive on my phone** |
 | 4 | Restart the Air | after my password, Hermes starts by itself and Telegram works |
-| 5 | Screen Sharing from the main Mac | it connects |
+| 5 | ~~Screen Sharing from the main Mac~~ | dropped (remote access off, decision 2026-10-05) |
 | 6 | The same scheduled script prints a short message ("DRIVE TEST …") | the message arrives on Telegram — the path every agent's messages will use (roadmap section 3, "How messages travel") |
 | 7 | Ask Hermes on Telegram to run `uv run python -m shared.commands undo --yes` | Hermes **asks for my approval first**; if I refuse, nothing runs (roadmap 10.2, rule 4) |
 | 8 | Schedule the backup once: `… uv run python -m shared.backup` | a copy appears in `Investing/Backup/` and **no** message arrives (a message "Backup written …" means Hermes forwards stderr — tell Claude) |
