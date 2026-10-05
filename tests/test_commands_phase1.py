@@ -106,20 +106,20 @@ def test_card_green_and_missing(db, env):
     code, text = commands.run(["green"])
     assert "NVDA" in text and "RIVN" not in text
     code, text = commands.run(["missing"])
-    assert "RIVN · debt · 2025" in text and "/data RIVN 2025 debt" in text
+    assert "RIVN · debt · 2024" in text and "/data RIVN 2024 debt" in text
 
 
 def test_data_enters_a_figure_with_a_plausibility_check(db, env):
     run.analyze(db, "RIVN", FixtureSources(), today="2026-10-05")
-    code, text = commands.run(["data", "RIVN", "2025", "debt", "44bn"])
+    code, text = commands.run(["data", "RIVN", "2024", "debt", "44bn"])
     assert "are you sure" in text.lower()  # 10 times the other years
-    code, text = commands.run(["data", "RIVN", "2025", "debt", "4.4bn"])
+    code, text = commands.run(["data", "RIVN", "2024", "debt", "4.4bn"])
     assert "are you sure" not in text.lower()
-    do("data", "RIVN", "2025", "debt", "4.4bn")
+    do("data", "RIVN", "2024", "debt", "4.4bn")
     row = db.execute("SELECT figure, period_end, value, source, void FROM financials WHERE source='user'").fetchone()
-    assert row == ("debt", "2025", 4.4e9, "user", 0)
+    assert row == ("debt", "2024", 4.4e9, "user", 0)
     code, text = commands.run(["missing"])
-    assert "RIVN · debt · 2025" not in text
+    assert "RIVN · debt · 2024" not in text
     do("undo")
     assert db.execute("SELECT void FROM financials WHERE source='user'").fetchone()[0] == 1
 

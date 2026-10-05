@@ -27,12 +27,15 @@ SYNONYMS: dict[str, dict[str, list[str]]] = {
         "dividends": ["PaymentsOfDividends", "PaymentsOfDividendsCommonStock", "PaymentsOfOrdinaryDividends"],
         "eps": ["EarningsPerShareDiluted"],
         "shares": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
-        "gain_on_sale": ["GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal"],
+        "gain_on_sale": ["GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal",
+                         "GainLossOnDispositionOfAssets"],
         "acquisitions": ["PaymentsToAcquireBusinessesNetOfCashAcquired"],
         # instant (balance sheet)
         "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
         "short_term_investments": ["ShortTermInvestments", "OtherShortTermInvestments"],
-        "marketable_securities": ["MarketableSecuritiesCurrent"],
+        # `MarketableSecurities` only counts when no `MarketableSecuritiesNoncurrent` is reported that year (then it is the
+        # current line; Coca-Cola renamed its line in 2021)
+        "marketable_securities": ["MarketableSecuritiesCurrent", "MarketableSecurities"],
         "short_term_investments_partial": ["AvailableForSaleSecuritiesDebtSecuritiesCurrent",
                                            "DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurrent"],
         "assets": ["Assets"],
@@ -102,8 +105,12 @@ DEBT_GROUPS: dict[str, list[tuple[list[str], bool, bool]]] = {
 SHORT_TERM_DEBT: dict[str, list[str]] = {"us-gaap": ["ShortTermBorrowings", "CommercialPaper"], "ifrs-full": []}
 
 
+# names read only to check another name (kept in the sample data)
+CHECK_NAMES = {"us-gaap": {"MarketableSecuritiesNoncurrent"}, "ifrs-full": set()}
+
+
 def all_names(taxonomy: str) -> set[str]:
-    names = {n for names in SYNONYMS[taxonomy].values() for n in names}
+    names = {n for names in SYNONYMS[taxonomy].values() for n in names} | CHECK_NAMES[taxonomy]
     names |= {n for group, _, _ in DEBT_GROUPS[taxonomy] for n in group}
     names |= set(SHORT_TERM_DEBT[taxonomy])
     return names

@@ -77,7 +77,9 @@ class Facts:
                            for rows in body["units"].values() for r in rows)
         self.annual_only = not has_quarters
         self.ttm_end = self._ttm_end() if quarters and has_quarters else None
-        self.ends = self.annual_ends + ([self.ttm_end] if self.ttm_end else [])
+        # the last 4 quarters take the place of the last annual report they overlap (decision 2026-10-05): sums, averages
+        # and "previous year" never count the same months twice
+        self.ends = (self.annual_ends[:-1] + [self.ttm_end]) if self.ttm_end else list(self.annual_ends)
 
     # --- basics -----------------------------------------------------------------------------------------------------
 
@@ -183,6 +185,8 @@ class Facts:
         unit = self._unit(figure)
         forms = FORMS_QUARTER if end == self.ttm_end else FORMS_ANNUAL
         for tag in self.syn[figure]:
+            if tag == "MarketableSecurities" and self._best("MarketableSecuritiesNoncurrent", unit, end, forms):
+                continue  # with a noncurrent line next to it, `MarketableSecurities` is not the current part
             if figure in INSTANT:
                 v = self._best(tag, unit, end, forms)
             elif figure == "shares":
@@ -225,13 +229,16 @@ class Facts:
 
     def liquid(self) -> dict[str, Value]:
         """Cash + short-term investments + current marketable securities — the parts are added, not alternatives.
-        A part that is not reported is not held; without cash the total is not computed."""
+        A part never reported is not held. A part reported the year before but missing this year is still counted as not
+        held, but noted in `liquid_gaps` and `misses` (decision 2026-10-05: computed + a data check + the ledger).
+        Without cash the total is not computed."""
         if "liquid" in self._cache:
             return self._cache["liquid"]
         cash, sti, ms = self.annual("cash"), self.annual("short_term_investments"), self.annual("marketable_securities")
         partial = self.annual("short_term_investments_partial")
         out = {}
-        for e in self.ends:
+        self.liquid_gaps: dict[str, list[str]] = {}
+        for i, e in enumerate(self.ends):
             if e not in cash:
                 continue
             parts = {cash[e].tag: cash[e].value}
@@ -240,6 +247,11 @@ class Facts:
                     parts[src[e].tag] = src[e].value
             if e not in sti and e not in ms and e in partial:
                 parts[partial[e].tag] = partial[e].value
+            if i:
+                prev = self.ends[i - 1]
+                for figure, src in (("short_term_investments", sti), ("marketable_securities", ms)):
+                    if prev in src and src[prev].value and e not in src:
+                        self.liquid_gaps.setdefault(e, []).append(figure)
             out[e] = Value(sum(parts.values()), "+".join(parts), cash[e].form, cash[e].accn, e, cash[e].filed, parts)
         self._cache["liquid"] = out
         return out

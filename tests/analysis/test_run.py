@@ -70,16 +70,16 @@ def test_a_bank_gets_an_out_of_scope_entry(db, env, src):
 
 
 def test_user_figures_fill_a_gap(db, env, src):
-    # Rivian's 2024–2025 debt is under a name our lists do not know yet → the ledger asks me; my figure fills it
+    # Rivian's 2024 debt is under a name our lists do not know yet → the ledger asks me; my figure fills it
     run.analyze(db, "RIVN", src, today="2026-10-05")
     sid = run.find_stock(db, "RIVN")["id"]
-    assert db.execute("SELECT count(*) FROM missing_data WHERE figure='debt' AND year='2025'").fetchone()[0] == 1
+    assert db.execute("SELECT count(*) FROM missing_data WHERE figure='debt' AND year='2024'").fetchone()[0] == 1
     db.execute("INSERT INTO financials (stock_id, period_end, period_type, figure, value, source, created_at) "
-               "VALUES (?, '2025', 'annual', 'debt', 4.4e9, 'user', 'x')", (sid,))
+               "VALUES (?, '2024', 'annual', 'debt', 4.4e9, 'user', 'x')", (sid,))
     db.commit()
     run.analyze(db, "RIVN", src, today="2026-10-06")
     text = drive.find_card("RIVN").read_text()
-    assert text.count("debt not found (2025)") == 1  # only the first entry lists it as a gap
+    assert text.count("debt not found (2024)") == 1  # only the first entry lists it as a gap
 
 
 def test_weekly_analyzes_watching_stocks_with_a_new_filing_only(db, env, src):

@@ -148,13 +148,13 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
         r.figures[fig] = get(fig)
     flags, notes = r.flags, r.notes
 
-    # --- consistency checks: a sudden drop to zero / a 10-times jump in revenue is flagged and not used -----------------
+    # --- consistency checks: a sudden drop to zero / a 10-times jump in revenue is flagged; no year is dropped
+    # (decision 2026-10-05) ---------------------------------------------------------------------------------------------
     for a_, b_ in zip(Y, Y[1:]):
         if rev.get(a_) and b_ in rev:
-            ratio = rev[b_] / rev[a_] if rev[a_] else None
-            if rev[b_] == 0 or (ratio is not None and (ratio > 10 or ratio < 0.1)):
-                flags.append({"flag": "data_check", "detail": f"revenue {rev[a_]/1e9:.2f} → {rev[b_]/1e9:.2f} bn ({b_[:4]}); not used"})
-                rev.pop(b_)
+            ratio = rev[b_] / rev[a_]
+            if rev[b_] == 0 or ratio > 10 or ratio < 0.1:
+                flags.append({"flag": "data_check", "detail": f"revenue {rev[a_]/1e9:.2f} → {rev[b_]/1e9:.2f} bn ({b_[:4]}); check the figure"})
     for e in Y:  # gross profit = revenue − cost
         if e in gross and e in rev and e in cost and rev[e] and abs(gross[e] - (rev[e] - cost[e])) > 0.02 * abs(rev[e]):
             flags.append({"flag": "data_check", "detail": f"gross profit ≠ revenue − cost ({e[:4]})"})
@@ -215,11 +215,13 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
         if e not in op or e not in assets or e not in cur_liab or e not in liquid:
             continue
         p, tx = pretax.get(e), tax.get(e)
-        rate = min(max(tx / p, 0), 0.35) if p and p > 0 and tx is not None else 0.21
+        if p is not None and p > 0 and tx is None:
+            continue  # a profit but no tax figure: not computed (21% is only for a year without profit)
+        rate = min(max(tx / p, 0), 0.35) if p is not None and p > 0 else 0.21
         tied_up = assets[e] - cur_liab[e] - liquid[e]
         if tied_up > 0:
             roce[e] = op[e] * (1 - rate) / tied_up
-    r5 = _avg([roce.get(e) for e in Y[-5:]], need=3)
+    r5 = _avg([roce.get(e) for e in Y[-5:]])
     r3 = _avg([roce.get(e) for e in Y[-3:]])
 
     # 5 cash conversion (3 years): free cash ÷ net profit; not computed if net profit ≤ 0
@@ -318,11 +320,11 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
         lynch_type = None
     elif (cyc_sector and profits >= 1) or (profits and losses):
         lynch_type = "cyclical"
-    elif profits < 4 and fcf3 is not None and fcf3 < 0:
+    elif losses >= 2 and fcf3 is not None and fcf3 < 0:  # "profit in fewer than 4 of the last 5 years"; a missing year is not a loss
         lynch_type = "unprofitable"
     elif M[1] is not None and M[1] >= .15:
         lynch_type = "fast_grower"
-    elif profits < 4:
+    elif losses >= 2:
         lynch_type = "unprofitable"
     elif M[1] is not None and M[1] >= .05:
         lynch_type = "stalwart"
@@ -363,6 +365,28 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
         R["T"] = GOOD if f5 >= d5 else WEAK
         N["T"] = f"free cash {f5/1e9:.2f} vs dividends {d5/1e9:.2f} bn over {len(y5)} years"
 
+    def _why(k) -> str:
+        if N.get(k) and k in (5, 6, 8):
+            return N[k]
+        need = {1: ("revenue", [i3, last], rev), 3: ("operating profit", [last], op), 9: ("gross profit", [i3, last], gross)}
+        if k in need:
+            what, ends_, src = need[k]
+            gone = [e[:4] for e in ends_ if e not in src]
+            return f"{what} not found ({', '.join(gone)})" if gone else f"{what} not usable"
+        if k == 2:
+            return "fewer than 3 years of margins"
+        if k == 4:
+            gone = [n for n, src in (("operating profit", op), ("total assets", assets), ("current liabilities", cur_liab),
+                                     ("liquid assets", liquid)) if last not in src]
+            return (", ".join(gone) + f" not found ({last[:4]})") if gone else "fewer than 2 years computed"
+        if k in (7, 10):
+            return "debt, liquid assets or free cash not found"
+        if k == "B":
+            return "interest expense and the paydown time not found"
+        if k == "T":
+            return "dividends or free cash not found for 2 years"
+        return "inputs not found"
+
     # --- grade ------------------------------------------------------------------------------------------------------------
     dec = DECISIVE.get(lynch_type, [])
     marks = [R[k] for k in dec]
@@ -385,6 +409,12 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
         grade = "mid"
         r.rules.append("fast_grower_safety")
     r.grade = grade
+    if lynch_type is not None:
+        computed_n = sum(1 for m in marks if m is not None)
+        for k in dec:
+            if R[k] is None:
+                flags.append({"flag": "data_check", "detail": f"decisive measure {NAMES[k]} not computed ({_why(k)}); "
+                                                              f"the grade rests on {computed_n} of {len(dec)}"})
 
     for k in list(range(1, 11)) + ["B", "T"]:
         r.measures[NAMES[k]] = {"value": M.get(k), "mark": R[k], "decisive": k in dec, "unit": UNITS.get(k),
@@ -424,10 +454,10 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
         f5, d5 = sum(fcf[e] for e in y5), sum(divs[e] for e in y5)
         if d5 and abs(f5 - d5) <= 0.1 * d5:
             flags.append({"flag": "borderline", "detail": "dividend_cover"})
-    if leases.get(last):
+    if leases.get(last) and leases[last] >= 0.05e9:
         notes.append(f"lease_heavy: leases {leases[last]/1e9:.1f} bn (debt including leases "
                      f"{((debt_last or 0) + leases[last])/1e9:.1f} bn)")
-    if acq.get(last):
+    if acq.get(last) and acq[last] >= 0.05e9:
         notes.append(f"acquisitive: {acq[last]/1e9:.1f} bn spent on acquisitions in the latest year")
 
     # --- price line (never part of the grade) ------------------------------------------------------------------------------
@@ -441,6 +471,15 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
     if any(e not in op for e in window):
         wanted.add("operating")
     r.missing = [m for m in facts.misses if m["figure"] in wanted and m["end"] in window]
+    for e, figs in getattr(facts, "liquid_gaps", {}).items():  # decision 2026-10-05: computed, flagged, asked
+        if e not in window:
+            continue
+        for fig in figs:
+            flags.append({"flag": "data_check", "detail": f"liquid assets: {fig} reported the year before, missing in "
+                                                          f"{facts.year_label(e)} (counted as not held; check the figure)"})
+            m = next((m for m in facts.misses if m["figure"] == fig and m["end"] == e), None)
+            if m:
+                r.missing.append(m)
     return r
 
 

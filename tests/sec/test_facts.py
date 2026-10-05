@@ -26,10 +26,26 @@ def test_year_ends_one_per_year_with_52_53_week_years():
 
 
 def test_ko_liquid_assets_add_the_parts():
-    # Coca-Cola 2025: cash 10.270 + other short-term investments 3.602 = 13.872 bn (the old prototype missed the second part)
+    # Coca-Cola 2025: cash 10.270 + other short-term investments 3.602 + marketable securities 1.934 = 15.806 bn
+    # (the old prototype missed the second part; the marketable securities line is named `MarketableSecurities` since 2021)
     liq = facts("KO", quarters=False).liquid()["2025-12-31"]
-    assert liq.value == pytest.approx(13.872 * BN, rel=1e-4)
-    assert set(liq.parts) == {"CashAndCashEquivalentsAtCarryingValue", "OtherShortTermInvestments"}
+    assert liq.value == pytest.approx(15.806 * BN, rel=1e-4)
+    assert set(liq.parts) == {"CashAndCashEquivalentsAtCarryingValue", "OtherShortTermInvestments", "MarketableSecurities"}
+
+
+def test_marketable_securities_with_a_noncurrent_line_is_not_current():
+    raw = sec_facts("KO")
+    rows = raw["facts"]["us-gaap"]["MarketableSecurities"]["units"]["USD"]
+    raw["facts"]["us-gaap"]["MarketableSecuritiesNoncurrent"] = {"units": {"USD": [dict(r) for r in rows]}}
+    liq = Facts(raw, sec_submissions("KO"), quarters=False).liquid()["2025-12-31"]
+    assert "MarketableSecurities" not in liq.parts
+
+
+def test_a_liquid_part_that_disappears_is_noted():
+    # Nvidia reported marketable securities until FY2026; the gap is noted for a data check and the ledger
+    f = facts("NVDA")
+    f.liquid()
+    assert "marketable_securities" in f.liquid_gaps.get(f.ttm_end, [])
 
 
 def test_boeing_debt_group_needs_all_parts():
@@ -82,7 +98,7 @@ def test_ttm_is_the_last_four_quarters_from_cumulative_10q_figures():
     q2 = best[("2025-12-29", "2026-03-29")]["val"]
     q3 = best[("2026-03-30", "2026-06-28")]["val"]
     assert f.annual("revenue")["2026-06-28"].value == pytest.approx(q4 + q1 + q2 + q3, rel=1e-9)
-    assert f.ends[-1] == "2026-06-28" and f.ends[-2] == "2025-09-28"
+    assert f.ends[-1] == "2026-06-28" and f.ends[-2] == "2024-09-29"  # the TTM takes the overlapping year's place
 
 
 def test_ttm_balance_sheet_comes_from_the_latest_quarter():

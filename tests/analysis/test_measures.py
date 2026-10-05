@@ -29,18 +29,29 @@ def test_golden_set_on_the_annual_reports(ticker):
     assert (r.grade, r.lynch_type) == GOLDEN[ticker]
 
 
+# With the last 4 quarters in place of the last annual report (decision 2026-10-05). A grade that differs from the golden
+# set must be explained by the new filing: Coca-Cola's TTM to 2026-04-03 leaves the 2025 fairlife one-off out, so free cash
+# covers the dividends over 5 years again (BAGLAM.md section 9: "back to solid once the one-offs leave the window").
+TTM_GRADE = {t: g for t, (g, _) in GOLDEN.items()} | {"KO": "solid"}
+
+
 @pytest.mark.parametrize("ticker", GOLDEN)
 def test_golden_set_with_the_last_four_quarters(ticker):
-    # the latest 10-Q as the current year (roadmap section 3, "Quarterly updates"); the grade must not move
     r = run(ticker, quarters=True)
-    assert r.grade == GOLDEN[ticker][0]
+    assert r.grade == TTM_GRADE[ticker]
+
+
+def test_ttm_replaces_the_overlapping_annual_report():
+    r = run("KO", quarters=True)
+    assert r.ends[-2:] == ["2024-12-31", "2026-04-03"]  # 2025 annual is not counted next to the TTM
+    assert r.measures["dividend_cover"]["mark"] == "good"
 
 
 def test_coca_cola_flags_and_borderline():
     r = run("KO")
     kinds = {f["flag"] for f in r.flags}
     assert {"one_off", "borderline"} <= kinds
-    assert r.measures["capital_return"]["value"] == pytest.approx(0.143, abs=0.001)
+    assert r.measures["capital_return"]["value"] == pytest.approx(0.1465, abs=0.001)  # with the marketable securities
     assert r.measures["dividend_cover"]["mark"] == "weak"  # the one-offs push dividend cover 2% short
 
 
