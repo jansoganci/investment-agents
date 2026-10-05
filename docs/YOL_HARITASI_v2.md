@@ -222,6 +222,14 @@ is added to the list when it shows up. The US side is ready in the old project (
    Why: "think fast, iterate faster" — first the companies where the 10 measures work well; add the others later if needed.
    An out-of-scope stock is marked "unclear — out of scope: <reason>". Payment companies such as Visa / Mastercard are
    **in** scope (Visa is "Financials" in GICS but is not a bank).
+   **Where the label lives and who sets it (decision: 2026-10-05):** a field of its own, `stocks.out_of_scope` (one of the five
+   labels; empty = in scope). Why a field of its own: `lynch_type` is the company's growth type, and mixing the two would blur
+   both; with its own field the Sunday summary and Hermes can list these stocks, and the label can change on a later run (a
+   `pre_revenue` company starts selling). Code sets it on every agent 3 run from SEC's industry code (SIC): `bank` 6021–6036 ·
+   `insurance` 6311–6399 (health insurers such as UnitedHealth, SIC 6324, fall here too) · `reit` 6798 · `utility` 4911, 4923,
+   4924, 4931, 4932, 4941, 4991 · `pre_revenue` = no revenue in any of the last 3 annual reports (a revenue that is not found
+   also goes to `missing_data`, so a missing name is caught). The card entry then says `grade: unclear` and
+   "unclear — out of scope: bank (SIC 6021)"; the 10 measures and the price line are not computed.
 3. **Code measures and raises questions; it does not judge:** e.g. "there is a loss" → "why this loss?". The AI writes the reason from the annual report
    **with a quote** (e.g. "the loss is from a new warehouse investment; gross profit is growing 30%; operating cash is positive"). Figure + reason
    sit side by side on the card; the decision is mine. (The Amazon lesson: a loss by itself is not weakness.)
@@ -401,8 +409,11 @@ and the parts of liquid assets and debt. Approval comes after that.
   (The same idea is used today under the name "PEGY", flipped: P/E ÷ (growth + yield).)
 - **Free-cash-flow yield:** free cash flow ÷ market value ("if I bought the whole company today, what percent of my money comes back
   as cash per year?"). Free cash = operating cash − capex − stock comp (the single definition above; SEC); **the main value uses
-  the 3-year average free cash**, the latest year is shown next to it (Coca-Cola: latest 1.4%, 3-year 1.7%). Market value = price
-  (Yahoo) × share count (SEC). The card also shows the 5-year path of free cash flow.
+  the 3-year average free cash**, the latest year is shown next to it (Coca-Cola: latest 1.4%, 3-year 1.7%). **Market value =
+  Yahoo's ready-made market value in USD** (decision: 2026-10-05 — it is right for ADRs and share classes, where price × SEC
+  share count is not: TSMC 1 ADR = 5 shares; Berkshire's SEC count is in A shares). If Yahoo has none, everything that needs it
+  (FCF yield, P/E, PEG, the dividend ratio) stays `not_computed` (null) for now; what to do then is my decision later. The card
+  also shows the 5-year path of free cash flow.
 - **PEG growth = diluted earnings per share, 3-year growth** (split-adjusted; P/E is a per-share ratio, so growth is per share too —
   Lynch also worked per share), capped at 25%.
 - **P/E and dividend yield are computed from SEC figures:** P/E = market value ÷ (latest net profit × FX); dividend yield = latest
@@ -692,7 +703,7 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 - **Structure changes:** the database carries a version number; each change to the tables is a small numbered upgrade step that
   the code applies on start. **Data is never lost when the structure changes** (my condition).
 
-Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
+Tables: `stocks` (with `out_of_scope` since 2026-10-05), `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
 Added on 2026-10-04 (decided features had no place for their records): `card_entries` (one row per card entry: date, record, `grade`, `lynch_type`, `thesis_status` — the history behind the sell triggers and the archive reminder), `audits` (the auditor's results and error rate), `command_log` (every change I make: number, command, time; `/undo` uses the number), `settings` (my overrides from Telegram, e.g. `/model`), `subsectors` (the approved subsector list).
 
 ```text

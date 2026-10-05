@@ -186,9 +186,9 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   the Air when it is set up (at the latest before phase 4). Small open items: the subsector list (before phase 4) · the
   Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external review is still running.
 - **Exception to fixed rule 5 (my decision, 2026-10-04):** phase 1 is built before phase 0 is done (only its Mac and Air checks are left; the Air is not ready; phase 2's real-model runs must come before 2026-10-19) — Mac checks of phases 0 and 1 together, phase 0's Air check when the Air is ready (plan section 1).
-- **Pending (2026-10-05):** phase 1's code waits for the five SEC / Yahoo hosts (still refused by the network rule) and 3 answers —
-  where the out-of-scope label is stored, where the market value comes from, my SEC contact line (plan, section 6). The sample
-  data comes through the network setting (decided 2026-10-04).
+- **Pending (2026-10-05):** the SEC / Yahoo hosts are open; decided: the out-of-scope label lives in `stocks.out_of_scope`
+  (set from the SIC code) and the market value comes from Yahoo (null if missing; the fallback is my decision later). Still open:
+  my SEC contact line (`SEC_UA`) — phase 1's SEC data waits for it (plan, section 6).
   **What is done, what waits, what we stay away from:** plan sections 7–8 (decision: 2026-10-05).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** PR #1 (agent 4, the document audit, the database decisions) was merged into main on 2026-10-04 as one commit; the

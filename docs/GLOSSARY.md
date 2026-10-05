@@ -210,7 +210,7 @@ Resmî İngilizce ad. Hiçbiri uymazsa `other` (`diğer`).
 
 Alt sektör listesi henüz yazılmadı. Örnekler kilit: Havacılık → Aviation · Yarı iletken → Semiconductors · Yapay zekâ → Artificial intelligence · Lityum → Lithium.
 
-Kapsam dışı iş modeli etiketi: banka → `bank` · sigorta → `insurance` · REIT → `reit` · gelirsiz şirket → `pre_revenue` · kamu hizmetleri (dağıtım) → `utility`.
+Kapsam dışı iş modeli etiketi: banka → `bank` · sigorta → `insurance` · REIT → `reit` · gelirsiz şirket → `pre_revenue` · kamu hizmetleri (dağıtım) → `utility`. Alan adı: `out_of_scope` (`stocks` tablosunda; boş = kapsamda; karar 2026-10-05).
 
 ## Ajanlar ve klasörler
 

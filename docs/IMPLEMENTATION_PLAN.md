@@ -173,9 +173,10 @@ states" · section 5 (one price job, price history) · `BAGLAM.md` section 9 (go
   note — roadmap 10.2). `/analyze` writes no `runs` row itself; the agent it runs does.
 - Saved sample data: trimmed SEC and Yahoo data for the golden set, Novo Nordisk and the trap cases.
 
-**To decide first (from phase 0):** where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`) is
-stored — `lynch_type` does not take these values; a new upgrade step adds the field. For the Mac check, one of my 3 stocks can be
-a bank (e.g. JPM) to see this path.
+**Decided first (from phase 0; my decision 2026-10-05):** the out-of-scope label lives in a field of its own,
+`stocks.out_of_scope`, set by code from the SIC code (roadmap section 3, "Agent 3 rules", approach 2); a new upgrade step adds the
+field. Market value = Yahoo's ready-made value; if it is missing, the price line stays `not_computed` (roadmap section 3,
+"Valuation"). For the Mac check, one of my 3 stocks can be a bank (e.g. JPM) to see the out-of-scope path.
 
 **Tests (here):** the golden set — all 10 get the expected grade and type (`BAGLAM.md` section 9) · Novo Nordisk works (IFRS,
 DKK in the price line) · KO liquid assets = cash + short-term investments · Boeing's debt group needs all parts · Pfizer 2020 debt
@@ -343,18 +344,16 @@ left stuck on purpose shows in `/status`.
 ## 6. Open inputs
 
 - **The subsector list** — needed before phase 4.
-- **Where the out-of-scope label is stored** — asked on 2026-10-04 (phase 1, "To decide first"). Claude's recommendation: a new
-  field `stocks.out_of_scope`, set by code from the SEC industry code (SIC). Waiting for my answer.
-- **Where the market value comes from** — asked on 2026-10-04: roadmap section 3, "Valuation", has two sentences (price × SEC
-  share count; market value from Yahoo). Claude's recommendation: Yahoo's market value (USD) everywhere (right for ADRs and
-  share classes). Waiting for my answer.
+- ~~**Where the out-of-scope label is stored**~~ — decided 2026-10-05: `stocks.out_of_scope`, set by code from the SIC code
+  (roadmap section 3, "Agent 3 rules", approach 2).
+- ~~**Where the market value comes from**~~ — decided 2026-10-05: Yahoo's ready-made market value (USD); if it is missing → `not_computed`
+  for now (roadmap section 3, "Valuation"; the fallback is in section 8).
 - **Sample data for phase 1** — needed before phase 1. The build session downloads real SEC and Yahoo answers once. Claude's
   recommendation: I allow these hosts in the cloud environment's network setting (environment menu in the session's title bar
   → Edit → Network access → Custom, keeping the default package-manager list): `data.sec.gov`, `www.sec.gov`,
   `query1.finance.yahoo.com`, `query2.finance.yahoo.com`, `fc.yahoo.com`. Otherwise Claude writes a download script that I run
   on my Mac and push. SEC also asks for a contact line (`SEC_UA`); the phase 1 session asks me for it.
-  **Decided (2026-10-04): the network setting.** On 2026-10-04 the five hosts were still refused by the environment's network
-  rule, and my `SEC_UA` line was a placeholder — both waiting.
+  **Decided (2026-10-04): the network setting** — the five hosts are open since 2026-10-05. My `SEC_UA` line: still open.
 - ~~**The sector before the Eye exists**~~ — decided 2026-10-04 (roadmap section 3, "Sector list"): taken from the SEC
   industry code (SIC) through a fixed table; I can correct it. The Eye's tag mapping takes over in phase 4.
 - **The third external review** — if it arrives before phase 1 is merged, its accepted points go into phase 1; later, into a fix of
@@ -367,7 +366,7 @@ left stuck on purpose shows in `/status`.
 | Phase | Build | Audit | Fixes | Mac check | Merge | Air | Branch / PR | Note |
 |---|---|---|---|---|---|---|---|---|
 | 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ⏳ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 | Mac check together with phase 1's (my decision), then the merge · Air check when the Air is set up (section 8) |
-| 1 | ⏳ | — | — | — | — | — | `claude/phase-1-analysis-numbers-arj800` (on top of phase 0) | started 2026-10-04 before phase 0 is done (exception, section 1) · the code waits for the SEC / Yahoo network access and 3 answers (section 6) |
+| 1 | ⏳ | — | — | — | — | — | `claude/phase-1-analysis-numbers-arj800` (on top of phase 0) | started 2026-10-04 before phase 0 is done (exception, section 1) · network open and 2 of the 3 answers given (2026-10-05); the SEC data waits for my contact line (section 6) |
 | 2 | — | — | — | — | — | — | — | real-model runs before 2026-10-19 |
 | 3 | — | — | — | — | — | — | — | |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
@@ -383,7 +382,7 @@ off this list is my decision.
 
 | What | Why not now | Comes back when |
 |---|---|---|
-| Phase 1 code | the SEC / Yahoo hosts are still refused by the environment's network rule; 3 answers are open (section 6) | I open the hosts and answer |
+| Phase 1 code that needs SEC data | my SEC contact line (`SEC_UA`) is still open (section 6) | I give the line |
 | Phase 0 Mac check, then merging PR #3 | done together with phase 1's Mac check (my decision, section 1) | phase 1 is built |
 | The Air setup (`AIR_SETUP.md`) and phase 0's Air check | not set up yet; phases 1–3 do not need the Air (tests here, real checks on the Mac) | at the latest before phase 4 — earlier is cheaper: Hermes's message path, its approval for `--yes` and the command-name clashes are still untested |
 | The third external review | it has not arrived | it arrives: before phase 1 is merged → into phase 1; later → a fix of its own |
@@ -396,6 +395,7 @@ off this list is my decision.
 | `/status` warnings: a job stuck in `running`, a backup that is too old | they matter only when jobs run on their own; the limits are a new rule I decide then (suggested: 1 hour, 36 hours) | 6 |
 | `/undo` for the other commands | phase 0's `/undo` handles rows with `void` only; each phase adds the path for its own commands (section 3) | each phase |
 | The subsector list | only the Eye uses it | before 4 |
+| What to do when Yahoo has no market value | rare; until then the price line says `not_computed` (null) | my decision, later |
 
 **Not in version 1 — roadmap decisions; we stay away:**
 
