@@ -349,3 +349,34 @@ kopya → `<veri klasörü>/pre-upgrade/` · Drive test dosyası → `Inbox/driv
 | `card_entries`: kayıt · kim | `record` · `who` (kayıt başlığındaki değerler) |
 | `audits`: denetim türü · sonuç · model | `audit` (`figure` / `reading` / `sell` / `event`) · `result` · `model` |
 | `settings` (Telegram'dan): anahtar · değer | `key` · `value` (en son geçerli satır kazanır; boş değer = varsayılana dön) |
+
+## Kod ve veritabanı adları (faz 1, 2026-10-05)
+
+**Modüller:** `shared/sec` (SEC istemcisi; `facts` rakamları izleriyle okur; `synonyms` eş ad listeleri ve borç grupları) ·
+`shared/sectors` (SIC → sektör tablosu, döngüsel SIC listesi, kapsam dışı SIC listesi) · `shared/prices` (tek fiyat işi;
+`yahoo` Yahoo istemcisi) · `agents/analysis` (`measures` 10 ölçü + tür + sınıf + bayraklar + fiyat satırı; `card` kart yazıcısı;
+`run` uçtan uca çalıştırma ve haftalık "yeni rapor var mı?" kontrolü). Komutlar: `shared/commands/stocks.py`.
+Örnek veri: `tests/fixtures/sec/`, `tests/fixtures/yahoo/` (her dosyada `_meta`: kaynak ve tarih).
+
+**`settings.yaml`:** sektör düzeltmesi → `sector_overrides` (ticker: sektör).
+
+**Rakam adları** (`financials.figure` ve `/data`): satış → `revenue` · satış maliyeti → `cost` · brüt kâr → `gross` ·
+faaliyet kârı → `operating` · vergi öncesi kâr → `pretax` · vergi → `tax` · net kâr → `net` · faiz gideri → `interest` ·
+net faiz geliri → `net_interest_income` · faiz geliri → `interest_income` · işletme nakdi → `op_cash` · yatırım harcaması → `capex` ·
+hisseyle ödenen maaş → `stock_comp` · ödenen temettü → `dividends` · hisse başı kâr (seyreltilmiş) → `eps` ·
+hisse sayısı (seyreltilmiş ortalama) → `shares` · satış kazancı → `gain_on_sale` · satın almalar → `acquisitions` · nakit → `cash` ·
+kısa vadeli yatırımlar → `short_term_investments` · menkul kıymetler → `marketable_securities` · kısmi kısa vadeli yatırım adı →
+`short_term_investments_partial` · toplam varlık → `assets` · kısa vadeli borçlar (yükümlülük) → `current_liabilities` ·
+toplam yükümlülük → `liabilities` · kira yükümlülüğü → `leases` · borç (grup toplamı) → `debt` · likit varlık (parçaların toplamı) → `liquid`.
+
+| Ne | Ad |
+|---|---|
+| `financials.period_type` için son 4 çeyrek | `ttm` (`annual` yıllık rapor) |
+| eksik veri ve `/data` yıl adı | `2025` (yıllık) · `TTM 2026-06-28` (son 4 çeyrek) |
+| `prices`: o günün temettüsü · bölünme oranı | `dividend` · `split_ratio` (10'a 1 → 10; 1'e 8 ters → 0.125) |
+| `financials`: kaydı yaratan komut · geri alındı mı | `command_id` · `void` / `voided_by` |
+| `card_entries`: kaydın dayandığı rapor (başvuru no) | `filing` |
+| `command_log`: değişikliğin yerine geçtiği eski hâl (JSON) | `before` |
+| kart kaydı başlığındaki kaynak | `2025 annual (10-K)` · `last 4 quarters to 2026-06-28 (10-Q)` |
+| kart YAML'ı: ek alanlar | `source.filing` · `price.market_value` · `price.pe` · `price.fcf_yield_latest` · `price.verdict` · `free_cash.average_3y` · `liquid` / `debt` (`value` + `parts`) · `info` (bilgi satırları: `lease_heavy`, `acquisitive`, Yahoo notları) · `warnings[].detail` · kapsam dışında `out_of_scope` + `sic` |
+| hesaplanamayan değer (kartta) | `not_computed` |

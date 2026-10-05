@@ -132,7 +132,8 @@ rules (confirmation, log, number, `/undo`) · `docs/AIR_SETUP.md`.
 **Tests (here):** `init` creates every table · an upgrade step keeps every row · WAL is on · a backup copy opens and retention
 keeps 7 + 4 · a command writes `command_log`; `/undo` marks `void` and deletes nothing · `shared/ask` cannot write.
 
-**Mac check:** `uv sync` · `uv run python -m shared.db init` → the development database appears · `uv run pytest -q` passes.
+**Mac check:** `uv sync` · `.env` with `DRIVE_DIR` = `…/My Drive/Investing-dev` (never the real `Investing/`) ·
+`uv run python -m shared.db init` → the development database appears · `uv run pytest -q` passes.
 **Air:** `AIR_SETUP.md` phases 1–7 — Hermes answers on Telegram; the scheduled test script's file shows up in Drive and its
 message arrives on Telegram.
 
@@ -183,9 +184,10 @@ DKK in the price line) · KO liquid assets = cash + short-term investments · Bo
 · Nvidia's ×10 split confirmed by Yahoo · a reverse split · the IPO year skipped · missing ≠ 0 everywhere · the last 4 quarters
 from cumulative 10-Q figures · a second run appends a dated entry and deletes nothing.
 
-**Mac check:** live SEC + Yahoo for KO, NVDA and 3 stocks I choose — the cards open in Drive and read well; the golden set on live
-data (a changed grade must be explained by a new filing). How: `uv run python -m shared.prices --ticker KO` ·
-`uv run python -m agents.analysis KO`.
+**Mac check:** live SEC + Yahoo for KO, NVDA and 3 stocks I choose — the cards open in Drive (`Investing-dev/`) and read well;
+the golden set on live data (a changed grade must be explained by a new filing). How: `uv run python -m shared.prices --ticker KO` ·
+`uv run python -m agents.analysis KO`. Also once: `uv run python tests/fixtures/fetch_yahoo.py` (Yahoo refused the cloud
+machine), then push the saved files.
 
 **Done when:** the tests pass, the audit has no blocker, the Mac check passes.
 
@@ -353,7 +355,9 @@ left stuck on purpose shows in `/status`.
   → Edit → Network access → Custom, keeping the default package-manager list): `data.sec.gov`, `www.sec.gov`,
   `query1.finance.yahoo.com`, `query2.finance.yahoo.com`, `fc.yahoo.com`. Otherwise Claude writes a download script that I run
   on my Mac and push. SEC also asks for a contact line (`SEC_UA`); the phase 1 session asks me for it.
-  **Decided (2026-10-04): the network setting** — the five hosts are open since 2026-10-05. My `SEC_UA` line: still open.
+  **Decided (2026-10-04): the network setting** — the five hosts are open since 2026-10-05; `SEC_UA` given (local `.env`
+  only). SEC data downloaded (`tests/fixtures/sec/`, 13 companies). Yahoo refused the cloud machine ("too many requests") →
+  its sample answers come from my Mac (section 8).
 - ~~**The sector before the Eye exists**~~ — decided 2026-10-04 (roadmap section 3, "Sector list"): taken from the SEC
   industry code (SIC) through a fixed table; I can correct it. The Eye's tag mapping takes over in phase 4.
 - **The third external review** — if it arrives before phase 1 is merged, its accepted points go into phase 1; later, into a fix of
@@ -366,7 +370,7 @@ left stuck on purpose shows in `/status`.
 | Phase | Build | Audit | Fixes | Mac check | Merge | Air | Branch / PR | Note |
 |---|---|---|---|---|---|---|---|---|
 | 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ⏳ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 | Mac check together with phase 1's (my decision), then the merge · Air check when the Air is set up (section 8) |
-| 1 | ⏳ | — | — | — | — | — | `claude/phase-1-analysis-numbers-arj800` (on top of phase 0) | started 2026-10-04 before phase 0 is done (exception, section 1) · network open and 2 of the 3 answers given (2026-10-05); the SEC data waits for my contact line (section 6) |
+| 1 | ✅ | ⏳ | — | ⏳ | — | — | `claude/phase-1-analysis-numbers-arj800` (on top of phase 0) | built 2026-10-05 (exception, section 1); waiting for the audit · Yahoo blocked the cloud machine, so the real Yahoo answers are checked on the Mac (section 8) · Mac check together with phase 0's |
 | 2 | — | — | — | — | — | — | — | real-model runs before 2026-10-19 |
 | 3 | — | — | — | — | — | — | — | |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
@@ -382,7 +386,7 @@ off this list is my decision.
 
 | What | Why not now | Comes back when |
 |---|---|---|
-| Phase 1 code that needs SEC data | my SEC contact line (`SEC_UA`) is still open (section 6) | I give the line |
+| Saved Yahoo answers for the tests (`tests/fixtures/yahoo/`) | Yahoo answered "too many requests" to the cloud machine for hours; the price job is tested on an answer built by hand in Yahoo's format | the Mac check runs `uv run python tests/fixtures/fetch_yahoo.py` once and pushes the files |
 | Phase 0 Mac check, then merging PR #3 | done together with phase 1's Mac check (my decision, section 1) | phase 1 is built |
 | The Air setup (`AIR_SETUP.md`) and phase 0's Air check | not set up yet; phases 1–3 do not need the Air (tests here, real checks on the Mac) | at the latest before phase 4 — earlier is cheaper: Hermes's message path, its approval for `--yes` and the command-name clashes are still untested |
 | The third external review | it has not arrived | it arrives: before phase 1 is merged → into phase 1; later → a fix of its own |

@@ -218,6 +218,7 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
         lines.append(f"Grade changed: {previous['grade']} → {r.grade}")
     if n_missing:
         lines.append(f"New missing figures: {n_missing} (see /missing)")
+    lines.extend(market_notes)
     lines.append(f"Card: {path}")
     return Outcome(sid, ticker, r.grade, notify.message(f"ANALYSIS · {ticker}", lines), str(path))
 
