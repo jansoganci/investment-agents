@@ -55,7 +55,8 @@ A new phase starts only when the previous one is done (`AGENTS.md`, fixed rule 5
   fake a pass · a test is never weakened to make it pass.
 - **Always true:** append-only where the rules say so (cards, ledgers; `/undo` marks `void`, never deletes) · missing ≠ 0 · every
   job writes a `runs` row · messages are printed text that Hermes delivers · each agent also runs by hand
-  (`uv run python -m agents.<agent>`) · all system output in English · secrets only in `.env`.
+  (`uv run python -m agents.<agent>`) · all system output in English · secrets only in `.env` · every new changing command
+  also gets its `/undo` path (roadmap 10.2; phase 0's `/undo` handles only rows with `void`).
 - **Git:** one branch per phase (e.g. `claude/phase-0-foundation`); small commits during the phase; one squash-merge at the end.
 
 ## 4. Audit prompt (template)
@@ -133,6 +134,13 @@ message arrives on Telegram.
 
 **Not in this phase:** agent logic, AI calls, prices.
 
+**Result (2026-10-04):** built; audited in a separate session — no blocker; fixes pushed to PR #3 (85 tests). The audit added:
+upgrade steps that take the write lock and check every link (a table can be rebuilt) · the database itself refuses deletes in
+`holdings`, `other_assets`, `card_entries`, `command_log`, `prices` and overwrites in `prices` (version 2) · a 5 s limit on free
+questions · no database inside Drive · the backup as one file · the time zone from `settings.yaml`. Decided with it (roadmap
+10.2): the lock on my `yes` is Hermes's approval mode (rule 4; Air test 7) · the number is shown when the change is done · an
+`/undo` cannot itself be undone. Moved to later phases: marked "from phase 0" in phases 1 and 6.
+
 ## Phase 1 — Agent 3: the numbers (no AI)
 
 **Purpose:** from SEC filings to a card with the 10 measures, the Lynch type, the grade, the flags and the price line — all
@@ -155,8 +163,13 @@ states" · section 5 (one price job, price history) · `BAGLAM.md` section 9 (go
   append-only); a bare card when a stock has none yet (until agent 2 exists); the weekly "is there a new filing?" check for
   watched stocks (archived stocks are never analyzed); `uv run python -m agents.analysis KO`.
 - Commands: `/watch` (state only for now), `/archive`, `/unarchive`, `/analyze` (numbers), `/card`, `/green`, `/missing`, `/data`
-  (plausibility check, `source: user`).
+  (plausibility check, `source: user`). Each changing one gets its `/undo` path (a state change goes back with a dated card
+  note — roadmap 10.2). `/analyze` writes no `runs` row itself; the agent it runs does.
 - Saved sample data: trimmed SEC and Yahoo data for the golden set, Novo Nordisk and the trap cases.
+
+**To decide first (from phase 0):** where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`) is
+stored — `lynch_type` does not take these values; a new upgrade step adds the field. For the Mac check, one of my 3 stocks can be
+a bank (e.g. JPM) to see this path.
 
 **Tests (here):** the golden set — all 10 get the expected grade and type (`BAGLAM.md` section 9) · Novo Nordisk works (IFRS,
 DKK in the price line) · KO liquid assets = cash + short-term investments · Boeing's debt group needs all parts · Pfizer 2020 debt
@@ -310,16 +323,22 @@ spending" · section 5 (backup) · section 6 (spend limit, the 10 $ warning) · 
   `/summary`.
 - Immediate messages: a holding's grade drops, an agent error, a new `solid` (green list), a drop alert, an auditor disagreement,
   the 10 $ spend warning.
+- From phase 0 (audit, 2026-10-04): a real time for the backup in `settings.yaml` (today `after prices`; set once the price
+  job's length is known) · `/status` warnings for a job stuck in `running` and for a backup that is too old — the limits are
+  my decision then (suggested: 1 hour and 36 hours).
 
 **Tests (here):** the summary from a saved database · when one step fails, the rest still runs and reports the error.
 
-**Air check:** one full Sunday end to end; a forced error reaches Telegram; after a restart everything starts again.
+**Air check:** one full Sunday end to end; a forced error reaches Telegram; after a restart everything starts again; a job
+left stuck on purpose shows in `/status`.
 
 **Done when:** the checks pass. Then: a few months of real use without changing the rules (`AGENTS.md`).
 
 ## 6. Open inputs
 
 - **The subsector list** — needed before phase 4.
+- **Where the out-of-scope label is stored** — decided at the start of phase 1 (from phase 0's audit; phase 1, "To decide
+  first").
 - **Sample data for phase 1** — needed before phase 1. The build session downloads real SEC and Yahoo answers once. Claude's
   recommendation: I allow these hosts in the cloud environment's network setting (environment menu in the session's title bar
   → Edit → Network access → Custom, keeping the default package-manager list): `data.sec.gov`, `www.sec.gov`,
@@ -334,7 +353,7 @@ spending" · section 5 (backup) · section 6 (spend limit, the 10 $ warning) · 
 
 | Phase | Status | Branch | Merged as |
 |---|---|---|---|
-| 0 | not started | — | — |
+| 0 | built · audited, no blocker · fixes pushed — left: my Mac check → merge → the Air check | `claude/phase-0-foundation-arj800` (PR #3) | — |
 | 1 | not started | — | — |
 | 2 | not started | — | — |
 | 3 | not started | — | — |

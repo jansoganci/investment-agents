@@ -819,9 +819,12 @@ I can also write a plain sentence ("I bought 10 KO at 85.65"); Hermes maps it to
 confirmation. Clashes with Hermes's own built-in commands are checked in step 0; on a clash ours is renamed.
 
 **Rules:** (1) every command that changes something — a correction too — asks for confirmation first — Hermes lists exactly what will change, and runs
-it only after `yes`; (2) every change is logged (what, when, which command) and gets a number, shown in its confirmation;
-(3) each command is a small Python function in our code (`python -m shared.commands …` style) — Hermes calls it, it never edits
-tables or files itself.
+it only after `yes`; (2) every change is logged (what, when, which command) and gets a number, shown when it is done (the
+number exists only after `yes`; decision: 2026-10-04); (3) each command is a small Python function in our code
+(`python -m shared.commands …` style) — Hermes calls it, it never edits tables or files itself; (4) **the lock on my `yes` is
+Hermes's own approval (decision: 2026-10-04):** a command run with `--yes` waits for my approval on Telegram in Hermes's
+approval mode; our code does not try to prove my `yes`. Checked on the Air (`docs/AIR_SETUP.md`, phase 7). If Hermes cannot do
+this, the preview gives a one-time code and `--yes` runs only with it.
 
 **A. Information (changes nothing, no confirmation)**
 
@@ -859,7 +862,7 @@ Beyond these commands I can ask Hermes anything; it answers from the database an
 | | `/tag` | `/tag rio-tinto RIO` | fixes a wrong tag mapping; the tag is not asked to the AI again |
 | Settings | `/model` | `/model strong gpt-6-sol` · `/model strong default` | persistent model override (in the Air database), or back to the default |
 | | `/subsector` | `/subsector add Uranium Energy` | approves a new subsector (the answer to "add a new subsector?") |
-| Fix (decision: 2026-10-04) | `/undo` | `/undo` · `/undo 42` | cancels my last change, or change #42; **nothing is deleted:** a ledger row (`holdings`, `other_assets`) is marked `void` and kept; a stock-state change goes back with a dated card note; a card note gets a dated "withdrawn" note. **A correction in a plain sentence:** I write "my KO buy was wrong, 10 not 100" → Hermes prepares two commands (`/undo` for the wrong row + the right `/bought`) and shows them to me → **nothing changes until I say `yes`** → then both run |
+| Fix (decision: 2026-10-04) | `/undo` | `/undo` · `/undo 42` | cancels my last change, or change #42; **nothing is deleted:** a ledger row (`holdings`, `other_assets`) is marked `void` and kept; a stock-state change goes back with a dated card note; a card note gets a dated "withdrawn" note. **A correction in a plain sentence:** I write "my KO buy was wrong, 10 not 100" → Hermes prepares two commands (`/undo` for the wrong row + the right `/bought`) and shows them to me → **nothing changes until I say `yes`** → then both run. An `/undo` itself cannot be undone: I send the right command again (decision: 2026-10-04) |
 
 `/model` appears in both groups: without arguments it only shows; with arguments it changes.
 

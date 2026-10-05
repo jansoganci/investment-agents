@@ -42,7 +42,11 @@ archive. Do not move or rename the archive unless that is the task.
 Exists today:
 ajanlar/analiz/prototip/   agent 3 rule trial (archive, not production)
 ajanlar/teknik/backtest/   backtest scripts (archive)
-docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md; reviews/ (external reviews)
+docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md,
+                           telegram_setcommands.txt; reviews/ (external reviews)
+shared/                    phase 0: config, clock, db (tables + upgrade steps), backup, runlog, notify, drive, commands, ask
+tests/                     uv run pytest -q
+pyproject.toml, uv.lock, settings.yaml, .env.example
 
 Planned (not created yet):
 agents/eye/         1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
@@ -50,8 +54,7 @@ agents/counter/     1B. Counter — counts stocks / sectors / commodities over t
 agents/research/    2. Research — reading + web search + score; opens the card (weekly, Sunday)
 agents/analysis/    3. Analysis — SEC / PDF → card.md (quarterly / annual)
 agents/portfolio/   4. Portfolio — my money: ledger, benchmark, total wealth, new money
-shared/             AI, SEC, prices, Drive paths, database, commands, the Sunday summary
-settings.yaml       models, budget, hours, stock list
+shared/             still to come: AI, SEC, prices, the Sunday summary
 ```
 
 ## Technical
@@ -72,7 +75,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-04
+- **Last update:** 2026-10-04 (phase 0 built, audited and fixed)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -159,10 +162,30 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   phase: built in one session → audited in a separate session (Claude gives the prompt) → fixes → my Mac check (Cursor) → one
   squash-merge into main → the Air. The sector before the Eye exists: from the SEC industry code (SIC) through a fixed table, I
   can correct it (roadmap section 3, "Sector list").
-- **Next (2026-10-04):** phase 0 (foundation and the message path) in a new session, branch `claude/phase-0-foundation`.
-  Small open items: the subsector list (before phase 4) · `.env.example`, the `/setcommands` text and the Drive test script are
-  built in phase 0 · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external review
-  is still running · before phase 1: the sample data (plan, section 6).
+- **Phase 0 built and audited (2026-10-04)** on branch `claude/phase-0-foundation-arj800`, PR #3 open, not merged:
+  `pyproject.toml` (uv), `settings.yaml`, `.env.example`; `shared/db` (all 18 tables, version 2, numbered upgrade steps; an
+  upgrade takes the write lock, runs with the foreign-key check off, checks every link before it commits and saves a copy first;
+  WAL + 5 s wait; UTC times; stock = internal number + CIK; triggers refuse DELETE on `holdings`, `other_assets`, `card_entries`,
+  `command_log`, `prices` and UPDATE on `prices`; `init | upgrade | info`); `shared/backup` (SQLite backup command →
+  `Investing/Backup/`, one self-contained file, 7 daily + the latest copy of each of the 4 weeks before them); `shared/runlog`
+  (`runs` row: `running` → `ok` / `error`, dollars); `shared/notify` (title line + plain lines, cut at Telegram's 4,096);
+  `shared/drive` (paths + the step-0 test script `python -m shared.drive test`); `shared/commands` (all 25 menu commands
+  listed; `/help`, `/status`, `/undo` built; a change prints a preview and runs only with `--yes`; `command_log` number; `/undo`
+  marks `void`); `shared/ask` (read-only: `mode=ro` + `query_only` + an authorizer + a 5 s limit); `shared/config` refuses a
+  database inside Drive; `docs/telegram_setcommands.txt`. New names in `GLOSSARY.md` ("Kod ve veritabanı adları"). 85 tests pass.
+  **Audit (separate session):** no blocker; all findings fixed except the ones below. **Decided (2026-10-04):** the lock on my
+  `yes` is Hermes's own approval mode (fallback: a one-time code from the preview) — roadmap 10.2 rule 4, tested in
+  `AIR_SETUP.md` phase 7 · the change number is shown when it is done · an `/undo` itself cannot be undone (roadmap 10.2).
+  Accepted as they are: commands do not write `runs` (their log is `command_log`; `/analyze` writes `runs` through the agent it
+  runs) · the backup prints nothing when all is well (Air test 8 checks Hermes does not forward stderr).
+  **Left for later:** a real time for the backup in `settings.yaml` and `/status` warnings for a job stuck in `running` or a
+  backup older than 36 hours (phase 6) · where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`)
+  is stored (phase 1) · every new changing command also gets its `/undo` path. All of these are written into
+  `docs/IMPLEMENTATION_PLAN.md` (sections 3 and 6, phases 1 and 6, marked "from phase 0").
+- **Next:** my Mac check (Cursor) → squash-merge → the Air (`AIR_SETUP.md`); the Air check closes phase 0 (phase 0 is done only
+  when the Mac and Air checks pass, so phase 1 starts after it — fixed rule 5). Small open items: the subsector list
+  (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external
+  review is still running · before phase 1: the sample data (plan, section 6).
 - **Pending questions:** (1) before phase 1 — how the sample data is downloaded: the cloud network setting (recommended) or a
   script on my Mac (plan, section 6).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).

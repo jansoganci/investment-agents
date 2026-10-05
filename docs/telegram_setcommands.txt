@@ -1,0 +1,25 @@
+help - Lists all commands with a short description
+summary - Shows the latest Sunday summary again
+green - The green list: type, grade, price line
+candidates - This week's candidates with scores and reasons
+card - Summary of the latest card entry and its Drive link
+portfolio - Holdings, benchmark against SPY and gold, total wealth
+missing - Missing figures waiting for me
+spend - This month's AI spend by provider and what is left
+model - Which job runs on which model; with arguments, changes it
+status - System health: when each job last ran, any errors
+watch - Start watching a stock (agent 3 keeps its card)
+archive - Archive a stock: no new analysis or spend
+unarchive - Bring an archived stock back to watching
+bought - Record a buy: quantity, ticker, price
+sold - Record a sale: quantity, ticker, price
+gold - Record a gold purchase: grams and TL price per gram
+bes - Record this month's BES payment and the BES total (TL)
+analyze - Run agent 3 now (shows the estimated cost first)
+closewarning - Close a warning on a card, with the reason
+thesis - Add my correction of the thesis as a note
+note - Add my free note to a card
+data - Enter a missing figure I was asked for
+tag - Fix a wrong tag mapping
+subsector - Approve a new subsector
+undo - Cancel my last change, or change #N; nothing is deleted

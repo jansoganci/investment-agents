@@ -3,5 +3,8 @@ __pycache__/
 .venv/
 .env
 *.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite.tmp
 *.db
 .DS_Store

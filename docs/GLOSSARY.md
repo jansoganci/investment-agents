@@ -310,3 +310,41 @@ Karışık ayrı kod değil: durum değişmez, önceki pozisyon durur.
 | Harcama sorusu | "bu ay ne harcadık?" | "what did we spend this month?" |
 
 Kesin komut listesi uygulama planında (yol haritası 10. bölüm) yazılır.
+
+## Kod ve veritabanı adları (faz 0, 2026-10-04)
+
+Faz 0'ın kodu bu adları getirdi. Türkçe karşılığı olmayan yeni adlar; sol sütun ne olduğunu söyler.
+
+**Modüller (`shared/`):** `config` (settings.yaml + `.env`) · `clock` (UTC saklanır, Türkiye saatiyle gösterilir) · `db` (tablolar,
+sürüm, yükseltme adımları; `python -m shared.db init | upgrade | info`) · `backup` (gece kopyası) · `runlog` (`runs` satırı) ·
+`notify` (işin yazdırdığı mesaj) · `drive` (`Investing/` yolları; `python -m shared.drive test`) · `commands` (Hermes'in komut
+listesi) · `ask` (serbest sorular için salt-okur yol).
+
+**`.env` yolları:** Drive kökü → `DRIVE_DIR` · veri klasörü (isteğe bağlı) → `DATA_DIR`.
+
+**Dosyalar:** veritabanı → `investment-agents.sqlite` · yedek → `Backup/investment-agents-YYYY-MM-DD.sqlite` · yükseltme öncesi
+kopya → `<veri klasörü>/pre-upgrade/` · Drive test dosyası → `Inbox/drive-test-YYYY-MM-DD-HHMM.md` · `/setcommands` metni →
+`docs/telegram_setcommands.txt`.
+
+| Ne | Ad |
+|---|---|
+| her tabloda: kayıt zamanı (UTC) | `created_at` |
+| hisseye bağlantı (iç numara) | `stock_id` (`commodity_links`'teki `company` budur) |
+| kaydı yaratan komutun numarası | `command_id` |
+| geri alındı mı / hangi komutla | `void` (0 / 1) · `voided_by` |
+| `runs`: iş adı · başladı · bitti · dolar · hata | `job` · `started_at` · `ended_at` · `cost_usd` · `error` |
+| `runs` durumu (yeni değer) | çalışıyor → `running` (`ok` / `error` aynı) |
+| `command_log`: komut · argümanlar · ne değişti · hedef tablo / satır · durum | `command` · `args` · `summary` · `target_table` / `target_id` · `status` (`done` / `void`) |
+| `articles`: site · başlık · yayın zamanı · tek cümle · tam metin | `site` · `title` · `published_at` · `sentence` · `full_text` |
+| `tags` kaynağı | `source` (`ai` / `user`) |
+| `scores`: hafta · toplam · gerekçeler (JSON) | `week` · `score` · `reasons` |
+| `missing_data`: yıl · rakam · denenen adlar | `year` · `figure` · `names_tried` |
+| `financials`: dönem sonu · dönem türü · form · rakam · değer · birim · etiket · başvuru no · kaynak | `period_end` · `period_type` (`annual` / `quarter` / `ttm`) · `form` · `figure` · `value` · `unit` · `xbrl` · `filing` · `source` (`sec` / `user`) |
+| `prices`: sembol · gün · kapanış · düzeltilmiş kapanış · para birimi | `symbol` · `date` · `close` · `adj_close` · `currency` |
+| `signals`: tür · gün · ayrıntı | `kind` · `date` · `detail` |
+| `holdings`: adet · fiyat · masraf · tutar · bölünme oranı | `quantity` · `price` · `fee` · `amount` · `split_ratio` |
+| `other_assets`: gram · TL gram fiyatı · TL ödeme · TL toplam · kur | `grams` · `price_try` · `payment_try` · `total_try` · `usdtry` |
+| `snapshots`: hafta sonu · hisse değeri · konan · geri alınan · getiri % · SPY gölge · altın gölge · altın · BES · hedef payı | `week_end` · `stock_value` · `put_in` · `got_back` · `return_pct` · `spy_shadow` · `gold_shadow` · `gold_value` · `bes_value` · `goal_share` |
+| `card_entries`: kayıt · kim | `record` · `who` (kayıt başlığındaki değerler) |
+| `audits`: denetim türü · sonuç · model | `audit` (`figure` / `reading` / `sell` / `event`) · `result` · `model` |
+| `settings` (Telegram'dan): anahtar · değer | `key` · `value` (en son geçerli satır kazanır; boş değer = varsayılana dön) |
