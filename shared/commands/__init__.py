@@ -10,6 +10,7 @@ Rules: (1) a command that changes something first prints exactly what will chang
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass, field
 from typing import Callable
@@ -23,6 +24,9 @@ class Applied:
     text: str                       # what changed, one line, plain English
     target_table: str | None = None
     target_id: int | None = None
+    before: dict | None = None      # what the change replaced (kept in `command_log.before` for /undo)
+    after: Callable[[], str] | None = None  # slow work that runs after the change is saved (e.g. /analyze)
+    undoable: bool = True
 
 
 @dataclass
@@ -52,6 +56,10 @@ class Command:
 
 
 REGISTRY: dict[str, Command] = {}
+
+# command name → how /undo cancels it: handler(conn, log_row: dict, undo_id) -> Applied, or raise Refused.
+# Without a handler, /undo marks the target row `void` (ledger rows).
+UNDO: dict[str, Callable] = {}
 
 # The Telegram `/` menu, in the order of roadmap section 10.2.
 MENU: list[str] = []
@@ -94,14 +102,20 @@ def _run_change(cmd: Command, args: list[str], yes: bool) -> tuple[int, str]:
             number = cur.lastrowid
             done = plan.apply(conn, number)
             conn.execute(
-                "UPDATE command_log SET summary=?, target_table=?, target_id=? WHERE id=?",
-                (done.text, done.target_table, done.target_id, number),
+                "UPDATE command_log SET summary=?, target_table=?, target_id=?, before=? WHERE id=?",
+                (done.text, done.target_table, done.target_id,
+                 json.dumps(done.before) if done.before is not None else None, number),
             )
             conn.commit()
         except BaseException:
             conn.rollback()
             raise
-        return 0, f"DONE · change #{number}\n{done.text}\nTo cancel it: /undo {number}"
+        text = f"DONE · change #{number}\n{done.text}"
+        if done.undoable:
+            text += f"\nTo cancel it: /undo {number}"
+        if done.after is not None:
+            text += "\n\n" + done.after()
+        return 0, text
     finally:
         conn.close()
 
@@ -132,4 +146,4 @@ def run(argv: list[str]) -> tuple[int, str]:
         return 1, str(exc)
 
 
-from shared.commands import builtin  # noqa: E402,F401 — registers the commands
+from shared.commands import builtin, stocks  # noqa: E402,F401 — registers the commands (phase 1 replaces placeholders)

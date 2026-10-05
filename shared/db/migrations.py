@@ -322,6 +322,9 @@ ALTER TABLE financials ADD COLUMN voided_by INTEGER REFERENCES command_log (id);
 -- The filing (accession number) a card entry is based on: the weekly "is there a new filing?" check compares with it.
 ALTER TABLE card_entries ADD COLUMN filing TEXT;
 
+-- What a change replaced (JSON, e.g. the previous status), so /undo can put it back.
+ALTER TABLE command_log ADD COLUMN before TEXT;
+
 CREATE INDEX missing_data_stock ON missing_data (stock_id, figure, year);
 CREATE INDEX card_entries_stock ON card_entries (stock_id, date);
 """

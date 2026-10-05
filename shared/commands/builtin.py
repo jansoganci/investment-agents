@@ -3,12 +3,13 @@ Telegram menu and answer "not built yet (phase N)" until their phase builds them
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import timedelta
 
 from shared import clock
 from shared import db as dbmod
-from shared.commands import Applied, Command, Plan, Refused, MENU, REGISTRY, register
+from shared.commands import UNDO, Applied, Command, Plan, Refused, MENU, REGISTRY, register
 
 # --- Information ------------------------------------------------------------------------------------------------
 
@@ -59,38 +60,47 @@ def _has_void_column(conn: sqlite3.Connection, table: str) -> bool:
 def _undo(conn: sqlite3.Connection, args: list[str]) -> Plan:
     if len(args) > 1 or (args and not args[0].lstrip("#").isdigit()):
         raise Refused("usage: /undo  or  /undo <number>")
+    cols = "id, command, args, summary, target_table, target_id, status, created_at, before"
     if args:
         number = int(args[0].lstrip("#"))
-        row = conn.execute(
-            "SELECT id, command, args, summary, target_table, target_id, status, created_at FROM command_log WHERE id=?",
-            (number,),
-        ).fetchone()
+        row = conn.execute(f"SELECT {cols} FROM command_log WHERE id=?", (number,)).fetchone()
         if row is None:
             raise Refused(f"There is no change #{number}.")
     else:
-        row = conn.execute(
-            "SELECT id, command, args, summary, target_table, target_id, status, created_at FROM command_log "
-            "WHERE status='done' AND command != 'undo' ORDER BY id DESC LIMIT 1"
-        ).fetchone()
+        row = conn.execute(f"SELECT {cols} FROM command_log WHERE status='done' AND command NOT IN ('undo', 'analyze') "
+                           "ORDER BY id DESC LIMIT 1").fetchone()
         if row is None:
             raise Refused("Nothing to undo.")
-    number, command, cargs, summary, table, target_id, status, created = row
-    if status == "void":
+    log = dict(zip(cols.split(", "), row))
+    number, command, cargs = log["id"], log["command"], log["args"]
+    if log["status"] == "void":
         raise Refused(f"Change #{number} is already cancelled.")
     if command == "undo":
         raise Refused(f"Change #{number} is itself an undo; send the right command again instead.")
-    if not (table and target_id and _has_void_column(conn, table)):
-        raise Refused(f"Change #{number} (/{command}) cannot be undone by /undo yet.")
+    log["before"] = json.loads(log["before"]) if log["before"] else None
+    handler = UNDO.get(command)
+    if handler is not None:
+        what, do = handler(conn, log)  # raises Refused when it cannot be undone
+    else:
+        table, target_id = log["target_table"], log["target_id"]
+        if not (table and target_id and _has_void_column(conn, table)):
+            raise Refused(f"Change #{number} (/{command}) cannot be undone by /undo yet.")
+        what = ["the row is marked void and kept; nothing is deleted"]
+
+        def do(conn: sqlite3.Connection, undo_id: int) -> str:
+            conn.execute(f'UPDATE "{table}" SET void=1, voided_by=? WHERE id=?', (undo_id, target_id))
+            return ""
 
     def apply(conn: sqlite3.Connection, undo_id: int) -> Applied:
-        conn.execute(f'UPDATE "{table}" SET void=1, voided_by=? WHERE id=?', (undo_id, target_id))
+        extra = do(conn, undo_id)
         conn.execute("UPDATE command_log SET status='void', voided_by=? WHERE id=?", (undo_id, number))
-        return Applied(f"Cancelled change #{number} ({f'/{command} {cargs}'.rstrip()}).", "command_log", number)
+        text = f"Cancelled change #{number} ({f'/{command} {cargs}'.rstrip()})." + (f" {extra}" if extra else "")
+        return Applied(text, "command_log", number, undoable=False)
 
     preview = [
-        f"cancel change #{number}: /{command} {cargs} · {clock.show(created)} (Turkey time)".rstrip(),
-        f"what it did: {summary}",
-        "the row is marked void and kept; nothing is deleted",
+        f"cancel change #{number}: /{command} {cargs} · {clock.show(log['created_at'])} (Turkey time)".rstrip(),
+        f"what it did: {log['summary']}",
+        *what,
     ]
     return Plan(preview, ["undo", str(number)], apply)
 
