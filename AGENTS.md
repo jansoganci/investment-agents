@@ -220,9 +220,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   commits. The Mac check of both is still owed, on `main`.
 - **Air setup started (2026-10-05):** clone at `~/projects/investment-agents` (the docs' example is `~/investment-agents`;
   scheduled jobs use the real full path). First check by Hermes (read-only, `sudo -n`, no password): time zone Istanbul,
-  FileVault, firewall, no sleep (AC and battery), wake for network ✓ · not yet: `uv` missing (blocks phase 2 of the setup),
-  Remote Login and Screen Sharing off, runs as user `jans` (no separate `agents` user), `.env` not written, the Air was on
-  battery · created: `~/investment-agents-data/`.
+  FileVault, firewall, no sleep (AC and battery), wake for network ✓ · setup phase 2 done: `uv` at
+  `/Users/jans./.local/bin/uv` (full path for scheduled jobs), `uv sync`, 85 tests pass (before the pull), database created,
+  `git pull` (phase 1) + `shared.db upgrade` → version 3 · not yet: `uv run pytest -q` after the pull (expect 216), Remote Login
+  and Screen Sharing off, runs as user `jans.` (no separate `agents` user — my decision pending), `.env` not written, the
+  charger (it was on battery); then setup phases 3–7 (Drive, Telegram, Hermes limits, OpenRouter, tests).
   **What is done, what waits, what we stay away from:** plan sections 7–8 (decision: 2026-10-05).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** PR #1 (agent 4, the document audit, the database decisions) was merged into main on 2026-10-04 as one commit; the
