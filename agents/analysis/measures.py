@@ -30,6 +30,9 @@ DECISIVE = {"stalwart": [2, 3, 4, 5], "fast_grower": [1, 9, 2, 10, 8], "slow_gro
             "cyclical": [4, "B", 8], "unprofitable": [2, 3, 4, 5]}
 
 GOOD, MID, WEAK = "good", "mid", "weak"
+SPECIAL_TEXT = {"cash_over_debt": "cash > debt", "produces_cash": "the business produces cash",
+                "no_cash_with_debt": "does not produce cash from the business, and has debt (research item)",
+                "just_turned_profit": "just turned from a loss to a profit", "loss_then_and_now": "a loss 3 years ago and now"}
 ORDER = [WEAK, MID, GOOD]
 SPLIT_RATIOS = (2, 3, 4, 5, 8, 10, 20)
 
@@ -385,7 +388,7 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
 
     for k in list(range(1, 11)) + ["B", "T"]:
         r.measures[NAMES[k]] = {"value": M.get(k), "mark": R[k], "decisive": k in dec, "unit": UNITS.get(k),
-                                "xbrl": X.get(k), "note": N.get(k) or special.get(k)}
+                                "xbrl": X.get(k), "note": N.get(k) or SPECIAL_TEXT.get(special.get(k))}
 
     # --- flags (they never change the grade) -------------------------------------------------------------------------------
     if len(Y) >= 3 and all(e in op_cash and e in net for e in Y[-3:]):

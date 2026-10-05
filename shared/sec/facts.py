@@ -52,7 +52,10 @@ class Value:
 
 
 class Facts:
-    def __init__(self, companyfacts: dict, submissions: dict | None = None, quarters: bool = True):
+    def __init__(self, companyfacts: dict, submissions: dict | None = None, quarters: bool = True,
+                 user_values: dict | None = None):
+        """`user_values`: {(figure, year): value} I entered with /data — used only where SEC has nothing (source: user)."""
+        self.user_values = user_values or {}
         all_facts = companyfacts.get("facts", {})
         known = {tax: sum(1 for n in all_facts.get(tax, {}) if n in _names(tax)) for tax in SYNONYMS}
         self.taxonomy = max(known, key=known.get)
@@ -194,6 +197,8 @@ class Facts:
         out = {}
         for end in self.ends:
             v = self._lookup(figure, end)
+            if v is None and (figure, self.year_label(end)) in self.user_values:
+                v = Value(float(self.user_values[(figure, self.year_label(end))]), "user", "user", None, end)
             if v is None:
                 self._miss(figure, end, self.syn[figure])
             else:
@@ -204,10 +209,14 @@ class Facts:
     def instant(self, figure: str, end: str) -> Value | None:
         return self.annual(figure).get(end)
 
+    def year_label(self, end: str) -> str:
+        """How a year is named to me: '2025' for an annual report, 'TTM 2026-06-28' for the last 4 quarters."""
+        return f"TTM {end}" if end == self.ttm_end else end[:4]
+
     def _miss(self, figure: str, end: str, tried: list[str]) -> None:
         key = (figure, end)
         if key not in {(m["figure"], m["end"]) for m in self.misses}:
-            self.misses.append({"figure": figure, "end": end, "year": end[:4], "names_tried": list(tried)})
+            self.misses.append({"figure": figure, "end": end, "year": self.year_label(end), "names_tried": list(tried)})
 
     # --- liquid assets and debt ------------------------------------------------------------------------------------------
 
@@ -250,6 +259,10 @@ class Facts:
                 if found and (len(found) == len(names) or not need_all):
                     cands.append((found, short_in))
             if not cands:
+                if ("debt", self.year_label(e)) in self.user_values:
+                    v = float(self.user_values[("debt", self.year_label(e))])
+                    out[e] = Debt(v, "user", "user", None, e, parts={"user": v})
+                    continue
                 self._miss("debt", e, [n for g, _, _ in DEBT_GROUPS[self.taxonomy] for n in g])
                 continue
             found, short_in = cands[0]
