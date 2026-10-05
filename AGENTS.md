@@ -76,7 +76,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-05 (phases 0 and 1 merged into `main`; Air setup started)
+- **Last update:** 2026-10-05 (phases 0 and 1 merged into `main`; Air setup through Drive and Telegram; Hermes limits are next)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -183,7 +183,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   backup older than 36 hours (phase 6) · where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`)
   is stored (phase 1) · every new changing command also gets its `/undo` path. All of these are written into
   `docs/IMPLEMENTATION_PLAN.md` (sections 3 and 6, phases 1 and 6, marked "from phase 0").
-- **Next:** the Mac check of phases 0 and 1 together, on `main` (with `tests/fixtures/fetch_yahoo.py` once; a fix comes as a
+- **Next — first thing (my note, 2026-10-05): limit Hermes (`AIR_SETUP.md` phase 5)** — I do it in the Air's terminal, not from
+  Telegram (a limit set by a chat message is no limit): Hermes reads its own docs and proposes the settings, I apply them, then
+  the tests (approval for `--yes`, another Telegram account gets no answer, `.env` is refused). Then phases 6–7 of the setup.
+  Then: the Mac check of phases 0 and 1 together, on `main` (with `tests/fixtures/fetch_yahoo.py` once; a fix comes as a
   small PR) · finish the Air setup (`docs/AIR_SETUP.md`; at the latest before phase 4), then on the Air `git pull` +
   `uv run python -m shared.db upgrade` (version 2 → 3). Small open items: the subsector list (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs
   before it) · a third external review is still running.
@@ -226,7 +229,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   setup phases 3–7 (Drive, Telegram, Hermes limits, OpenRouter, tests). **Decided (2026-10-05):** the system runs in my main
   account `jans.` (no `agents` user; iCloud off on the Air) · Remote Login and Screen Sharing off — Telegram is the remote path ·
   Hermes limited, not painful: plain words, questions without approval, a change after one "yes", no other terminal commands
-  (`AIR_SETUP.md` phases 1 and 5) · the charger is on.
+  (`AIR_SETUP.md` phases 1 and 5) · the charger is on · **done 2026-10-05:** Drive (setup phase 3: `DRIVE_DIR` = `/Users/jans./Drive'ım/Investing`, Drive for desktop on a
+  separate Gmail, Mirror files; the test file reached Drive on the web), Telegram bot connected (phase 4), `.env` filled, 216 tests
+  pass on the Air · **running:** the phase 0 + 1 real check, done by Hermes on the Air in isolation (throwaway `DATA_DIR` and
+  `DRIVE_DIR`, never the real database or `Investing/`; `fetch_yahoo.py` skipped because the Air writes no code) · Remote Login
+  left on by my choice.
   **What is done, what waits, what we stay away from:** plan sections 7–8 (decision: 2026-10-05).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** PR #1 (agent 4, the document audit, the database decisions) was merged into main on 2026-10-04 as one commit; the
