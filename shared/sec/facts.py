@@ -67,6 +67,9 @@ class Facts:
         fys = [r["fy"] for body in self.raw.values() for rows in body["units"].values() for r in rows
                if r.get("form") in FORMS_ANNUAL and r.get("fy")]
         self.first_fy = min(fys) if fys else None
+        latest = max(((r.get("filed", ""), r.get("accn")) for body in self.raw.values() for rows in body["units"].values()
+                      for r in rows if r.get("form") in FORMS_ANNUAL | FORMS_QUARTER), default=("", None))
+        self.latest_accn = latest[1]  # the newest filing whose figures are in SEC's data
         self.misses: list[dict] = []
         self._cache: dict = {}
         self.annual_ends = self._annual_ends()
