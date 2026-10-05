@@ -76,7 +76,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-05 (phase 1 built, audited and fixed)
+- **Last update:** 2026-10-05 (phases 0 and 1 merged into `main`; Air setup started)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -163,7 +163,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   phase: built in one session → audited in a separate session (Claude gives the prompt) → fixes → my Mac check (Cursor) → one
   squash-merge into main → the Air. The sector before the Eye exists: from the SEC industry code (SIC) through a fixed table, I
   can correct it (roadmap section 3, "Sector list").
-- **Phase 0 built and audited (2026-10-04)** on branch `claude/phase-0-foundation-arj800`, PR #3 open, not merged:
+- **Phase 0 built and audited (2026-10-04)** on branch `claude/phase-0-foundation-arj800`, PR #3 (merged into `main` 2026-10-05):
   `pyproject.toml` (uv), `settings.yaml`, `.env.example`; `shared/db` (all 18 tables, version 2, numbered upgrade steps; an
   upgrade takes the write lock, runs with the foreign-key check off, checks every link before it commits and saves a copy first;
   WAL + 5 s wait; UTC times; stock = internal number + CIK; triggers refuse DELETE on `holdings`, `other_assets`, `card_entries`,
@@ -183,13 +183,13 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   backup older than 36 hours (phase 6) · where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`)
   is stored (phase 1) · every new changing command also gets its `/undo` path. All of these are written into
   `docs/IMPLEMENTATION_PLAN.md` (sections 3 and 6, phases 1 and 6, marked "from phase 0").
-- **Next:** the Mac checks of phases 0 and 1 together (with
-  `tests/fixtures/fetch_yahoo.py` once) → merge PR #3, then phase 1 → the Air when it is set up (at the latest before phase 4).
-  Small open items: the subsector list (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs
+- **Next:** the Mac check of phases 0 and 1 together, on `main` (with `tests/fixtures/fetch_yahoo.py` once; a fix comes as a
+  small PR) · finish the Air setup (`docs/AIR_SETUP.md`; at the latest before phase 4), then on the Air `git pull` +
+  `uv run python -m shared.db upgrade` (version 2 → 3). Small open items: the subsector list (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs
   before it) · a third external review is still running.
 - **Exception to fixed rule 5 (my decision, 2026-10-04):** phase 1 is built before phase 0 is done (only its Mac and Air checks are left; the Air is not ready; phase 2's real-model runs must come before 2026-10-19) — Mac checks of phases 0 and 1 together, phase 0's Air check when the Air is ready (plan section 1).
-- **Phase 1 built (2026-10-05)** on `claude/phase-1-analysis-numbers-arj800` (on top of phase 0; PR open, not merged; merge after
-  PR #3). `shared/sec` (SEC client with `SEC_UA`; figures with their trace — tag + filing; synonym lists per year; liquid parts
+- **Phase 1 built (2026-10-05)** on `claude/phase-1-analysis-numbers-arj800` (on top of phase 0; PR #4 went into the phase 0
+  branch, PR #5 brought it to `main`, merged 2026-10-05). `shared/sec` (SEC client with `SEC_UA`; figures with their trace — tag + filing; synonym lists per year; liquid parts
   added; debt groups need all parts + candidate check; the last 4 quarters as the current year: annual + year-to-date − last
   year's same period; missing figures → `missing_data`); `shared/sectors` (SIC → sector table, corrections in `settings.yaml`
   `sector_overrides`; cyclical SIC list; out-of-scope SIC list); `shared/prices` (the price job, history kept, open day not
@@ -216,7 +216,15 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   **Not here:** Yahoo refused this cloud machine all day ("too many requests"), so the price job is tested on an answer built by
   hand in Yahoo's format, and the real Yahoo answers (prices, splits, market value) are checked on the Mac
   (`uv run python tests/fixtures/fetch_yahoo.py` once, then push). The data itself: `tests/fixtures/sec/` (13 companies).
-- **Pending (2026-10-05):** the Mac checks of phases 0 and 1 together → merge PR #3, then phase 1 (PR #4).
+- **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
+  commits. The Mac check of both is still owed, on `main`.
+- **Air setup started (2026-10-05):** clone at `~/projects/investment-agents` (the docs' example is `~/investment-agents`;
+  scheduled jobs use the real full path). First check by Hermes (read-only, `sudo -n`, no password): time zone Istanbul,
+  FileVault, firewall, no sleep (AC and battery), wake for network ✓ · setup phase 2 done: `uv` at
+  `/Users/jans./.local/bin/uv` (full path for scheduled jobs), `uv sync`, 85 tests pass (before the pull), database created,
+  `git pull` (phase 1) + `shared.db upgrade` → version 3 · not yet: `uv run pytest -q` after the pull (expect 216), Remote Login
+  and Screen Sharing off, runs as user `jans.` (no separate `agents` user — my decision pending), `.env` not written, the
+  charger (it was on battery); then setup phases 3–7 (Drive, Telegram, Hermes limits, OpenRouter, tests).
   **What is done, what waits, what we stay away from:** plan sections 7–8 (decision: 2026-10-05).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** PR #1 (agent 4, the document audit, the database decisions) was merged into main on 2026-10-04 as one commit; the
