@@ -12,7 +12,7 @@ not closed yet is not stored.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from shared import clock
@@ -69,7 +69,9 @@ def fetch(conn, symbol: str, range_: str = "5d", source=None) -> int:
 
 def ensure_history(conn, symbol: str, source=None) -> int:
     """For one ticker on demand: 10 years the first time (splits and dividends included), then the recent days."""
-    known = conn.execute("SELECT count(*) FROM prices WHERE symbol = ?", (symbol,)).fetchone()[0]
+    # "known" = we already have the long history (a row older than a year), not just the nightly rows
+    since = date.fromordinal(date.fromisoformat(clock.today_local()).toordinal() - 365).isoformat()
+    known = conn.execute("SELECT 1 FROM prices WHERE symbol = ? AND date < ? LIMIT 1", (symbol, since)).fetchone()
     return fetch(conn, symbol, "1mo" if known else "10y", source)
 
 

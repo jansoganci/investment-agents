@@ -76,7 +76,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-05 (phase 1 built; waiting for its audit)
+- **Last update:** 2026-10-05 (phase 1 built, audited and fixed)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -183,7 +183,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   backup older than 36 hours (phase 6) · where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`)
   is stored (phase 1) · every new changing command also gets its `/undo` path. All of these are written into
   `docs/IMPLEMENTATION_PLAN.md` (sections 3 and 6, phases 1 and 6, marked "from phase 0").
-- **Next:** the phase 1 audit (separate session) → fixes → the Mac checks of phases 0 and 1 together (with
+- **Next:** the Mac checks of phases 0 and 1 together (with
   `tests/fixtures/fetch_yahoo.py` once) → merge PR #3, then phase 1 → the Air when it is set up (at the latest before phase 4).
   Small open items: the subsector list (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs
   before it) · a third external review is still running.
@@ -199,18 +199,24 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   new-filing check); commands `/watch` `/archive` `/unarchive` `/analyze` `/card` `/green` `/missing` `/data` with `/undo` paths.
   DB version 3 (`stocks.out_of_scope`, price events, user figures, `card_entries.filing`, `command_log.before`). Golden set 10/10 on
   the annual reports **and** with the last 4 quarters; NVO (IFRS, DKK) works; 167 tests pass.
-  **Choices made in code (to confirm in the audit; no rule changed):** a stock analysed by hand that is not in the system is added
-  as `candidate` (status changes only through my commands) · `/analyze` cannot be undone (its entry stays; append-only) · `/undo`
-  of `/watch` on a new stock sets it back to `candidate` (rows are never deleted) · a stock whose revenue growth cannot be computed
-  gets type `unclear` (the prototype guessed `slow_grower`) · with the last 4 quarters, 3-year growth uses the real time between
-  the two dates (e.g. 2.5 years) · the 10× revenue-jump rule drops the later year (Rivian 2022, its first full year) · a new
-  filing listed before its figures reach SEC's data waits a week (Coca-Cola's July 10-Q) · the SIC sector table is approximate
-  (Snap comes out Information Technology; correct it in `settings.yaml`).
+  **Audit (separate session, 2026-10-05):** no blocker; 29 findings. **My decisions (written into the roadmap):** a liquid part
+  missing this year is still counted as not held, with a `data_check` + a `missing_data` row · the last 4 quarters take the place
+  of the annual report they overlap · a 10× revenue jump is flagged, no year dropped · stock comp from Yahoo: not now (plan
+  section 8) · a decisive measure not computed keeps the grade rule but adds a `data_check` with the reason · no Lynch dividend
+  ratio when earnings growth ≤ 0. Approved code choices (roadmap): a stock analysed by hand is added as `candidate` · `/analyze`
+  cannot be undone (fix a figure with `/data`, then `/analyze`) · type `unclear` when revenue growth cannot be computed.
+  **Fixed:** Coca-Cola's `MarketableSecurities` (liquid 15.81 bn, not 13.87) · Boeing's gain on disposal flag · loss years for
+  `unprofitable` (a missing year is not a loss) · tax / 5-year average per the rules · ticker change and share classes (identity by
+  CIK) · SEC is never asked inside the write lock · the card is written at once and inside the database lock, last · the weekly
+  check goes on after any error · unknown header fields kept · `free_cash.path_5y` · `financials` never deleted · the 10-year
+  price history when only recent rows exist · Yahoo quotes read in tests · 36 rule tests + 11 fix tests. **216 tests pass.**
+  **Golden set:** 10/10 on the annual reports; with the last 4 quarters Coca-Cola is now `solid` (the 2025 fairlife one-off is
+  outside the window to 2026-04-03, so free cash covers the dividends again — BAGLAM.md section 9 said it would), the others
+  unchanged. Deferred audit notes: plan section 8.
   **Not here:** Yahoo refused this cloud machine all day ("too many requests"), so the price job is tested on an answer built by
   hand in Yahoo's format, and the real Yahoo answers (prices, splits, market value) are checked on the Mac
   (`uv run python tests/fixtures/fetch_yahoo.py` once, then push). The data itself: `tests/fixtures/sec/` (13 companies).
-- **Pending (2026-10-05):** the phase 1 audit (prompt given in chat) → fixes → the Mac checks of phases 0 and 1 together →
-  merge PR #3, then phase 1.
+- **Pending (2026-10-05):** the Mac checks of phases 0 and 1 together → merge PR #3, then phase 1 (PR #4).
   **What is done, what waits, what we stay away from:** plan sections 7–8 (decision: 2026-10-05).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** PR #1 (agent 4, the document audit, the database decisions) was merged into main on 2026-10-04 as one commit; the

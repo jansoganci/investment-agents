@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import yaml
@@ -22,11 +23,18 @@ NOT_COMPUTED = "not_computed"
 
 def _header_text(head: dict) -> str:
     lines = ["---"]
-    for k in HEADER_ORDER:
+    for k in list(HEADER_ORDER) + [k for k in head if k not in HEADER_ORDER]:  # fields we do not know are kept
         v = head.get(k)
         lines.append(f"{k}: {'' if v is None else v}".rstrip())
     lines.append("---")
     return "\n".join(lines) + "\n"
+
+
+def write(path: Path, text: str) -> None:
+    """Write the whole file at once: a temporary file, then a rename (never a half-written card)."""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def new_card(stock: dict) -> str:
@@ -59,7 +67,21 @@ def append(path: Path, entry: str, header_changes: dict) -> None:
     head.update({k: v for k, v in header_changes.items()})
     if entry:
         body = body.rstrip("\n") + "\n\n" + entry.rstrip("\n") + "\n"
-    path.write_text(_header_text(head) + body, encoding="utf-8")
+    write(path, _header_text(head) + body)
+
+
+def rename_ticker(path: Path, old: str, new: str, day: str, note: str) -> Path:
+    """A ticker change (FB → META): same company, same card. The folder takes the new ticker, the header's `ticker`
+    changes and a dated note says so; nothing else changes."""
+    head, body = split(path.read_text(encoding="utf-8"))
+    head["ticker"] = new
+    body = body.rstrip("\n") + "\n\n" + note_entry(day, note).rstrip("\n") + "\n"
+    folder = path.parent
+    target = folder.with_name(new + folder.name[len(old):]) if folder.name.startswith(old + " - ") else folder
+    if target != folder:
+        os.replace(folder, target)
+    write(target / path.name, _header_text(head) + body)
+    return target / path.name
 
 
 def note_entry(day: str, text: str, who: str = "user") -> str:
@@ -104,7 +126,8 @@ def data_block(r: Result, source: dict) -> dict:
         data["measures"][name] = item
     fc = r.free_cash
     data["free_cash"] = {"value": _num(fc.get("value")), "average_3y": _num(fc.get("average_3y")),
-                         "stock_comp": _num(fc.get("stock_comp")), "currency": r.currency}
+                         "stock_comp": _num(fc.get("stock_comp")), "currency": r.currency,
+                         "path_5y": {e: _num(v) for e, v in (fc.get("path_5y") or {}).items()}}
     p = r.price
     data["price"] = {"price": _num(p.get("price")), "market_value": _num(p.get("market_value")),
                      "pe": _num(p.get("pe")), "peg": _num(p.get("peg")),

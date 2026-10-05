@@ -41,7 +41,9 @@ class FixtureSources:
 
     def lookup(self, ticker):
         t = ticker.upper()
-        return {"cik": str(TICKER_CIK[t]).zfill(10), "name": t, "ticker": t, "exchange": None} if t in TICKER_CIK else None
+        if t not in TICKER_CIK:
+            return None
+        return {"cik": str(TICKER_CIK[t]).zfill(10), "name": t, "ticker": t, "exchange": None, "all_tickers": [t]}
 
     def facts(self, cik):
         self.calls.append(("facts", cik))
@@ -65,4 +67,10 @@ class FixtureSources:
         return raw
 
     def market_value(self, symbol):
-        return self.market_values.get(symbol)
+        if symbol in self.market_values:
+            return self.market_values[symbol]
+        quotes = HERE / "yahoo" / "quotes.json"  # saved from the Mac (tests/fixtures/fetch_yahoo.py), if present
+        if quotes.exists():
+            q = load("yahoo", "quotes.json")["quotes"].get(symbol) or {}
+            return q.get("marketCap") if q.get("currency") == "USD" else None
+        return None

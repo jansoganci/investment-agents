@@ -83,5 +83,6 @@ def lookup(ticker: str) -> dict | None:
     want = ticker.upper().replace(".", "-")
     for cik, name, tk, exchange in data["data"]:
         if tk.upper().replace(".", "-") == want:
-            return {"cik": cik10(cik), "name": name, "ticker": tk.upper(), "exchange": exchange}
+            same = [t.upper() for c, _n, t, _e in data["data"] if c == cik]  # share classes of the same company
+            return {"cik": cik10(cik), "name": name, "ticker": tk.upper(), "exchange": exchange, "all_tickers": same}
     return None

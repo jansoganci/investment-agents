@@ -370,7 +370,7 @@ left stuck on purpose shows in `/status`.
 | Phase | Build | Audit | Fixes | Mac check | Merge | Air | Branch / PR | Note |
 |---|---|---|---|---|---|---|---|---|
 | 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ⏳ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 | Mac check together with phase 1's (my decision), then the merge · Air check when the Air is set up (section 8) |
-| 1 | ✅ | ⏳ | — | ⏳ | — | — | `claude/phase-1-analysis-numbers-arj800` (on top of phase 0) | built 2026-10-05 (exception, section 1); waiting for the audit · Yahoo blocked the cloud machine, so the real Yahoo answers are checked on the Mac (section 8) · Mac check together with phase 0's |
+| 1 | ✅ | ✅ no blocker | ✅ | ⏳ | — | — | `claude/phase-1-analysis-numbers-arj800` · PR #4 (on top of phase 0) | built and audited 2026-10-05 (exception, section 1); fixes and my 6 decisions in · Yahoo blocked the cloud machine, so the real Yahoo answers are checked on the Mac (section 8) · Mac check together with phase 0's |
 | 2 | — | — | — | — | — | — | — | real-model runs before 2026-10-19 |
 | 3 | — | — | — | — | — | — | — | |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
@@ -400,6 +400,13 @@ off this list is my decision.
 | `/undo` for the other commands | phase 0's `/undo` handles rows with `void` only; each phase adds the path for its own commands (section 3) | each phase |
 | The subsector list | only the Eye uses it | before 4 |
 | What to do when Yahoo has no market value | rare; until then the price line says `not_computed` (null) | my decision, later |
+| Stock comp from Yahoo when SEC has none (roadmap "Free cash") | decision 2026-10-05: not now; the gap goes to `missing_data` and I can enter it with `/data` | later |
+| The IPO year from the first S-1 / F-1 instead of the first annual report in SEC's data | phase 1 audit note; today NVO's share count spans 3 years, not 5 | later |
+| Fixed warning codes (U1 stays U1 on every entry) and `flag_kind` | needed by `/closewarning` and the AI reading | phase 2 |
+| A line when a new filing's figures have not reached SEC's data for 2+ weeks | the weekly check waits silently today | phase 6 |
+| `absent` for a figure a company never reports (the ledger asks again each quarter) | comes with the Telegram requests for missing data | phase 2 |
+| A guard that the Mac never writes into the real `Investing/` | today only `.env` keeps them apart (optional idea) | later |
+| Small UAT items: info line for debt held for sale, a flag for a margin outside 0–100%, Coca-Cola's short-term borrowings name | each under 1%; checked in the 20-stock acceptance test | phase 2 |
 
 **Not in version 1 — roadmap decisions; we stay away:**
 

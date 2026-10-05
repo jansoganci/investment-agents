@@ -56,37 +56,71 @@ def _card_note(ticker: str, text: str, header: dict) -> None:
 
 # --- stock state -----------------------------------------------------------------------------------------------------
 
-def _state_change(name: str, ticker: str, stock: dict | None, new: str, created: dict | None = None) -> Plan:
+def _state_change(name: str, ticker: str, stock: dict | None, new: str, found: dict | None = None) -> Plan:
+    """`found`: SEC's answer for a ticker new to us (a new stock, or a renamed ticker of a stock we have)."""
+    rename_from = (found or {}).get("rename_from")
+    if rename_from:
+        stock = rename_from
     old = stock["status"] if stock else None
     label = f"{ticker}" + (f" ({stock['company']})" if stock and stock.get("company") else "")
-    preview = [f"{label}: " + (f"new stock (SEC: {created['name']}), status → {new}" if created else f"status {old} → {new}"),
-               "a dated note on the card" if stock else "the card is opened by the first analysis"]
+    if rename_from:
+        preview = [f"ticker {rename_from['ticker']} → {ticker} (the same company, SEC CIK {rename_from['cik']}); the card is kept",
+                   f"status {old} → {new}" if old != new else f"status stays {old}"]
+    elif stock is None:
+        preview = [f"{label}: new stock (SEC: {found['name']}), status → {new}", "the card is opened by the first analysis"]
+    else:
+        preview = [f"{label}: status {old} → {new}", "a dated note on the card"]
+
+    def recheck(conn: sqlite3.Connection) -> None:  # inside the write lock, database only
+        now = _stock(conn, ticker)
+        if rename_from:
+            row = conn.execute("SELECT ticker, status FROM stocks WHERE id=?", (rename_from["id"],)).fetchone()
+            if row is None or row[0] != rename_from["ticker"] or row[1] != old:
+                raise Refused(f"{rename_from['ticker']} changed meanwhile; send /{name} {ticker} again.")
+        elif stock is None and (now or conn.execute("SELECT 1 FROM stocks WHERE cik=?", (found["cik"],)).fetchone()):
+            raise Refused(f"{ticker} was added meanwhile; send /{name} {ticker} again.")
+        elif stock is not None and (now is None or now["status"] != old):
+            raise Refused(f"{ticker}'s status changed meanwhile; send /{name} {ticker} again.")
 
     def apply(conn: sqlite3.Connection, number: int) -> Applied:
-        nonlocal stock
+        before = {"status": old, "after": new}
+        if rename_from:
+            from agents.analysis.run import apply_rename
+
+            apply_rename(conn, ticker, found, clock.today_local())
+            before["ticker"] = rename_from["ticker"]
         if stock is None:
             cur = conn.execute("INSERT INTO stocks (cik, ticker, company, status, in_portfolio, added_by, created_at) "
                                "VALUES (?, ?, ?, ?, 'no', 'user', ?)",
-                               (created["cik"], ticker, created["name"].title(), new, clock.utc_iso()))
+                               (found["cik"], ticker, found["name"].title(), new, clock.utc_iso()))
             sid = cur.lastrowid
         else:
             sid = stock["id"]
-            conn.execute("UPDATE stocks SET status=? WHERE id=?", (new, sid))
-            _card_note(ticker, f"Status: {old} → {new} (/{name}, change #{number})", {"status": new})
-        text = f"{ticker}: status {old or 'new'} → {new}."
-        return Applied(text, "stocks", sid, before={"status": old, "after": new})
+            if old != new:
+                conn.execute("UPDATE stocks SET status=? WHERE id=?", (new, sid))
+                _card_note(ticker, f"Status: {old} → {new} (/{name}, change #{number})", {"status": new})
+        text = (f"{ticker}: ticker {rename_from['ticker']} → {ticker}; " if rename_from else f"{ticker}: ") + \
+            f"status {old or 'new'} → {new}."
+        return Applied(text, "stocks", sid, before=before)
 
-    return Plan(preview, [name, ticker], apply)
+    return Plan(preview, [name, ticker], apply, recheck=recheck)
 
 
 def _watch(conn, args):
     ticker = _ticker(args, "/watch KO")
     stock = _stock(conn, ticker)
     if stock is None:
-        found = _sources().lookup(ticker)
-        if not found:
-            raise Refused(f"SEC does not know the ticker {ticker} (version 1 is US markets only).")
-        return _state_change("watch", ticker, None, "watching", created=found)
+        from agents.analysis.run import Refused as AnalysisRefused
+        from agents.analysis.run import identify
+
+        try:
+            _, found = identify(conn, ticker, _sources())
+        except AnalysisRefused as exc:
+            raise Refused(str(exc)) from exc
+        if found.get("rename_from") and found["rename_from"]["status"] == "archived":
+            raise Refused(f"{ticker} is the new ticker of {found['rename_from']['ticker']}, which is archived; "
+                          f"use /unarchive {found['rename_from']['ticker']}.")
+        return _state_change("watch", ticker, None, "watching", found=found)
     if stock["status"] == "watching":
         raise Refused(f"{ticker} is already watching.")
     if stock["status"] == "archived":
@@ -119,6 +153,9 @@ def _undo_state(conn, log: dict):
     if row is None:
         raise Refused(f"Change #{log['id']}: the stock is gone.")
     ticker, now = row
+    if before.get("ticker"):
+        raise Refused(f"Change #{log['id']} also changed the ticker ({before['ticker']} → {ticker}); a ticker change is "
+                      "not undone (the old ticker no longer trades). Use /archive or /watch instead.")
     if now != before.get("after"):
         raise Refused(f"{ticker}'s status changed since change #{log['id']} (now {now}); undo the later change first.")
     back = before.get("status") or "candidate"  # a stock that /watch added goes back to candidate (rows are never deleted)
@@ -144,6 +181,23 @@ def _analyze(conn, args):
         raise Refused(f"{ticker} is archived: archived stocks are never analyzed (/unarchive {ticker} first).")
     preview = [f"analyze {ticker} now: SEC figures → a new dated entry on its card",
                "estimated cost $0.00 (numbers only; no AI in phase 1)"]
+    if stock is None:  # ask SEC now, in the preview, not after `yes`
+        from agents.analysis.run import Refused as AnalysisRefused
+        from agents.analysis.run import identify
+
+        try:
+            _, found = identify(conn, ticker, _sources())
+        except AnalysisRefused as exc:
+            raise Refused(str(exc)) from exc
+        if found.get("rename_from"):
+            preview.insert(0, f"ticker {found['rename_from']['ticker']} → {ticker} (the same company); the card is kept")
+        else:
+            preview.insert(0, f"{ticker} ({found['name']}) is new: it is added as a candidate")
+
+    def recheck(conn):
+        now = _stock(conn, ticker)
+        if now and now["status"] == "archived":
+            raise Refused(f"{ticker} is archived: archived stocks are never analyzed (/unarchive {ticker} first).")
 
     def apply(conn, number):
         def after() -> str:
@@ -163,7 +217,7 @@ def _analyze(conn, args):
 
         return Applied(f"Analysis of {ticker} requested.", None, None, undoable=False, after=after)
 
-    return Plan(preview, ["analyze", ticker], apply)
+    return Plan(preview, ["analyze", ticker], apply, recheck=recheck)
 
 
 def _undo_analyze(conn, log):

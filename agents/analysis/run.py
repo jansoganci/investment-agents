@@ -150,65 +150,105 @@ def _save_missing(conn, stock_id: int, missing: list[dict], now: str) -> int:
     return new
 
 
+def identify(conn, ticker: str, src) -> tuple[dict | None, dict | None]:
+    """(the stock as we have it, SEC's answer). The identity is the internal number + CIK; the ticker is a label.
+    A ticker new to us whose company (CIK) we already have is either another share class of it (refused: the card is under
+    the other ticker) or a renamed ticker (FB → META: `found["rename_from"]` holds the stock to relabel)."""
+    stock = find_stock(conn, ticker)
+    if stock and stock.get("cik"):
+        return stock, None
+    found = src.lookup(ticker)
+    if not found:
+        raise Refused(f"SEC does not know the ticker {ticker} (version 1 is US markets only).")
+    if stock is None:
+        cur = conn.execute("SELECT * FROM stocks WHERE cik = ?", (found["cik"],))
+        row = cur.fetchone()
+        if row:
+            other = dict(zip([d[0] for d in cur.description], row))
+            if other["ticker"].upper() in [t.upper() for t in found.get("all_tickers", [])]:
+                raise Refused(f"{ticker} is another share class of {other['ticker']} (the same company); "
+                              f"its card is under {other['ticker']}.")
+            found["rename_from"] = other
+    return stock, found
+
+
+def apply_rename(conn, ticker: str, found: dict, day: str) -> dict:
+    """Relabel a stock whose ticker changed: database + card (folder, header, a dated note). Inside the write lock."""
+    old = found["rename_from"]
+    conn.execute("UPDATE stocks SET ticker = ? WHERE id = ?", (ticker, old["id"]))
+    path = drive.find_card(old["ticker"])
+    if path is not None:
+        card.rename_ticker(path, old["ticker"], ticker, day,
+                           f"Ticker: {old['ticker']} → {ticker} (the same company, SEC CIK {old['cik']}).")
+    return find_stock(conn, ticker)
+
+
 def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts: dict | None = None) -> Outcome:
     src = sources or LiveSources()
     day = today or clock.today_local()
     now = clock.utc_iso()
     ticker = ticker.upper()
-    stock = find_stock(conn, ticker)
+    stock, found = identify(conn, ticker, src)
     if stock and stock["status"] == "archived":
         raise Refused(f"{ticker} is archived: archived stocks are never analyzed (/unarchive {ticker} first).")
-    cik = stock["cik"] if stock and stock.get("cik") else None
-    if cik is None:
-        found = src.lookup(ticker)
-        if not found:
-            raise Refused(f"SEC does not know the ticker {ticker} (version 1 is US markets only).")
-        cik = found["cik"]
+    cik = stock["cik"] if stock else found["cik"]
+    # the slow part (SEC, Yahoo) runs before the write lock
     subs = src.submissions(cik)
     user_values = _user_values(conn, stock["id"]) if stock else {}
     facts = Facts(raw_facts or src.facts(cik), subs, user_values=user_values)
     market, market_notes = _market(conn, ticker, facts.currency, src)
     r = analyse(facts, ticker, market)
     r.notes.extend(market_notes)
-
     company = (subs.get("name") or facts.name or ticker).title()
-    if stock is None:
-        cur = conn.execute(
-            "INSERT INTO stocks (cik, ticker, company, exchange, country, sector, status, in_portfolio, added_by, "
-            "opened, created_at) VALUES (?, ?, ?, ?, ?, ?, 'candidate', 'no', 'user', ?, ?)",
-            (cik, ticker, company, (subs.get("exchanges") or [None])[0], _country(subs), r.sector, day, now))
-        stock = find_stock(conn, ticker)
-        assert stock and stock["id"] == cur.lastrowid
-    sid = stock["id"]
-    previous = conn.execute("SELECT grade, lynch_type FROM card_entries WHERE stock_id=? AND record='fundamental' "
-                            "ORDER BY id DESC LIMIT 1", (sid,)).fetchone()
-    previous = {"grade": previous[0], "lynch_type": previous[1]} if previous else None
-
-    path = drive.find_card(ticker) or drive.card_path(ticker, stock["company"] or company)
-    if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        head = dict(stock)
-        head.update({"company": stock["company"] or company, "sector": stock["sector"] or r.sector,
-                     "opened": stock["opened"] or day, "in_portfolio": stock["in_portfolio"]})
-        path.write_text(card.new_card(head), encoding="utf-8")
     source = _source(facts, r, cik)
-    entry = card.fundamental_entry(r, source, day, previous)
-    card.append(path, entry, {"lynch_type": r.lynch_type or "", "grade": r.grade, "last_entry": day})
 
-    conn.execute("UPDATE stocks SET cik=?, lynch_type=?, grade=?, last_entry=?, out_of_scope=?, "
-                 "opened=coalesce(opened, ?), sector=coalesce(sector, ?), country=coalesce(country, ?), "
-                 "exchange=coalesce(exchange, ?) WHERE id=?",
-                 (cik, r.lynch_type, r.grade, day, r.out_of_scope, day, r.sector, _country(subs),
-                  (subs.get("exchanges") or [None])[0], sid))
-    conn.execute("INSERT INTO card_entries (stock_id, date, record, who, source, grade, lynch_type, filing, created_at) "
-                 "VALUES (?, ?, 'fundamental', 'agent_3', ?, ?, ?, ?, ?)",
-                 (sid, day, source["label"], r.grade, r.lynch_type, facts.latest_accn, now))
-    _save_financials(conn, sid, facts, r, now)
-    n_missing = _save_missing(conn, sid, r.missing, now)
     conn.commit()
+    conn.execute("BEGIN IMMEDIATE")  # the card and the database change together, one writer at a time
+    try:
+        if found and found.get("rename_from"):
+            stock = apply_rename(conn, ticker, found, day)
+        stock = find_stock(conn, ticker)
+        if stock and stock["status"] == "archived":
+            raise Refused(f"{ticker} is archived: archived stocks are never analyzed (/unarchive {ticker} first).")
+        if stock is None:
+            conn.execute(
+                "INSERT INTO stocks (cik, ticker, company, exchange, country, sector, status, in_portfolio, added_by, "
+                "opened, created_at) VALUES (?, ?, ?, ?, ?, ?, 'candidate', 'no', 'user', ?, ?)",
+                (cik, ticker, company, (subs.get("exchanges") or [None])[0], _country(subs), r.sector, day, now))
+            stock = find_stock(conn, ticker)
+        sid = stock["id"]
+        previous = conn.execute("SELECT grade, lynch_type FROM card_entries WHERE stock_id=? AND record='fundamental' "
+                                "ORDER BY id DESC LIMIT 1", (sid,)).fetchone()
+        previous = {"grade": previous[0], "lynch_type": previous[1]} if previous else None
+        conn.execute("UPDATE stocks SET cik=?, lynch_type=?, grade=?, last_entry=?, out_of_scope=?, "
+                     "opened=coalesce(opened, ?), sector=coalesce(sector, ?), country=coalesce(country, ?), "
+                     "exchange=coalesce(exchange, ?) WHERE id=?",
+                     (cik, r.lynch_type, r.grade, day, r.out_of_scope, day, r.sector, _country(subs),
+                      (subs.get("exchanges") or [None])[0], sid))
+        conn.execute("INSERT INTO card_entries (stock_id, date, record, who, source, grade, lynch_type, filing, "
+                     "created_at) VALUES (?, ?, 'fundamental', 'agent_3', ?, ?, ?, ?, ?)",
+                     (sid, day, source["label"], r.grade, r.lynch_type, facts.latest_accn, now))
+        _save_financials(conn, sid, facts, r, now)
+        n_missing = _save_missing(conn, sid, r.missing, now)
+        # the card last: if anything above fails, the card is not touched
+        path = drive.find_card(ticker) or drive.card_path(ticker, stock["company"] or company)
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            head = dict(stock)
+            head.update({"company": stock["company"] or company, "sector": stock["sector"] or r.sector,
+                         "opened": stock["opened"] or day})
+            card.write(path, card.new_card(head))
+        card.append(path, card.fundamental_entry(r, source, day, previous),
+                    {"lynch_type": r.lynch_type or "unclear", "grade": r.grade, "last_entry": day})
+        conn.commit()
+    except BaseException:
+        conn.rollback()
+        raise
 
     lines = [f"Grade {r.grade} · " + (f"out of scope: {r.out_of_scope}" if r.out_of_scope else (r.lynch_type or "type unclear"))
              + f" · {source['label']}"]
+    if found and found.get("rename_from"):
+        lines.append(f"Ticker changed: {found['rename_from']['ticker']} → {ticker} (same company; card kept)")
     dec = [f"{n} {m['mark'] or 'not_computed'}" for n, m in r.measures.items() if m["decisive"]]
     if dec:
         lines.append("Decisive: " + ", ".join(dec))
@@ -251,8 +291,8 @@ def weekly(conn, sources=None, today: str | None = None) -> str | None:
                     continue  # a new filing is listed but its figures are not in SEC's data yet: next week again
             out = analyze(conn, ticker, src, today, raw_facts=raw)
             done.append(out.text)
-        except (Refused, sec.SecError) as exc:
-            errors.append(f"{ticker}: {exc}")
+        except Exception as exc:  # noqa: BLE001 — one stock's error must not stop the others
+            errors.append(f"{ticker}: {type(exc).__name__}: {exc}")
     if not done and not errors:
         return None
     parts = done + ([notify.message("ANALYSIS · errors", errors)] if errors else [])

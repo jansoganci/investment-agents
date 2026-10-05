@@ -378,5 +378,5 @@ toplam yükümlülük → `liabilities` · kira yükümlülüğü → `leases` �
 | `card_entries`: kaydın dayandığı rapor (başvuru no) | `filing` |
 | `command_log`: değişikliğin yerine geçtiği eski hâl (JSON) | `before` |
 | kart kaydı başlığındaki kaynak | `2025 annual (10-K)` · `last 4 quarters to 2026-06-28 (10-Q)` |
-| kart YAML'ı: ek alanlar | `source.filing` · `price.market_value` · `price.pe` · `price.fcf_yield_latest` · `price.verdict` · `free_cash.average_3y` · `liquid` / `debt` (`value` + `parts`) · `info` (bilgi satırları: `lease_heavy`, `acquisitive`, Yahoo notları) · `warnings[].detail` · kapsam dışında `out_of_scope` + `sic` |
+| kart YAML'ı: ek alanlar | `source.filing` · `price.price` · `free_cash.currency` · `free_cash.path_5y` (son 5 yılın serbest nakdi) · `price.market_value` · `price.pe` · `price.fcf_yield_latest` · `price.verdict` · `free_cash.average_3y` · `liquid` / `debt` (`value` + `parts`) · `info` (bilgi satırları: `lease_heavy`, `acquisitive`, Yahoo notları) · `warnings[].detail` · kapsam dışında `out_of_scope` + `sic` |
 | hesaplanamayan değer (kartta) | `not_computed` |

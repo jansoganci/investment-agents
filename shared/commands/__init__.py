@@ -34,6 +34,9 @@ class Plan:
     preview: list[str]              # exactly what will change
     confirm_args: list[str]         # the exact command to run after `yes` (without --yes)
     apply: Callable[[sqlite3.Connection, int], Applied]
+    # a plan that asked SEC (network) is made before the write lock; `recheck` then checks, inside the lock and with the
+    # database only, that nothing changed in between (raises Refused). Without it the whole plan is made again.
+    recheck: Callable[[sqlite3.Connection], None] | None = None
 
 
 class Refused(Exception):
@@ -92,9 +95,13 @@ def _run_change(cmd: Command, args: list[str], yes: bool) -> tuple[int, str]:
     try:
         if not yes:
             return 0, _confirm_text(cmd, cmd.plan(conn, args))
+        plan = cmd.plan(conn, args)  # may ask SEC: never inside the write lock
         conn.execute("BEGIN IMMEDIATE")  # one writer at a time; others wait (busy timeout)
         try:
-            plan = cmd.plan(conn, args)  # checked again inside the transaction
+            if plan.recheck is not None:
+                plan.recheck(conn)
+            else:
+                plan = cmd.plan(conn, args)  # checked again inside the transaction
             cur = conn.execute(
                 "INSERT INTO command_log (command, args, created_at) VALUES (?, ?, ?)",
                 (cmd.name, " ".join(args), clock.utc_iso()),

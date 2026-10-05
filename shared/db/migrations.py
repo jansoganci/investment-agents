@@ -325,6 +325,10 @@ ALTER TABLE card_entries ADD COLUMN filing TEXT;
 -- What a change replaced (JSON, e.g. the previous status), so /undo can put it back.
 ALTER TABLE command_log ADD COLUMN before TEXT;
 
+-- Figures are append-only too: a wrong one I entered is marked void by /undo, never deleted.
+CREATE TRIGGER financials_no_delete BEFORE DELETE ON financials
+BEGIN SELECT RAISE(ABORT, 'financials is append-only: rows are never deleted (/undo marks a row void)'); END;
+
 CREATE INDEX missing_data_stock ON missing_data (stock_id, figure, year);
 CREATE INDEX card_entries_stock ON card_entries (stock_id, date);
 """
