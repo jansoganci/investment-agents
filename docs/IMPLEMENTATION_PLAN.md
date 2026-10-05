@@ -369,8 +369,8 @@ left stuck on purpose shows in `/status`.
 
 | Phase | Build | Audit | Fixes | Mac check | Merge | Air | Branch / PR | Note |
 |---|---|---|---|---|---|---|---|---|
-| 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ⏳ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 | Mac check together with phase 1's (my decision), then the merge · Air check when the Air is set up (section 8) |
-| 1 | ✅ | ✅ no blocker | ✅ | ⏳ | — | — | `claude/phase-1-analysis-numbers-arj800` · PR #4 (on top of phase 0) | built and audited 2026-10-05 (exception, section 1); fixes and my 6 decisions in · Yahoo blocked the cloud machine, so the real Yahoo answers are checked on the Mac (section 8) · Mac check together with phase 0's |
+| 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 (merged 2026-10-05) | merged before the Mac check (my decision, 2026-10-05): the Mac check runs on `main`, a fix comes as a small PR · Air setup started 2026-10-05 (`AIR_SETUP.md`) |
+| 1 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-1-analysis-numbers-arj800` · PR #4 → PR #5 (merged 2026-10-05) | built and audited 2026-10-05 (exception, section 1) · PR #4 went into the phase 0 branch, PR #5 brought it to `main` · Mac check together with phase 0's, on `main` (incl. the real Yahoo answers, section 8) · on the Air: `git pull` + `uv run python -m shared.db upgrade` (version 2 → 3) |
 | 2 | — | — | — | — | — | — | — | real-model runs before 2026-10-19 |
 | 3 | — | — | — | — | — | — | — | |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
@@ -387,8 +387,8 @@ off this list is my decision.
 | What | Why not now | Comes back when |
 |---|---|---|
 | Saved Yahoo answers for the tests (`tests/fixtures/yahoo/`) | Yahoo answered "too many requests" to the cloud machine for hours; the price job is tested on an answer built by hand in Yahoo's format | the Mac check runs `uv run python tests/fixtures/fetch_yahoo.py` once and pushes the files |
-| Phase 0 Mac check, then merging PR #3 | done together with phase 1's Mac check (my decision, section 1) | phase 1 is built |
-| The Air setup (`AIR_SETUP.md`) and phase 0's Air check | not set up yet; phases 1–3 do not need the Air (tests here, real checks on the Mac) | at the latest before phase 4 — earlier is cheaper: Hermes's message path, its approval for `--yes` and the command-name clashes are still untested |
+| The Mac check of phases 0 and 1 | both are merged into `main` (2026-10-05, before the check — my decision); the check is still owed, on `main` | next, on my Mac; a fix comes as a small PR |
+| Finishing the Air setup (`AIR_SETUP.md`) and phase 0's Air check | started 2026-10-05; the first pass found `uv` missing, Remote Login and Screen Sharing off, no separate `agents` user | at the latest before phase 4 |
 | The third external review | it has not arrived | it arrives: before phase 1 is merged → into phase 1; later → a fix of its own |
 
 **Moved to a later phase (from phase 0's audit):**
