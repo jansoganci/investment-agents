@@ -94,6 +94,8 @@ Each stock is one row in the `stocks` table:
 
 - The **green list** is not a separate status: stocks with `status = watching` and `grade = solid`. A stock that comes out solid **enters automatically**, and Telegram sends a message.
 - `status` and `in_portfolio` live in the database; code updates the card header at the same time and appends a dated note (e.g. `2026-10-10 · Added to portfolio`).
+- A stock that I analyse by hand and that is not in the system yet is added as `candidate` (a status changes only through my
+  commands; 2026-10-05).
 - **Archive reminder:** watching + not in the portfolio + not solid on the last 2 cards → the Sunday summary asks "archive it?". The decision is mine.
 
 ### Agent 1 (Eye) rules (decision: 2026-10-03)
@@ -222,6 +224,14 @@ is added to the list when it shows up. The US side is ready in the old project (
    Why: "think fast, iterate faster" — first the companies where the 10 measures work well; add the others later if needed.
    An out-of-scope stock is marked "unclear — out of scope: <reason>". Payment companies such as Visa / Mastercard are
    **in** scope (Visa is "Financials" in GICS but is not a bank).
+   **Where the label lives and who sets it (decision: 2026-10-05):** a field of its own, `stocks.out_of_scope` (one of the five
+   labels; empty = in scope). Why a field of its own: `lynch_type` is the company's growth type, and mixing the two would blur
+   both; with its own field the Sunday summary and Hermes can list these stocks, and the label can change on a later run (a
+   `pre_revenue` company starts selling). Code sets it on every agent 3 run from SEC's industry code (SIC): `bank` 6021–6036 ·
+   `insurance` 6311–6399 (health insurers such as UnitedHealth, SIC 6324, fall here too) · `reit` 6798 · `utility` 4911, 4923,
+   4924, 4931, 4932, 4941, 4991 · `pre_revenue` = no revenue in any of the last 3 annual reports (a revenue that is not found
+   also goes to `missing_data`, so a missing name is caught). The card entry then says `grade: unclear` and
+   "unclear — out of scope: bank (SIC 6021)"; the 10 measures and the price line are not computed.
 3. **Code measures and raises questions; it does not judge:** e.g. "there is a loss" → "why this loss?". The AI writes the reason from the annual report
    **with a quote** (e.g. "the loss is from a new warehouse investment; gross profit is growing 30%; operating cash is positive"). Figure + reason
    sit side by side on the card; the decision is mine. (The Amazon lesson: a loss by itself is not weakness.)
@@ -253,11 +263,14 @@ Formulas:
   price line. A multi-year average uses the years that exist; with fewer than 2 years it is `not_computed`.
 - **Liquid assets = cash + short-term investments + current marketable securities** — the parts are **added**, not tried as
   alternatives. Short-term investments: `ShortTermInvestments` · `OtherShortTermInvestments`; marketable securities:
-  `MarketableSecuritiesCurrent`; a partial tag (`AvailableForSaleSecuritiesDebtSecuritiesCurrent`, …) only if nothing else is found.
-  (The trial missed these at Coca-Cola, Nvidia, Nike and Pfizer; Nvidia uses a company-only tag that SEC's standard data never shows
-  → `not_computed` + ledger + a Telegram request.)
+  `MarketableSecuritiesCurrent` · `MarketableSecurities` (only when no noncurrent line sits next to it; Coca-Cola renamed its line
+  in 2021); a partial tag (`AvailableForSaleSecuritiesDebtSecuritiesCurrent`, …) only if nothing else is found.
+  (The trial missed these at Coca-Cola, Nvidia, Nike and Pfizer; Nvidia uses a company-only tag that SEC's standard data never shows.)
+  **A part reported the year before but missing this year (decision: 2026-10-05):** the total is still computed (the part counted
+  as not held), with a `data_check` flag and a `missing_data` row, so I am asked to check it.
 - Capital return (per year) = operating profit × (1 − tax rate) ÷ (total assets − current liabilities − liquid assets);
-  tax rate = tax expense ÷ pre-tax profit (between 0 and 35%; 21% if there is no profit). Equity / debt are not used
+  tax rate = tax expense ÷ pre-tax profit (between 0 and 35%; 21% if there is no profit; a profitable year with no tax figure is
+  `not_computed` — 2026-10-05). Equity / debt are not used
   (a company with negative equity, such as Starbucks, produced a nonsense result like 105%; the figure also does not depend on the debt number).
   **The grade uses the worse of the 3-year and the 5-year average** — Smith's test is a *sustained* high return; a 5-year average
   can carry old good years (Pfizer: 5-year 12% ➖, last 3 years 5% ❌). **Exception: `cyclical` uses the 5-year average only**
@@ -321,6 +334,9 @@ paydown time is ❌, it drops one step (✅ → ➖, ➖ → ❌). If interest c
 
 Because rule 1 catches mixed profit / loss years, `unprofitable` in practice means "a loss in every year". Known limit: a company that
 was a loss-maker and then turned profitable (e.g. Uber) gets `cyclical`.
+"Profit in fewer than 4 of the last 5 years" counts **loss years** (2 or more): a year with no data is not a loss, so a young company
+with 3 profitable years is not `unprofitable` (phase 1 audit, 2026-10-05). If revenue growth cannot be computed, the type is
+`unclear` rather than a guess (2026-10-05).
 
 **Decisive measures (by type; in football, a striker is judged on goals and a goalkeeper on saves):**
 
@@ -345,6 +361,10 @@ unclear  = more than half of the decisive measures could not be computed, or out
 shrink   = if the 3-year average revenue growth is negative, the grade cannot be solid (mid at best); shrink_rule: yes
 fast_grower safety = if operating margin is ❌ and it burns cash (3-year average free cash < 0), the grade cannot be solid (mid at best)
 ```
+
+**A decisive measure that cannot be computed (decision: 2026-10-05):** the grade rule stays as it is, but the card gets a
+`data_check` flag that says which measure, why (e.g. "operating profit not found") and on how many decisive measures the grade
+rests (e.g. GE: "solid" on 2 of 3, capital return not computed).
 
 **Flags (they never change the grade; each one sends a "why?" question to the AI, answered with a quote on the card):**
 one-off (operating cash fell more than 30% over 2 years while net profit rose — e.g. Coca-Cola's 12 billion $ tax deposit and
@@ -376,7 +396,8 @@ Lynch dividend ratio (for dividend payers) ≥ 2 attractive · 1–2 fair · < 1
   every candidate total; if they disagree, a flag. Flags: debt suddenly drops to zero from one year to the
   next · debt is larger than total liabilities · debt changed more than 30% in a year. Debt of a business held for sale and
   leases: info lines only.
-- **Consistency checks:** gross profit = revenue − cost · margin 0–100% · a sudden drop to zero / a 10-times jump → flagged, not used.
+- **Consistency checks:** gross profit = revenue − cost · margin 0–100% · a sudden drop to zero / a 10-times jump → flagged.
+  **No year is dropped (decision: 2026-10-05):** the flag says "check the figure" (Rivian 2021 → 2022 is a real jump).
 - **Trace:** the card records which name and which filing each figure came from.
 - **Ledger:** a figure that cannot be found becomes `not_computed` and is written to the SQLite `missing_data` table (date, ticker, year,
   figure, names tried, status: `open` / `tag_added` / `absent`). One line on the Sunday summary; Hermes can be asked.
@@ -398,11 +419,15 @@ and the parts of liquid assets and debt. Approval comes after that.
   are not used.** There is no numerical floor (Lynch has none either); if earnings growth ≤ 0, PEG cannot be computed.
 - **Lynch's dividend-adjusted ratio** (also, for companies that pay a dividend): (earnings growth % + dividend yield %) ÷ P/E;
   Lynch: < 1 weak, 1.5 is all right, ≥ 2 is what you want. It corrects PEG's unfairness to a slow grower that pays a dividend (such as Coca-Cola).
-  (The same idea is used today under the name "PEGY", flipped: P/E ÷ (growth + yield).)
+  (The same idea is used today under the name "PEGY", flipped: P/E ÷ (growth + yield).) If earnings growth ≤ 0 it is not computed
+  either (decision: 2026-10-05; e.g. Nike).
 - **Free-cash-flow yield:** free cash flow ÷ market value ("if I bought the whole company today, what percent of my money comes back
   as cash per year?"). Free cash = operating cash − capex − stock comp (the single definition above; SEC); **the main value uses
-  the 3-year average free cash**, the latest year is shown next to it (Coca-Cola: latest 1.4%, 3-year 1.7%). Market value = price
-  (Yahoo) × share count (SEC). The card also shows the 5-year path of free cash flow.
+  the 3-year average free cash**, the latest year is shown next to it (Coca-Cola: latest 1.4%, 3-year 1.7%). **Market value =
+  Yahoo's ready-made market value in USD** (decision: 2026-10-05 — it is right for ADRs and share classes, where price × SEC
+  share count is not: TSMC 1 ADR = 5 shares; Berkshire's SEC count is in A shares). If Yahoo has none, everything that needs it
+  (FCF yield, P/E, PEG, the dividend ratio) stays `not_computed` (null) for now; what to do then is my decision later. The card
+  also shows the 5-year path of free cash flow.
 - **PEG growth = diluted earnings per share, 3-year growth** (split-adjusted; P/E is a per-share ratio, so growth is per share too —
   Lynch also worked per share), capped at 25%.
 - **P/E and dividend yield are computed from SEC figures:** P/E = market value ÷ (latest net profit × FX); dividend yield = latest
@@ -435,7 +460,8 @@ is hard and error-prone for an AI; it would make version 1 harder.
 **Quarterly updates — last 4 quarters (decision: 2026-10-04):** agent 3 reads every 10-Q as well as the 10-K. A single quarter is
 noisy (seasons, one-offs), so at each new filing the measures are recomputed on the **last 4 quarters summed** (a rolling year,
 "TTM"); balance-sheet figures come from the latest quarter. Multi-year averages keep the annual history, with the last 4 quarters as
-the current year. SEC gives no separate Q4 and reports cash flow cumulatively (Q4 = year − 9 months; quarters by subtraction) — code
+the current year. **The last 4 quarters take the place of the annual report they overlap (decision: 2026-10-05):** totals,
+averages and "previous year" never count the same months twice. SEC gives no separate Q4 and reports cash flow cumulatively (Q4 = year − 9 months; quarters by subtraction) — code
 handles it. 20-F filers (ADRs) stay annual.
 
 **When to consider selling (decision: 2026-10-04)** — never because the price fell; because the reason to own it is gone (Fisher:
@@ -678,8 +704,13 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 - **Times** are stored in UTC and shown in Turkey time.
 - **TL entries** (gold purchases, BES) keep the TL amount and the USD/TRY rate used; the USD value is computed from them.
 - **Two separate databases:** the real one on the Air, a development one on the main Mac; they never mix.
+- **Two Drive folders (decision: 2026-10-04):** only the Air writes to the real `Investing/`; the main Mac writes to
+  `Investing-dev/` (`DRIVE_DIR` in `.env`). Why: `card.md` is append-only — a test card from the Mac mixed into a real card could
+  not be deleted.
 - **Stock identity:** every stock gets a fixed internal number (and, for SEC filers, its SEC number, CIK); the ticker is only a
-  label, so a ticker change (e.g. FB → META) does not break the history. I keep typing tickers.
+  label, so a ticker change (e.g. FB → META) does not break the history. I keep typing tickers. **In code (2026-10-05):** a ticker
+  new to us whose CIK we already have is either a renamed ticker (the stock and its card are relabelled, with a dated note) or
+  another share class of the same company (refused: the card stays under the first ticker).
 - **Price history is kept:** each night adds that day's prices as new rows; old prices are never deleted or overwritten, so I can
   always look back.
 - **Backups:** every night a consistent copy (made with SQLite's own backup command) goes to `Investing/Backup/`; the last 7 daily
@@ -689,7 +720,7 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 - **Structure changes:** the database carries a version number; each change to the tables is a small numbered upgrade step that
   the code applies on start. **Data is never lost when the structure changes** (my condition).
 
-Tables: `stocks`, `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
+Tables: `stocks` (with `out_of_scope` since 2026-10-05), `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
 Added on 2026-10-04 (decided features had no place for their records): `card_entries` (one row per card entry: date, record, `grade`, `lynch_type`, `thesis_status` — the history behind the sell triggers and the archive reminder), `audits` (the auditor's results and error rate), `command_log` (every change I make: number, command, time; `/undo` uses the number), `settings` (my overrides from Telegram, e.g. `/model`), `subsectors` (the approved subsector list).
 
 ```text
@@ -854,7 +885,7 @@ Beyond these commands I can ask Hermes anything; it answers from the database an
 | | `/sold` | `/sold 5 KO 92.10` | a `sell` row; when the position reaches 0, `in_portfolio = no` |
 | | `/gold` | `/gold 1 4689` | a gold purchase: grams and the TL price per gram (a sale: minus grams) → a new dated row in `other_assets` (total wealth); a price more than 20% from that day's gram price → "are you sure?" |
 | | `/bes` | `/bes 8670 245000` | this month's BES payment and the BES total (TL) → a new dated row in `other_assets`; a total more than 50% away from the last one → "are you sure?" |
-| Analysis | `/analyze` | `/analyze KO` or `/analyze KO opus-5.5` | runs agent 3 now (filing + latest news); the confirmation shows the **estimated cost** |
+| Analysis | `/analyze` | `/analyze KO` or `/analyze KO opus-5.5` | runs agent 3 now (filing + latest news); the confirmation shows the **estimated cost**. It cannot be undone — its card entry stays (append-only); a wrong figure is fixed with `/data`, then a new `/analyze` (2026-10-05) |
 | Card | `/closewarning` | `/closewarning KO U1 one-off tax deposit, not recurring` | the warning closes; a note with the reason; it does not reopen unless the condition changes |
 | | `/thesis` | `/thesis KO <corrected point>` | my correction of the AI's thesis as a note; the old thesis is not deleted |
 | | `/note` | `/note KO met management at a conference…` | my free note on the card |

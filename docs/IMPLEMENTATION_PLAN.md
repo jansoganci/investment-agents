@@ -26,13 +26,19 @@ Every phase goes through the same loop:
 
 A new phase starts only when the previous one is done (`AGENTS.md`, fixed rule 5).
 
+**Exception (my decision, 2026-10-04):** phase 1 is built before phase 0 is done — only phase 0's Mac and Air checks are left, the Air is not ready, and phase 2's real-model runs must happen before the Anthropic credit ends on 2026-10-19; phase 1 does not need the Air (tested here on sample data); the Mac checks of phases 0 and 1 are done together, phase 0's Air check when the Air is ready.
+
 ## 2. Where things run
 
 | Where | Who | What | Data |
 |---|---|---|---|
 | Cloud session | Claude | builds the phase, runs the automated tests | saved sample data (`tests/fixtures/`), fake AI |
-| My Mac (Cursor) | me | the real check (UAT): real SEC, Yahoo, AI, Drive, the sites | the development database |
-| The Air (Hermes) | the system | runs everything 24/7 | the real database (`~/investment-agents-data/`) |
+| My Mac (Cursor) | me | the real check (UAT): real SEC, Yahoo, AI, Drive, the sites | the development database · `Investing-dev/` in Drive |
+| The Air (Hermes) | the system | runs everything 24/7 | the real database (`~/investment-agents-data/`) · `Investing/` in Drive |
+
+- **Mac and Air never write to the same Drive folder (decision: 2026-10-04; roadmap section 5):** on the Mac `DRIVE_DIR` is
+  `…/My Drive/Investing-dev`; only the Air writes to the real `Investing/`. Cards are append-only, so a Mac test card mixed into
+  a real card could not be deleted.
 
 - **The database file never goes to GitHub.** GitHub carries the code that creates it: the table structure and the numbered
   upgrade steps. On the Mac and on the Air one command creates or upgrades it (`uv run python -m shared.db init`); no data is
@@ -126,7 +132,8 @@ rules (confirmation, log, number, `/undo`) · `docs/AIR_SETUP.md`.
 **Tests (here):** `init` creates every table · an upgrade step keeps every row · WAL is on · a backup copy opens and retention
 keeps 7 + 4 · a command writes `command_log`; `/undo` marks `void` and deletes nothing · `shared/ask` cannot write.
 
-**Mac check:** `uv sync` · `uv run python -m shared.db init` → the development database appears · `uv run pytest -q` passes.
+**Mac check:** `uv sync` · `.env` with `DRIVE_DIR` = `…/My Drive/Investing-dev` (never the real `Investing/`) ·
+`uv run python -m shared.db init` → the development database appears · `uv run pytest -q` passes.
 **Air:** `AIR_SETUP.md` phases 1–7 — Hermes answers on Telegram; the scheduled test script's file shows up in Drive and its
 message arrives on Telegram.
 
@@ -167,18 +174,20 @@ states" · section 5 (one price job, price history) · `BAGLAM.md` section 9 (go
   note — roadmap 10.2). `/analyze` writes no `runs` row itself; the agent it runs does.
 - Saved sample data: trimmed SEC and Yahoo data for the golden set, Novo Nordisk and the trap cases.
 
-**To decide first (from phase 0):** where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`) is
-stored — `lynch_type` does not take these values; a new upgrade step adds the field. For the Mac check, one of my 3 stocks can be
-a bank (e.g. JPM) to see this path.
+**Decided first (from phase 0; my decision 2026-10-05):** the out-of-scope label lives in a field of its own,
+`stocks.out_of_scope`, set by code from the SIC code (roadmap section 3, "Agent 3 rules", approach 2); a new upgrade step adds the
+field. Market value = Yahoo's ready-made value; if it is missing, the price line stays `not_computed` (roadmap section 3,
+"Valuation"). For the Mac check, one of my 3 stocks can be a bank (e.g. JPM) to see the out-of-scope path.
 
 **Tests (here):** the golden set — all 10 get the expected grade and type (`BAGLAM.md` section 9) · Novo Nordisk works (IFRS,
 DKK in the price line) · KO liquid assets = cash + short-term investments · Boeing's debt group needs all parts · Pfizer 2020 debt
 · Nvidia's ×10 split confirmed by Yahoo · a reverse split · the IPO year skipped · missing ≠ 0 everywhere · the last 4 quarters
 from cumulative 10-Q figures · a second run appends a dated entry and deletes nothing.
 
-**Mac check:** live SEC + Yahoo for KO, NVDA and 3 stocks I choose — the cards open in Drive and read well; the golden set on live
-data (a changed grade must be explained by a new filing). How: `uv run python -m shared.prices --ticker KO` ·
-`uv run python -m agents.analysis KO`.
+**Mac check:** live SEC + Yahoo for KO, NVDA and 3 stocks I choose — the cards open in Drive (`Investing-dev/`) and read well;
+the golden set on live data (a changed grade must be explained by a new filing). How: `uv run python -m shared.prices --ticker KO` ·
+`uv run python -m agents.analysis KO`. Also once: `uv run python tests/fixtures/fetch_yahoo.py` (Yahoo refused the cloud
+machine), then push the saved files.
 
 **Done when:** the tests pass, the audit has no blocker, the Mac check passes.
 
@@ -337,13 +346,18 @@ left stuck on purpose shows in `/status`.
 ## 6. Open inputs
 
 - **The subsector list** — needed before phase 4.
-- **Where the out-of-scope label is stored** — decided at the start of phase 1 (from phase 0's audit; phase 1, "To decide
-  first").
+- ~~**Where the out-of-scope label is stored**~~ — decided 2026-10-05: `stocks.out_of_scope`, set by code from the SIC code
+  (roadmap section 3, "Agent 3 rules", approach 2).
+- ~~**Where the market value comes from**~~ — decided 2026-10-05: Yahoo's ready-made market value (USD); if it is missing → `not_computed`
+  for now (roadmap section 3, "Valuation"; the fallback is in section 8).
 - **Sample data for phase 1** — needed before phase 1. The build session downloads real SEC and Yahoo answers once. Claude's
   recommendation: I allow these hosts in the cloud environment's network setting (environment menu in the session's title bar
   → Edit → Network access → Custom, keeping the default package-manager list): `data.sec.gov`, `www.sec.gov`,
   `query1.finance.yahoo.com`, `query2.finance.yahoo.com`, `fc.yahoo.com`. Otherwise Claude writes a download script that I run
   on my Mac and push. SEC also asks for a contact line (`SEC_UA`); the phase 1 session asks me for it.
+  **Decided (2026-10-04): the network setting** — the five hosts are open since 2026-10-05; `SEC_UA` given (local `.env`
+  only). SEC data downloaded (`tests/fixtures/sec/`, 13 companies). Yahoo refused the cloud machine ("too many requests") →
+  its sample answers come from my Mac (section 8).
 - ~~**The sector before the Eye exists**~~ — decided 2026-10-04 (roadmap section 3, "Sector list"): taken from the SEC
   industry code (SIC) through a fixed table; I can correct it. The Eye's tag mapping takes over in phase 4.
 - **The third external review** — if it arrives before phase 1 is merged, its accepted points go into phase 1; later, into a fix of
@@ -351,12 +365,56 @@ left stuck on purpose shows in `/status`.
 
 ## 7. Phase status
 
-| Phase | Status | Branch | Merged as |
-|---|---|---|---|
-| 0 | built · audited, no blocker · fixes pushed — left: my Mac check → merge → the Air check | `claude/phase-0-foundation-arj800` (PR #3) | — |
-| 1 | not started | — | — |
-| 2 | not started | — | — |
-| 3 | not started | — | — |
-| 4 | not started | — | — |
-| 5 | not started | — | — |
-| 6 | not started | — | — |
+✅ done · ⏳ waiting (the note says on what) · — not started. The steps are the loop of section 1.
+
+| Phase | Build | Audit | Fixes | Mac check | Merge | Air | Branch / PR | Note |
+|---|---|---|---|---|---|---|---|---|
+| 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ⏳ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 | Mac check together with phase 1's (my decision), then the merge · Air check when the Air is set up (section 8) |
+| 1 | ✅ | ✅ no blocker | ✅ | ⏳ | — | — | `claude/phase-1-analysis-numbers-arj800` · PR #4 (on top of phase 0) | built and audited 2026-10-05 (exception, section 1); fixes and my 6 decisions in · Yahoo blocked the cloud machine, so the real Yahoo answers are checked on the Mac (section 8) · Mac check together with phase 0's |
+| 2 | — | — | — | — | — | — | — | real-model runs before 2026-10-19 |
+| 3 | — | — | — | — | — | — | — | |
+| 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
+| 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
+| 6 | — | — | — | — | — | — | — | runs on the Air |
+
+## 8. Not now — on purpose (2026-10-05)
+
+What we deliberately do not do now, why, and when it comes back. Claude does not start any of these on its own; taking an item
+off this list is my decision.
+
+**Waiting — the next step depends on something else:**
+
+| What | Why not now | Comes back when |
+|---|---|---|
+| Saved Yahoo answers for the tests (`tests/fixtures/yahoo/`) | Yahoo answered "too many requests" to the cloud machine for hours; the price job is tested on an answer built by hand in Yahoo's format | the Mac check runs `uv run python tests/fixtures/fetch_yahoo.py` once and pushes the files |
+| Phase 0 Mac check, then merging PR #3 | done together with phase 1's Mac check (my decision, section 1) | phase 1 is built |
+| The Air setup (`AIR_SETUP.md`) and phase 0's Air check | not set up yet; phases 1–3 do not need the Air (tests here, real checks on the Mac) | at the latest before phase 4 — earlier is cheaper: Hermes's message path, its approval for `--yes` and the command-name clashes are still untested |
+| The third external review | it has not arrived | it arrives: before phase 1 is merged → into phase 1; later → a fix of its own |
+
+**Moved to a later phase (from phase 0's audit):**
+
+| What | Why not now | Phase |
+|---|---|---|
+| A real time for the backup in `settings.yaml` (today `after prices`) | the price job does not exist yet and its length is unknown; scheduling is phase 6's work | 6 |
+| `/status` warnings: a job stuck in `running`, a backup that is too old | they matter only when jobs run on their own; the limits are a new rule I decide then (suggested: 1 hour, 36 hours) | 6 |
+| `/undo` for the other commands | phase 0's `/undo` handles rows with `void` only; each phase adds the path for its own commands (section 3) | each phase |
+| The subsector list | only the Eye uses it | before 4 |
+| What to do when Yahoo has no market value | rare; until then the price line says `not_computed` (null) | my decision, later |
+| Stock comp from Yahoo when SEC has none (roadmap "Free cash") | decision 2026-10-05: not now; the gap goes to `missing_data` and I can enter it with `/data` | later |
+| The IPO year from the first S-1 / F-1 instead of the first annual report in SEC's data | phase 1 audit note; today NVO's share count spans 3 years, not 5 | later |
+| Fixed warning codes (U1 stays U1 on every entry) and `flag_kind` | needed by `/closewarning` and the AI reading | phase 2 |
+| A line when a new filing's figures have not reached SEC's data for 2+ weeks | the weekly check waits silently today | phase 6 |
+| `absent` for a figure a company never reports (the ledger asks again each quarter) | comes with the Telegram requests for missing data | phase 2 |
+| A guard that the Mac never writes into the real `Investing/` | today only `.env` keeps them apart (optional idea) | later |
+| Small UAT items: info line for debt held for sale, a flag for a margin outside 0–100%, Coca-Cola's short-term borrowings name | each under 1%; checked in the 20-stock acceptance test | phase 2 |
+
+**Not in version 1 — roadmap decisions; we stay away:**
+
+| What | Why | Decided in |
+|---|---|---|
+| Hong Kong / China A-shares (and reading their PDFs) | US markets first; added once the system is settled | roadmap sections 1 and 9 |
+| Lynch types `turnaround`, `asset_play` | kept out of version 1 → `unclear` | roadmap section 3, "Agent 3 rules" (approach 1) |
+| Analysing banks, insurers, REITs, `pre_revenue`, utilities | the 10 measures do not fit them → "unclear — out of scope" | roadmap section 3, "Agent 3 rules" (approach 2) |
+| Hidden assets; a company's real value vs its market value | hard and error-prone for an AI; would make version 1 harder | roadmap section 3, "Not in version 1" |
+| Selling on a market filter; "shrink, not sell" on a macro reason | the backtests: it costs return; option A chosen; the macro idea is for later | roadmap section 3, agent 4 rule 8 |
+| A web interface / blog | Markdown with a `publish` header is enough for now | roadmap section 4 |

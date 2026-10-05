@@ -48,7 +48,8 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [ ] Setting: **Mirror files** (files also on disk; no trouble when the internet drops; our files are small).
 - [ ] Folders: `Investing/` with `Inbox/`, `Weekly/`, `Backup/`, `Stocks/` (the test script below also creates any that are missing).
 - [ ] Put the full path of `Investing/` into `.env` as `DRIVE_DIR` (e.g.
-      `/Users/agents/Library/CloudStorage/GoogleDrive-<account>/My Drive/Investing`).
+      `/Users/agents/Library/CloudStorage/GoogleDrive-<account>/My Drive/Investing`). Only the Air writes here; the main Mac
+      uses `Investing-dev/` (roadmap section 5).
 
 ## Phase 4 — Telegram bot (~15 min) · me (menu text from Claude)
 
