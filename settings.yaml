@@ -22,6 +22,10 @@ hours:                             # Turkey time
   backup: after prices
   eye: ["07:00", "13:00", "20:00"] # agent 1, 3 passes a day
 
+# Sector before the Eye exists: from the SEC industry code (shared/sectors.py). Correct a wrong one here, e.g.
+#   sector_overrides: {SNAP: Communication Services}
+sector_overrides: {}
+
 portfolio:
   goal_usd: 800000                 # total wealth goal (agent 4 rule 4)
   dividend_withholding: 0.20       # 20%, user-confirmed (agent 4 rule 1)

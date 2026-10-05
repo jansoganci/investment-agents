@@ -304,10 +304,40 @@ CREATE TRIGGER prices_no_update BEFORE UPDATE ON prices
 BEGIN SELECT RAISE(ABORT, 'prices: history is never overwritten'); END;
 """
 
+STEP_3 = """
+-- Phase 1 (2026-10-05).
+-- The out-of-scope label (roadmap section 3, "Agent 3 rules", approach 2; decision 2026-10-05). Empty = in scope.
+ALTER TABLE stocks ADD COLUMN out_of_scope TEXT
+    CHECK (out_of_scope IN ('bank', 'insurance', 'reit', 'pre_revenue', 'utility'));
+
+-- The one price job keeps split and dividend history next to the close of that day (Yahoo's events).
+ALTER TABLE prices ADD COLUMN dividend REAL;
+ALTER TABLE prices ADD COLUMN split_ratio REAL;
+
+-- A figure I enter with /data is a `financials` row with source 'user'; /undo marks it void, never deletes it.
+ALTER TABLE financials ADD COLUMN command_id INTEGER REFERENCES command_log (id);
+ALTER TABLE financials ADD COLUMN void INTEGER NOT NULL DEFAULT 0 CHECK (void IN (0, 1));
+ALTER TABLE financials ADD COLUMN voided_by INTEGER REFERENCES command_log (id);
+
+-- The filing (accession number) a card entry is based on: the weekly "is there a new filing?" check compares with it.
+ALTER TABLE card_entries ADD COLUMN filing TEXT;
+
+-- What a change replaced (JSON, e.g. the previous status), so /undo can put it back.
+ALTER TABLE command_log ADD COLUMN before TEXT;
+
+-- Figures are append-only too: a wrong one I entered is marked void by /undo, never deleted.
+CREATE TRIGGER financials_no_delete BEFORE DELETE ON financials
+BEGIN SELECT RAISE(ABORT, 'financials is append-only: rows are never deleted (/undo marks a row void)'); END;
+
+CREATE INDEX missing_data_stock ON missing_data (stock_id, figure, year);
+CREATE INDEX card_entries_stock ON card_entries (stock_id, date);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
     (2, STEP_2),
+    (3, STEP_3),
 ]
 
 
