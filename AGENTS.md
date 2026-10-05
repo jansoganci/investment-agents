@@ -75,7 +75,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-04 (phase 0 built, audited and fixed)
+- **Last update:** 2026-10-05 (phase 1 started; step-by-step status and the "Not now" list in the plan, sections 7–8)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -182,13 +182,14 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   backup older than 36 hours (phase 6) · where the out-of-scope label (`bank`, `insurance`, `reit`, `pre_revenue`, `utility`)
   is stored (phase 1) · every new changing command also gets its `/undo` path. All of these are written into
   `docs/IMPLEMENTATION_PLAN.md` (sections 3 and 6, phases 1 and 6, marked "from phase 0").
-- **Next:** my Mac check (Cursor) → squash-merge → the Air (`AIR_SETUP.md`); the Air check closes phase 0 (phase 0 is done only
-  when the Mac and Air checks pass, so phase 1 starts after it — fixed rule 5). Small open items: the subsector list
-  (before phase 4) · the Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external
-  review is still running · before phase 1: the sample data (plan, section 6).
+- **Next:** phase 1 (its code waits — see Pending) → the Mac checks of phases 0 and 1 together → merge PR #3, then phase 1 →
+  the Air when it is set up (at the latest before phase 4). Small open items: the subsector list (before phase 4) · the
+  Anthropic API credit expires 2026-10-19 (phase 2's real-model runs before it) · a third external review is still running.
 - **Exception to fixed rule 5 (my decision, 2026-10-04):** phase 1 is built before phase 0 is done (only its Mac and Air checks are left; the Air is not ready; phase 2's real-model runs must come before 2026-10-19) — Mac checks of phases 0 and 1 together, phase 0's Air check when the Air is ready (plan section 1).
-- **Pending questions:** (1) before phase 1 — how the sample data is downloaded: the cloud network setting (recommended) or a
-  script on my Mac (plan, section 6).
+- **Pending (2026-10-05):** phase 1's code waits for the five SEC / Yahoo hosts (still refused by the network rule) and 3 answers —
+  where the out-of-scope label is stored, where the market value comes from, my SEC contact line (plan, section 6). The sample
+  data comes through the network setting (decided 2026-10-04).
+  **What is done, what waits, what we stay away from:** plan sections 7–8 (decision: 2026-10-05).
   **How to talk:** one topic at a time, one name per topic, short; no comments on model / provider choices (user, 2026-10-04).
 - **Note:** PR #1 (agent 4, the document audit, the database decisions) was merged into main on 2026-10-04 as one commit; the
   implementation plan was merged the same day, also as one commit.

@@ -343,13 +343,18 @@ left stuck on purpose shows in `/status`.
 ## 6. Open inputs
 
 - **The subsector list** — needed before phase 4.
-- **Where the out-of-scope label is stored** — decided at the start of phase 1 (from phase 0's audit; phase 1, "To decide
-  first").
+- **Where the out-of-scope label is stored** — asked on 2026-10-04 (phase 1, "To decide first"). Claude's recommendation: a new
+  field `stocks.out_of_scope`, set by code from the SEC industry code (SIC). Waiting for my answer.
+- **Where the market value comes from** — asked on 2026-10-04: roadmap section 3, "Valuation", has two sentences (price × SEC
+  share count; market value from Yahoo). Claude's recommendation: Yahoo's market value (USD) everywhere (right for ADRs and
+  share classes). Waiting for my answer.
 - **Sample data for phase 1** — needed before phase 1. The build session downloads real SEC and Yahoo answers once. Claude's
   recommendation: I allow these hosts in the cloud environment's network setting (environment menu in the session's title bar
   → Edit → Network access → Custom, keeping the default package-manager list): `data.sec.gov`, `www.sec.gov`,
   `query1.finance.yahoo.com`, `query2.finance.yahoo.com`, `fc.yahoo.com`. Otherwise Claude writes a download script that I run
   on my Mac and push. SEC also asks for a contact line (`SEC_UA`); the phase 1 session asks me for it.
+  **Decided (2026-10-04): the network setting.** On 2026-10-04 the five hosts were still refused by the environment's network
+  rule, and my `SEC_UA` line was a placeholder — both waiting.
 - ~~**The sector before the Eye exists**~~ — decided 2026-10-04 (roadmap section 3, "Sector list"): taken from the SEC
   industry code (SIC) through a fixed table; I can correct it. The Eye's tag mapping takes over in phase 4.
 - **The third external review** — if it arrives before phase 1 is merged, its accepted points go into phase 1; later, into a fix of
@@ -357,12 +362,48 @@ left stuck on purpose shows in `/status`.
 
 ## 7. Phase status
 
-| Phase | Status | Branch | Merged as |
-|---|---|---|---|
-| 0 | built · audited, no blocker · fixes pushed — left: my Mac check → merge → the Air check | `claude/phase-0-foundation-arj800` (PR #3) | — |
-| 1 | not started | — | — |
-| 2 | not started | — | — |
-| 3 | not started | — | — |
-| 4 | not started | — | — |
-| 5 | not started | — | — |
-| 6 | not started | — | — |
+✅ done · ⏳ waiting (the note says on what) · — not started. The steps are the loop of section 1.
+
+| Phase | Build | Audit | Fixes | Mac check | Merge | Air | Branch / PR | Note |
+|---|---|---|---|---|---|---|---|---|
+| 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ⏳ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 | Mac check together with phase 1's (my decision), then the merge · Air check when the Air is set up (section 8) |
+| 1 | ⏳ | — | — | — | — | — | `claude/phase-1-analysis-numbers-arj800` (on top of phase 0) | started 2026-10-04 before phase 0 is done (exception, section 1) · the code waits for the SEC / Yahoo network access and 3 answers (section 6) |
+| 2 | — | — | — | — | — | — | — | real-model runs before 2026-10-19 |
+| 3 | — | — | — | — | — | — | — | |
+| 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
+| 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
+| 6 | — | — | — | — | — | — | — | runs on the Air |
+
+## 8. Not now — on purpose (2026-10-05)
+
+What we deliberately do not do now, why, and when it comes back. Claude does not start any of these on its own; taking an item
+off this list is my decision.
+
+**Waiting — the next step depends on something else:**
+
+| What | Why not now | Comes back when |
+|---|---|---|
+| Phase 1 code | the SEC / Yahoo hosts are still refused by the environment's network rule; 3 answers are open (section 6) | I open the hosts and answer |
+| Phase 0 Mac check, then merging PR #3 | done together with phase 1's Mac check (my decision, section 1) | phase 1 is built |
+| The Air setup (`AIR_SETUP.md`) and phase 0's Air check | not set up yet; phases 1–3 do not need the Air (tests here, real checks on the Mac) | at the latest before phase 4 — earlier is cheaper: Hermes's message path, its approval for `--yes` and the command-name clashes are still untested |
+| The third external review | it has not arrived | it arrives: before phase 1 is merged → into phase 1; later → a fix of its own |
+
+**Moved to a later phase (from phase 0's audit):**
+
+| What | Why not now | Phase |
+|---|---|---|
+| A real time for the backup in `settings.yaml` (today `after prices`) | the price job does not exist yet and its length is unknown; scheduling is phase 6's work | 6 |
+| `/status` warnings: a job stuck in `running`, a backup that is too old | they matter only when jobs run on their own; the limits are a new rule I decide then (suggested: 1 hour, 36 hours) | 6 |
+| `/undo` for the other commands | phase 0's `/undo` handles rows with `void` only; each phase adds the path for its own commands (section 3) | each phase |
+| The subsector list | only the Eye uses it | before 4 |
+
+**Not in version 1 — roadmap decisions; we stay away:**
+
+| What | Why | Decided in |
+|---|---|---|
+| Hong Kong / China A-shares (and reading their PDFs) | US markets first; added once the system is settled | roadmap sections 1 and 9 |
+| Lynch types `turnaround`, `asset_play` | kept out of version 1 → `unclear` | roadmap section 3, "Agent 3 rules" (approach 1) |
+| Analysing banks, insurers, REITs, `pre_revenue`, utilities | the 10 measures do not fit them → "unclear — out of scope" | roadmap section 3, "Agent 3 rules" (approach 2) |
+| Hidden assets; a company's real value vs its market value | hard and error-prone for an AI; would make version 1 harder | roadmap section 3, "Not in version 1" |
+| Selling on a market filter; "shrink, not sell" on a macro reason | the backtests: it costs return; option A chosen; the macro idea is for later | roadmap section 3, agent 4 rule 8 |
+| A web interface / blog | Markdown with a `publish` header is enough for now | roadmap section 4 |
