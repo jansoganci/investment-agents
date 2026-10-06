@@ -358,7 +358,11 @@ BEGIN SELECT RAISE(ABORT, 'ai_calls is append-only: rows are never changed'); EN
 -- What the auditor and the AI found on a card entry: the audit row points at the entry it checked.
 ALTER TABLE audits ADD COLUMN filing TEXT;
 
--- An open warning on a card can be closed by me (/closewarning) and is then not reopened unless the condition changes.
+-- The plain request for a missing figure is sent once; if no answer comes it is reminded once (roadmap, "Asking for missing data").
+ALTER TABLE missing_data ADD COLUMN asked_at TEXT;
+ALTER TABLE missing_data ADD COLUMN reminded_at TEXT;
+
+-- An entry the auditor disagreed with is marked unverified.
 ALTER TABLE card_entries ADD COLUMN unverified INTEGER NOT NULL DEFAULT 0 CHECK (unverified IN (0, 1));
 """
 

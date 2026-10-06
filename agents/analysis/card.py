@@ -136,7 +136,7 @@ def _block(data: dict) -> str:
                                         width=140) + "```\n"
 
 
-def data_block(r: Result, source: dict) -> dict:
+def data_block(r: Result, source: dict, part=None) -> dict:
     src = {k: source.get(k) for k in ("report", "period_end", "url", "as_of", "filing")}
     data: dict = {"source": src}
     if r.out_of_scope:
@@ -173,10 +173,35 @@ def data_block(r: Result, source: dict) -> dict:
         data["liquid"] = {"value": _num(r.liquid[last].value), "parts": r.liquid[last].parts}
     if last in r.debt:
         data["debt"] = {"value": _num(r.debt[last].value), "parts": r.debt[last].parts}
-    data["warnings"] = [{"code": f"U{i}", "name": f["flag"], "flag_status": "open", "detail": f["detail"]}
-                        for i, f in enumerate(r.flags, 1)]
+    why = {w.id: w for w in (part.why if part else [])}
+    data["warnings"] = []
+    for i, f in enumerate(r.flags, 1):
+        w = {"code": f"U{i}", "name": f["flag"], "flag_status": "open", "detail": f["detail"]}
+        if f"U{i}" in why:  # what the AI said, with its quote (shown only when the quote is in the filing)
+            x = why[f"U{i}"]
+            w.update({"kind": x.kind or NOT_COMPUTED, "answer": x.answer, "quote": x.quote or None})
+        data["warnings"].append(w)
+    if part:
+        for name, item in data["measures"].items():
+            if f"M:{name}" in why:
+                x = why[f"M:{name}"]
+                item["why"] = {"answer": x.answer, "quote": x.quote or None, "kind": x.kind or NOT_COMPUTED}
     data["info"] = list(r.notes)
     data["gaps"] = [f"{m['figure']} not found ({m['year']})" for m in r.missing]
+    if part:
+        if part.thesis_status:
+            data["thesis_status"] = part.thesis_status
+        if part.check:
+            data["thesis_check"] = {k: v for k, v in part.check.items() if v not in (None, "")}
+        if part.audits:
+            data["audits"] = [{"audit": a.audit, "result": a.result, "model": a.model or None,
+                               "items": [{"id": i["id"], "verdict": i["verdict"], "reason": i["reason"]}
+                                         for i in a.items if i["verdict"] != "pass"] or None,
+                               "error": a.error} for a in part.audits]
+        if part.unverified:
+            data["unverified"] = "yes"
+        if part.sell:
+            data["sell_suggestion"] = {"trigger": part.sell["trigger"], "status": part.sell["status"]}
     return data
 
 
@@ -194,7 +219,22 @@ def _summary(r: Result) -> str:
     return s
 
 
-def fundamental_entry(r: Result, source: dict, day: str, previous: dict | None) -> str:
+def _thesis_section(part, previous_thesis_date: str | None) -> str:
+    if part is None:
+        return "Not written yet — the first thesis is written by agent 3's AI (run with --ai or /analyze)."
+    from agents.analysis.ai import thesis_text
+
+    if part.thesis:
+        return thesis_text(part.thesis)
+    if part.check:
+        c = part.check
+        line = f"Unchanged — see the thesis of {previous_thesis_date}. Status: {c['status']}. {c['reason']}".strip()
+        return line + (f'\nQuote: "{c["quote"]}"' if c["quote"] else "")
+    return "Not written yet — the AI answer could not be used this time (see the info lines)."
+
+
+def fundamental_entry(r: Result, source: dict, day: str, previous: dict | None, part=None,
+                      previous_thesis_date: str | None = None) -> str:
     heading = f"## {day} · fundamental · agent_3 · {source['label']}\n"
     if previous is None:
         changed = "First fundamental entry."
@@ -205,6 +245,8 @@ def fundamental_entry(r: Result, source: dict, day: str, previous: dict | None) 
         if previous.get("lynch_type") != r.lynch_type:
             bits.append(f"type {previous.get('lynch_type')} → {r.lynch_type}")
         changed = ("; ".join(bits) + ".") if bits else "Grade and type unchanged."
-    thesis = "Not written yet — the first thesis is written by agent 3's AI (phase 2)."
-    return (heading + _block(data_block(r, source)) + "### Summary\n" + _summary(r) + "\n### Thesis\n" + thesis
-            + "\n### What changed\n" + changed + "\n")
+    summary = _summary(r)
+    if part is not None and part.unverified:
+        summary += " UNVERIFIED: the auditor disagrees (see the audits in the data block)."
+    return (heading + _block(data_block(r, source, part)) + "### Summary\n" + summary + "\n### Thesis\n"
+            + _thesis_section(part, previous_thesis_date) + "\n### What changed\n" + changed + "\n")

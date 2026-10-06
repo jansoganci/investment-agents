@@ -87,6 +87,7 @@ class Context:
     first: bool = True                      # no earlier fundamental entry
     grades: list = field(default_factory=list)   # earlier entries' grades, oldest first
     previous_thesis: str | None = None
+    previous_thesis_date: str | None = None
     notes: list = field(default_factory=list)    # my notes since that thesis
     run: object = None
     stock_id: int | None = None

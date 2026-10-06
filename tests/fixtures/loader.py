@@ -59,6 +59,9 @@ class FixtureSources:
         self.calls.append(("submissions", cik))
         return sec_submissions(self._ticker(cik))
 
+    def filing_text(self, cik, accession, document):
+        return filing_text(self._ticker(cik))["text"]  # a saved 10-Q (NVDA only)
+
     def chart(self, symbol, range_, interval):
         from shared.prices.yahoo import YahooError
 
