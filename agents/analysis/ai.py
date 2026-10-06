@@ -170,9 +170,16 @@ def why_items(r) -> list[dict]:
         if m["mark"] == "weak":
             items.append({"id": f"M:{name}", "what": f"measure {name} is weak (value {m['value']}; {m.get('note') or 'no note'})",
                           "terms": MEASURE_TERMS.get(name, [])})
-    for i, f in enumerate(r.flags, 1):
-        items.append({"id": f"U{i}", "what": f"flag {f['flag']}: {f['detail']}", "terms": FLAG_TERMS.get(f["flag"], [])})
+    for code, f in open_flags(r):
+        items.append({"id": code, "what": f"flag {f['flag']}: {f['detail']}", "terms": FLAG_TERMS.get(f["flag"], [])})
     return items[:MAX_ITEMS]
+
+
+def open_flags(r) -> list[tuple[str, dict]]:
+    """(code, flag) of the warnings still open: the ones I closed are not asked about again."""
+    codes = getattr(r, "codes", None) or [f"U{i}" for i in range(1, len(r.flags) + 1)]
+    closed = getattr(r, "closed", set())
+    return [(c, f) for c, f in zip(codes, r.flags) if c not in closed]
 
 
 def ask_why(r, text: str, ctx: Context) -> list[Why]:
@@ -331,7 +338,7 @@ def run_ai(r, text: str, ctx: Context) -> AIPart:
         part.notes.append(f"The thesis could not be written or checked: {exc}")
 
     previous_grade = ctx.grades[-1] if ctx.grades else None
-    data_check = any(f["flag"] == "data_check" for f in r.flags)
+    data_check = any(f["flag"] == "data_check" for _, f in open_flags(r))
     kinds = should_audit(ctx, r, previous_grade, data_check)
     trig = sell.trigger(ctx.in_portfolio, r.grade, ctx.grades, part.thesis_status)
     if trig:

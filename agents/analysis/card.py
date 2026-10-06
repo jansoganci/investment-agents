@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 import yaml
@@ -89,6 +90,62 @@ def note_entry(day: str, text: str, who: str = "user") -> str:
 
 
 # --- reading the card back ---------------------------------------------------------------------------------------------
+
+def flag_key(flag: dict) -> str:
+    """What a warning is about, with its numbers masked: the same condition keeps its code on every entry
+    ("debt 8.5 → 33.4 bn (2026)" and "debt 9.1 → 34.0 bn (2027)" are one warning)."""
+    detail = re.sub(r"[-+]?\d[\d.,]*(?:e[-+]?\d+)?%?|→|×", "#", flag["detail"])
+    detail = re.sub(r"#(?:\s*#)+", "#", detail)
+    squeezed = re.sub(r"\s+", " ", detail).strip()
+    return f"{flag['flag']}:{squeezed}"
+
+
+def _keys(items: list[dict], name: str) -> list[str]:
+    """One key per warning of an entry; the same key twice in one entry gets a counter."""
+    seen, out = {}, []
+    for w in items:
+        k = flag_key({"flag": w[name], "detail": w["detail"]})
+        seen[k] = seen.get(k, 0) + 1
+        out.append(k if seen[k] == 1 else f"{k}~{seen[k]}")
+    return out
+
+
+def _yaml_of(body: str) -> dict:
+    if "```yaml\n" not in body:
+        return {}
+    try:
+        return yaml.safe_load(body.split("```yaml\n", 1)[1].split("\n```", 1)[0]) or {}
+    except yaml.YAMLError:
+        return {}
+
+
+def assign_codes(text: str | None, flags: list[dict]) -> tuple[list[str], set[str]]:
+    """(a code for each flag, the codes I closed). A condition keeps the code it first had (U1 stays U1); a new condition
+    gets the next number; a closed warning stays closed while its condition (its key) is the same."""
+    known, top = {}, 0
+    for e in entries(text or ""):
+        warnings = _yaml_of(e["body"]).get("warnings") or []
+        for w, k in zip(warnings, _keys(warnings, "name")):
+            known.setdefault(w.get("key") or k, w["code"])
+            top = max(top, int(re.sub(r"\D", "", w["code"]) or 0))
+    codes = []
+    for f, k in zip(flags, _keys([{"name": f["flag"], "detail": f["detail"]} for f in flags], "name")):
+        if k not in known:
+            top += 1
+            known[k] = f"U{top}"
+        codes.append(known[k])
+    return codes, closed_warnings(text or "")
+
+
+def closed_warnings(text: str) -> set[str]:
+    """Warnings I closed with /closewarning (a user note "Warning U1 closed: …"), unless reopened by /undo."""
+    closed = set()
+    for e in entries(text):
+        if e["record"] == "note" and e["who"] == "user":
+            for code, what in re.findall(r"Warning (U\d+) (closed|reopened)", e["body"]):
+                (closed.add if what == "closed" else closed.discard)(code)
+    return closed
+
 
 THESIS_NONE = ("Not written", "Unchanged")
 
@@ -175,10 +232,13 @@ def data_block(r: Result, source: dict, part=None) -> dict:
         data["debt"] = {"value": _num(r.debt[last].value), "parts": r.debt[last].parts}
     why = {w.id: w for w in (part.why if part else [])}
     data["warnings"] = []
-    for i, f in enumerate(r.flags, 1):
-        w = {"code": f"U{i}", "name": f["flag"], "flag_status": "open", "detail": f["detail"]}
-        if f"U{i}" in why:  # what the AI said, with its quote (shown only when the quote is in the filing)
-            x = why[f"U{i}"]
+    codes = getattr(r, "codes", None) or [f"U{i}" for i in range(1, len(r.flags) + 1)]
+    closed = getattr(r, "closed", set())
+    for code, f, key in zip(codes, r.flags, _keys([{"name": f["flag"], "detail": f["detail"]} for f in r.flags], "name")):
+        w = {"code": code, "name": f["flag"], "flag_status": "closed" if code in closed else "open", "detail": f["detail"],
+             "key": key}
+        if code in why:  # what the AI said, with its quote (shown only when the quote is in the filing)
+            x = why[code]
             w.update({"kind": x.kind or NOT_COMPUTED, "answer": x.answer, "quote": x.quote or None})
         data["warnings"].append(w)
     if part:

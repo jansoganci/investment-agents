@@ -116,3 +116,38 @@ def test_ask_for_missing_figures_when_asked_to(db, env, src, monkeypatch):
     out = run.analyze(db, "SNAP", src, today="2026-10-06", ask_missing=True)
     if db.execute("SELECT count(*) FROM missing_data").fetchone()[0]:
         assert "MISSING FIGURES — I need your help" in out.text and "/data SNAP" in out.text
+
+
+def test_a_drop_alert_is_checked_against_the_thesis_and_closed(db, env, src, monkeypatch):
+    FakeAI(handler()).install(monkeypatch)
+    run.analyze(db, "NVDA", src, today="2026-10-06", use_ai=True)
+    db.execute("INSERT INTO signals (kind, stock_id, date, detail, created_at) VALUES ('drop_alert', 1, '2026-10-12', "
+               "'{\"drop\": -0.23}', 'x')")
+    db.commit()
+    FakeAI(lambda *a: {"status": "watch", "reason": "price fell, the filing shows no break", "quote": ""}).install(monkeypatch)
+    text = run.drop_alerts(db, src, today="2026-10-13")
+    assert "DROP ALERT · NVDA — thesis watch: price fell, the filing shows no break" in text and "/analyze NVDA" in text
+    assert db.execute("SELECT status FROM signals").fetchone()[0] == "done"
+    last = entries_of("NVDA")[-1]
+    assert (last["date"], last["record"], last["who"]) == ("2026-10-13", "note", "agent_3")
+    assert "filing only; no news was available" in last["body"]
+    assert run.drop_alerts(db, src, today="2026-10-14") is None  # nothing pending any more
+
+
+def test_a_drop_alert_without_a_thesis_asks_for_an_analysis_and_stays_pending(db, env, src, monkeypatch):
+    run.analyze(db, "NVDA", src, today="2026-10-06")  # numbers only: no thesis
+    db.execute("INSERT INTO signals (kind, stock_id, date, created_at) VALUES ('drop_alert', 1, '2026-10-12', 'x')")
+    db.commit()
+    FakeAI(lambda *a: "x").install(monkeypatch)
+    assert "no thesis is written yet" in run.drop_alerts(db, src, today="2026-10-13")
+    assert db.execute("SELECT status FROM signals").fetchone()[0] == "pending"
+
+
+def test_an_archived_stock_drop_alert_is_closed_without_a_check(db, env, src, monkeypatch):
+    run.analyze(db, "NVDA", src, today="2026-10-06")
+    db.execute("UPDATE stocks SET status='archived'")
+    db.execute("INSERT INTO signals (kind, stock_id, date, created_at) VALUES ('drop_alert', 1, '2026-10-12', 'x')")
+    db.commit()
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    assert run.drop_alerts(db, src, today="2026-10-13") is None and fake.calls == []
+    assert db.execute("SELECT status FROM signals").fetchone()[0] == "done"
