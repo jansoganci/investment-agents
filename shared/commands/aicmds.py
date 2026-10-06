@@ -21,14 +21,15 @@ def _spend(conn, args):
     if not rows:
         lines.append("No AI calls yet.")
     for r in rows:
-        extra = f", {r['unpriced']} unpriced (no price in settings.yaml)" if r["unpriced"] else ""
+        extra = (f", {r['estimated']} at the default price (no price in settings.yaml)" if r["estimated"] else "") + \
+                (f", {r['rejected']} billed but rejected" if r["rejected"] else "")
         lines.append(f"- {r['provider']}: ${r['usd']:.2f} · {r['calls']} calls{extra}")
     total = ai.month_spend(conn)
     if limit is not None:
         lines.append(f"Total ${total:.2f} of ${limit} · ${max(limit - total, 0):.2f} left")
     else:
         lines.append(f"Total ${total:.2f}")
-    lines.append("An unpriced call is counted as $0 here; the real bill is on the provider's page.")
+    lines.append("Counted from the tokens at the prices in settings.yaml; the real bill is on the provider's page.")
     return "\n".join(lines)
 
 

@@ -51,12 +51,14 @@ def anthropic_backend(entry: dict, system: str, prompt: str, max_tokens: int) ->
         raise ProviderError(f"HTTP {exc.status_code}: {exc.message}") from exc
     except anthropic.APIConnectionError as exc:
         raise ProviderError("could not be reached") from exc
+    usage = (msg.usage.input_tokens, msg.usage.output_tokens, None)  # billed even when the answer is rejected below
     if msg.stop_reason == "refusal":
-        raise ProviderError("the model refused (safety classifier)")
+        raise ProviderError("the model refused (safety classifier)", usage=usage, outcome="refused")
     if msg.stop_reason == "max_tokens":
-        raise ProviderError("the answer was cut at max_tokens (thinking counts too); raise `ai.max_tokens`")
+        raise ProviderError("the answer was cut at max_tokens (thinking counts too); raise `ai.max_tokens`", usage=usage,
+                            outcome="cut")
     text = "".join(b.text for b in msg.content if b.type == "text")
-    return Reply(text, "anthropic", entry["model"], msg.usage.input_tokens, msg.usage.output_tokens)
+    return Reply(text, "anthropic", entry["model"], usage[0], usage[1])
 
 
 def openai_style_backend(provider: str):
@@ -74,14 +76,17 @@ def openai_style_backend(provider: str):
         except openai.APIConnectionError as exc:
             raise ProviderError("could not be reached") from exc
         choice = resp.choices[0]
-        if choice.finish_reason == "content_filter":
-            raise ProviderError("the model refused (content filter)")
         usage = resp.usage
         cost = getattr(usage, "cost", None) if usage is not None else None
         if cost is None and usage is not None:
             cost = (getattr(usage, "model_extra", None) or {}).get("cost")
-        return Reply(choice.message.content or "", provider, entry["model"],
-                     getattr(usage, "prompt_tokens", None), getattr(usage, "completion_tokens", None),
+        n_in, n_out = getattr(usage, "prompt_tokens", None), getattr(usage, "completion_tokens", None)
+        billed = (n_in, n_out, float(cost) if cost is not None else None) if n_in is not None and n_out is not None else None
+        if choice.finish_reason == "content_filter" or getattr(choice.message, "refusal", None):
+            raise ProviderError("the model refused (content filter)", usage=billed, outcome="refused")
+        if choice.finish_reason == "length":
+            raise ProviderError("the answer was cut at the token limit; raise `ai.max_tokens`", usage=billed, outcome="cut")
+        return Reply(choice.message.content or "", provider, entry["model"], n_in, n_out,
                      float(cost) if cost is not None else None)
     return backend
 

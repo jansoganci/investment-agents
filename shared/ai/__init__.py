@@ -23,7 +23,13 @@ class AIError(RuntimeError):
 
 
 class ProviderError(Exception):
-    """One provider failed (no key, empty credit, rate limit, server error, a safety refusal): the next one is tried."""
+    """One provider failed (no key, empty credit, rate limit, server error, a safety refusal): the next one is tried.
+    `usage` = (input tokens, output tokens, cost or None) when the call was billed although it was rejected (a refusal, an
+    answer cut at the token limit): it is still logged and counted."""
+
+    def __init__(self, message: str, *, usage: tuple | None = None, outcome: str = "refused"):
+        super().__init__(message)
+        self.usage, self.outcome = usage, outcome
 
 
 @dataclass
@@ -33,8 +39,9 @@ class Reply:
     model: str
     input_tokens: int | None = None
     output_tokens: int | None = None
-    cost_usd: float | None = None      # None = no price known for this model (shown as "unpriced")
+    cost_usd: float | None = None      # None = the tokens are unknown
     job: str = ""
+    estimated: bool = False            # counted at the default price (the model has none in settings.yaml)
 
 
 # provider → backend(entry, system, prompt, max_tokens) -> Reply. Filled by `shared.ai.backends`; tests replace it.
@@ -112,31 +119,35 @@ def model_names() -> list[str]:
 
 # --- money ----------------------------------------------------------------------------------------------------------------
 
-def price_of(model: str) -> tuple[float, float] | None:
-    """(dollars per million input tokens, per million output tokens) from settings.yaml, or None (unpriced)."""
+def price_of(model: str) -> tuple[float, float, bool]:
+    """(dollars per million input tokens, per million output tokens, estimated?) from settings.yaml. A model without a price gets
+    `pricing.default` (cautious) and is marked estimated."""
     table = config.settings().get("pricing") or {}
     for key in (model, model.split("/")[-1]):
         p = table.get(key)
         if p and p.get("input") is not None and p.get("output") is not None:
-            return float(p["input"]), float(p["output"])
-    return None
+            return float(p["input"]), float(p["output"]), False
+    d = table.get("default") or {"input": 5.0, "output": 25.0}
+    return float(d["input"]), float(d["output"]), True
 
 
-def cost_of(model: str, input_tokens: int | None, output_tokens: int | None) -> float | None:
-    p = price_of(model)
-    if p is None or input_tokens is None or output_tokens is None:
-        return None
-    return (input_tokens * p[0] + output_tokens * p[1]) / 1_000_000
+def cost_of(model: str, input_tokens: int | None, output_tokens: int | None) -> tuple[float | None, bool]:
+    """(dollars, estimated?); (None, False) when the tokens are unknown."""
+    if input_tokens is None or output_tokens is None:
+        return None, False
+    i, o, est = price_of(model)
+    return (input_tokens * i + output_tokens * o) / 1_000_000, est
 
 
-def estimate(job: str, input_chars: int, output_tokens: int = 1500, model: str | None = None, conn=None) -> float | None:
-    """A rough cost before a call (about 4 characters a token); None when the first model has no price."""
+def estimate(job: str, input_chars: int, output_tokens: int = 1500, model: str | None = None, conn=None) -> float:
+    """A rough cost before a call (about 4 characters a token), at the first model's price (the default price if it has none)."""
     first = chain(job, conn, model)[0]
-    return cost_of(first["model"], input_chars // 4, output_tokens)
+    return cost_of(first["model"], input_chars // 4, output_tokens)[0]
 
 
 def month_start() -> str:
-    return clock.today_local()[:7] + "-01"
+    """The first day of this month, UTC (the same clock the `created_at` stamps use)."""
+    return clock.now_utc().strftime("%Y-%m-01")
 
 
 def month_spend(conn) -> float:
@@ -146,9 +157,10 @@ def month_spend(conn) -> float:
 
 def spend_by_provider(conn) -> list[dict]:
     rows = conn.execute(
-        "SELECT provider, count(*), coalesce(sum(cost_usd), 0), sum(cost_usd IS NULL) FROM ai_calls "
-        "WHERE created_at >= ? GROUP BY provider ORDER BY provider", (month_start(),)).fetchall()
-    return [{"provider": p, "calls": n, "usd": usd, "unpriced": u or 0} for p, n, usd, u in rows]
+        "SELECT provider, count(*), coalesce(sum(cost_usd), 0), coalesce(sum(estimated), 0), "
+        "coalesce(sum(outcome != 'ok'), 0) FROM ai_calls WHERE created_at >= ? GROUP BY provider ORDER BY provider",
+        (month_start(),)).fetchall()
+    return [{"provider": p, "calls": n, "usd": usd, "estimated": e, "rejected": r} for p, n, usd, e, r in rows]
 
 
 # --- the call -------------------------------------------------------------------------------------------------------------
@@ -184,9 +196,15 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
                 reply = backend(dict(entry, job=job), system, prompt, tokens)
             except ProviderError as exc:
                 errors.append(f"{entry['provider']} {entry['model']}: {exc}")
+                if exc.usage:  # billed although rejected: still counted
+                    n_in, n_out, given = exc.usage
+                    cost, est = (given, False) if given is not None else cost_of(entry["model"], n_in, n_out)
+                    _log(conn, run, Reply("", entry["provider"], entry["model"], n_in, n_out, cost, job, est), stock_id,
+                         exc.outcome)
                 continue
             if reply.cost_usd is None:
-                reply = replace(reply, cost_usd=cost_of(reply.model, reply.input_tokens, reply.output_tokens))
+                cost, est = cost_of(reply.model, reply.input_tokens, reply.output_tokens)
+                reply = replace(reply, cost_usd=cost, estimated=est)
             reply = replace(reply, job=job)
             _log(conn, run, reply, stock_id)
             return reply
@@ -196,14 +214,18 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
             conn.close()
 
 
-def _log(conn, run, reply: Reply, stock_id) -> None:
-    conn.execute("INSERT INTO ai_calls (run_id, job, provider, model, input_tokens, output_tokens, cost_usd, created_at) "
-                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                 (getattr(run, "id", None), reply.job, reply.provider, reply.model, reply.input_tokens,
-                  reply.output_tokens, reply.cost_usd, clock.utc_iso()))
+def log_reply(conn, run, reply: Reply, stock_id=None, outcome: str = "ok") -> None:
+    """One row in `ai_calls`, and the dollars on the job's `runs` row."""
+    conn.execute("INSERT INTO ai_calls (run_id, stock_id, job, provider, model, input_tokens, output_tokens, cost_usd, estimated, "
+                 "outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 (getattr(run, "id", None), stock_id, reply.job, reply.provider, reply.model, reply.input_tokens,
+                  reply.output_tokens, reply.cost_usd, 1 if reply.estimated else 0, outcome, clock.utc_iso()))
     conn.commit()
     if run is not None and reply.cost_usd:
         run.add_cost(reply.cost_usd)
+
+
+_log = log_reply
 
 
 from shared.ai import backends  # noqa: E402,F401 — registers the real providers in BACKENDS

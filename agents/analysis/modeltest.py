@@ -22,7 +22,7 @@ from shared.sec.facts import Facts
 KEY = "modeltest-key.json"
 
 
-def one(src, ticker: str, model: str, run) -> tuple[list, str]:
+def one(src, ticker: str, model: str, run) -> tuple[list, str, list]:
     found = src.lookup(ticker)
     if not found:
         raise SystemExit(f"SEC does not know {ticker}")
@@ -31,8 +31,8 @@ def one(src, ticker: str, model: str, run) -> tuple[list, str]:
     r.codes, r.closed = card.assign_codes(None, r.flags)
     source = _source(facts, r, found["cik"])
     text = src.filing_text(found["cik"], source["filing"], sec.primary_document(subs, source["filing"]))
-    ctx = parts.Context(ticker=ticker, company=found["name"], run=run, model=model)
-    return parts.ask_why(r, text, ctx), r.grade
+    ctx = parts.Context(ticker=ticker, company=found["name"], run=run, model=model, no_fallback=True)  # no other model may answer
+    return parts.ask_why(r, text, ctx), r.grade, sorted(set(ctx.models))
 
 
 def main(argv: list[str], src=None) -> str:
@@ -51,9 +51,9 @@ def main(argv: list[str], src=None) -> str:
             answers = {}
             for slot, idx in zip("AB", order):
                 model = None if models[idx] == "default" else models[idx]
-                why, grade = one(src, ticker, model, run)
+                why, grade, used = one(src, ticker, model, run)
                 answers[slot] = why
-                key[f"{n}. {ticker} {slot}"] = models[idx]
+                key[f"{n}. {ticker} {slot}"] = ", ".join(used)  # the model that really answered
             out.append(f"\n=== {ticker} (grade {grade}) ===")
             for w in answers["A"]:
                 b = next((x for x in answers["B"] if x.id == w.id), None)

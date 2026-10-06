@@ -392,7 +392,7 @@ doğrulama, yapay zekâya gidecek parçalar) · `agents/analysis/ai` (neden ceva
 denetçi çağrıları) · `agents/analysis/sell` (satmayı düşün tetikleri) · `agents/analysis/ask` (eksik rakam isteği) ·
 `agents/analysis/modeltest` (güçlü model testi). Komutlar: `shared/commands/cards.py`, `shared/commands/aicmds.py`.
 
-**Veritabanı (sürüm 4):** `ai_calls` (her yapay zekâ çağrısı: iş, sağlayıcı, model, token, dolar; dolar boşsa fiyat yok) ·
+**Veritabanı (sürüm 4):** `ai_calls` (her yapay zekâ çağrısı: `run_id`, `stock_id`, iş, sağlayıcı, model, `input_tokens`, `output_tokens`, `cost_usd`, `estimated` (varsayılan fiyatla sayıldı), `outcome` = `ok` / `refused` / `cut` (faturalanıp reddedilen çağrı)) ·
 `audits.filing` · `card_entries.unverified` · `missing_data.asked_at` / `reminded_at`.
 
 **Kart:** uyarı kodu (`U1`…) bir koşulu tanır ve her girişte aynı kalır; kapatılmış uyarı `flag_status: closed` · uyarının `kind` alanı
@@ -402,3 +402,10 @@ Satmayı düşün tetikleri: `thesis_broken` · `grade_weak` · `mid_after_solid
 
 **`settings.yaml`:** `ai` (alıntı ve parça sınırları, denetim örneklemesi) · `pricing` (milyon token başına dolar) · `model_aliases`
 (`opus-5.5` gibi kısa adlar). **`.env`:** `ANTHROPIC_API_KEY` · `DEEPSEEK_API_KEY` · `OPENAI_API_KEY` · `OPENROUTER_API_KEY`.
+
+**Faz 2 denetimi sonrası eklenenler (2026-10-06):** kartta `warnings[].key` (uyarının kimliği: tutarlar maskelenir, yıllar kalır) ve
+`warnings[].answer` / `quote` / `kind` · `measures.<ad>.why` (zayıf ölçünün cevabı) · `thesis_check` · `runs` iş adları: `analysis`,
+`auditor_testset`, `modeltest` (ve `ai_calls.job = ping`) · `settings` tablosunda anahtar `model.<iş>` · `settings.yaml`: `pricing.default`
+(fiyatı olmayan model için temkinli fiyat), `ai.excerpt_chars`, `ai.min_quote_chars`, `ai.audit_sample`, `ai.max_tokens`, `ai.timeout_s` ·
+denetçi ve yazar **farklı model ailesinden** olur (`shared.ai.family`) · satış önerisi durumları: `sent` / `held` (nedenleri: denetçi karşı
+çıktı · teyit edilemedi · denetim çalışamadı).

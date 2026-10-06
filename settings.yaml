@@ -64,14 +64,15 @@ ai:
   timeout_s: 180
   audit_sample: 5                  # a random 1 in 5 routine updates is audited
 
-# Price per million tokens in dollars, by model name. A model without a price is counted as 0 and shown as "unpriced" in
-# /spend. Fill these from each provider's price page (only claude-sonnet-5-5 is known today: 2 / 10, cache reads 0.20).
+# Price per million tokens in dollars, by model name (input = the full input price: cheaper cache reads are not assumed, so the
+# count is on the cautious side). A model not listed is counted at `default` and shown as "estimated" in /spend.
 pricing:
-  claude-sonnet-5-5:   {input: 2.00, output: 10.00}
-  claude-opus-5-5:     {input: 4.00, output: 20.00}
-  deepseek-v4-flash:   {input: null, output: null}
-  deepseek-v4-pro:     {input: null, output: null}
-  gpt-6-sol:           {input: null, output: null}
+  claude-sonnet-5-5:   {input: 2.00,  output: 10.00}
+  claude-opus-5-5:     {input: 4.00,  output: 20.00}
+  deepseek-v4-flash:   {input: 0.14,  output: 0.28}     # given by me, 2026-10-06
+  deepseek-v4-pro:     {input: 0.435, output: 0.87}
+  gpt-6-sol:           {input: 2.00,  output: 10.00}
+  default:             {input: 5.00,  output: 25.00}    # cautious: above every model above
 
 # Short names for /analyze KO opus-5.5 and /model strong gpt-6-sol (a one-off or stored override).
 model_aliases:

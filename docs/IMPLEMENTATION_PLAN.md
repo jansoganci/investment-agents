@@ -238,8 +238,13 @@ Database version 4 (`ai_calls`, `audits.filing`, `card_entries.unverified`, `mis
 (Anthropic through its SDK; DeepSeek, OpenAI, OpenRouter through the OpenAI-style SDK), `shared/auditor` (rule cards 1–3, test
 sets), `shared/sec/filing` (text, word-for-word quote check, excerpts), agent 3's AI parts and sell triggers, stable warning codes
 (U1 stays U1), the missing-data message, `--drop-alerts`, and the commands `/spend` `/model` `/note` `/thesis` `/closewarning`
-(`/analyze KO [model]` shows the estimated cost first). The model name in `settings.yaml` is fixed (`claude-sonnet-5-5`); only
-Sonnet 5.5 and Opus 5.5 have a price there — fill the others (`pricing`) from the providers' pages.
+(`/analyze KO [model]` shows the estimated cost first). The model name in `settings.yaml` is fixed (`claude-sonnet-5-5`); the prices of all five models are there (DeepSeek and GPT-6 Sol
+given by me, 2026-10-06); an unknown model is counted at a cautious default.
+
+**Phase 2 audit (2026-10-06, a separate session):** 1 blocker and 8 should-fix found and fixed on the same branch (roadmap section 3,
+"Changes after the phase 2 audit"): a sell suggestion is sent only when every audit behind it passed · the audit has no threshold ·
+excerpts keep balance-sheet rows · the auditor is never of the writer's family · warning identity keeps years · rejected calls are
+logged and counted · the strong-model test records who answered and does not fall back. 342 tests pass.
 
 **Mac check, in this order (all real calls, a few dollars in all; the Anthropic credit ends 2026-10-19):**
 1. `uv sync` · `uv run python -m shared.db upgrade` (the development database goes to version 4) · the four keys are in `.env`.

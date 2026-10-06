@@ -230,6 +230,12 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   (section 3, "Agent 3's AI parts — how phase 2 builds them") for my approval after the audit. **Not tried with a real model yet:**
   the Mac check (plan, phase 2) does that. Pricing for DeepSeek and GPT-6 Sol models is empty in `settings.yaml` (shown as unpriced).
   **Not here:** news in the drop-alert check (phase 5) · the card's 2-sentence story · `absent` marking.
+  **Audit of phase 2 (separate session, 2026-10-06):** 1 blocker (a sell suggestion went out although the auditor confirmed nothing) and
+  8 should-fix, all fixed on the same branch; my decisions: no audit threshold (every item must pass; any fail marks `unverified`;
+  otherwise "could not confirm") · fiyat list given by me (DeepSeek, GPT-6 Sol) and a cautious default price for unknown models ·
+  agent 3 may write a dated `note · agent_3` for a checked drop alert. Also fixed: balance-sheet rows kept in the excerpts, the auditor is never
+  of the writer's model family, warning identity keeps years, billed-but-rejected calls logged, `ping` and the test set logged, strong-model
+  test records who answered. **342 tests pass.** Still not tried with a real model (Mac check).
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
 - **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,

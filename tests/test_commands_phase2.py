@@ -58,8 +58,13 @@ def test_spend_adds_up_by_provider_and_shows_what_is_left(db, monkeypatch):
     ai.call("strong", "p", conn=db)
     ai.call("auditor", "p", conn=db)
     text = commands.run(["spend"])[1]
-    assert "- anthropic: $0.01 · 1 calls" in text and "- deepseek: $0.00 · 1 calls, 1 unpriced" in text
+    assert "- anthropic: $0.01 · 1 calls" in text and "- deepseek: $0.00 · 1 calls" in text
     assert "of $30" in text and "$29.99 left" in text
+    db.execute("INSERT INTO ai_calls (job, provider, model, cost_usd, estimated, outcome, created_at) "
+               "VALUES ('strong', 'openai', 'gpt-9', 0.5, 1, 'cut', ?)", (ai.month_start() + "T01:00:00Z",))
+    db.commit()
+    text = commands.run(["spend"])[1]
+    assert "- openai: $0.50 · 1 calls, 1 at the default price (no price in settings.yaml), 1 billed but rejected" in text
 
 
 def test_note_thesis_and_closewarning_write_dated_notes_and_undo_withdraws_them(db, env, monkeypatch):

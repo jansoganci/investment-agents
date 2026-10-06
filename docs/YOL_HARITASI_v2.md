@@ -526,8 +526,8 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
    block, a line in the message, results in `audits`; figures are never changed.
 7. **Money:** every call is a row in `ai_calls` (job, provider, model, tokens, dollars) — a new table (database version 4) so that
    `/spend` can show spend by provider; the dollars are also added to the job's `runs` row. Prices per million tokens are in
-   `settings.yaml` (`pricing`); a model without a price is counted as 0 and shown as "unpriced" in `/spend`; OpenRouter's own cost
-   figure is used when it sends one. A call is refused when the month's spend has reached `budget.ai_monthly_max_usd`.
+   `settings.yaml` (`pricing`); a model without a price is counted at the cautious default price and shown as "estimated" in `/spend`
+   (item 17 below); OpenRouter's own cost figure is used when it sends one. A call is refused when the month's spend has reached `budget.ai_monthly_max_usd`.
 8. **A refusal or an error of one provider** (no key, empty credit, rate limit, server error, safety refusal) moves the call to
    the next provider in the job's list; when all fail the job stops with the reasons (never the keys).
 9. **Where AI runs:** `/analyze` always; `python -m agents.analysis KO --ai` and `--weekly --ai` on request (without `--ai` the

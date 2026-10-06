@@ -320,7 +320,7 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
     if part is not None and part.sell:
         text += "\n\n" + part.sell["text"]
     if ask_missing:
-        request = ask.request(conn, ticker, run)
+        request = ask.request(conn, ticker, run, plain=use_ai)
         if request:
             text += "\n\n" + request
     return Outcome(sid, ticker, r.grade, text, str(path))
@@ -356,7 +356,7 @@ def weekly(conn, sources=None, today: str | None = None, *, use_ai: bool = False
             done.append(out.text)
         except Exception as exc:  # noqa: BLE001 — one stock's error must not stop the others
             errors.append(f"{ticker}: {type(exc).__name__}: {exc}")
-    request = ask.request(conn, None, run)  # the gaps of this run, in one message (a figure is asked once, reminded once)
+    request = ask.request(conn, None, run, plain=use_ai)  # the gaps of this run, in one message (a figure is asked once, reminded once)
     if not done and not errors and not request:
         return None
     parts = done + ([notify.message("ANALYSIS · errors", errors)] if errors else []) + ([request] if request else [])

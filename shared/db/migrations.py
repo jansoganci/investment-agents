@@ -335,17 +335,20 @@ CREATE INDEX card_entries_stock ON card_entries (stock_id, date);
 
 STEP_4 = """
 -- Phase 2 (2026-10-06).
--- Every AI call: which job, which provider and model, tokens and dollars (NULL dollars = the model has no price in
--- settings.yaml). `/spend` adds this up by provider; the dollars also go to the job's `runs` row. Append-only.
+-- Every AI call: which job, which provider and model, tokens and dollars (a model without a price is counted at the default
+-- price and marked estimated). `/spend` adds this up by provider; the dollars also go to the job's `runs` row. Append-only.
 CREATE TABLE ai_calls (
     id             INTEGER PRIMARY KEY,
     run_id         INTEGER REFERENCES runs (id),
-    job            TEXT NOT NULL,                 -- cheap / strong / auditor
+    stock_id       INTEGER REFERENCES stocks (id),
+    job            TEXT NOT NULL,                 -- cheap / strong / auditor (or ping)
     provider       TEXT NOT NULL,
     model          TEXT NOT NULL,
     input_tokens   INTEGER,
     output_tokens  INTEGER,
-    cost_usd       REAL,
+    cost_usd       REAL,                          -- NULL only when the tokens are unknown
+    estimated      INTEGER NOT NULL DEFAULT 0 CHECK (estimated IN (0, 1)),   -- 1 = counted at the default price
+    outcome        TEXT NOT NULL DEFAULT 'ok' CHECK (outcome IN ('ok', 'refused', 'cut')),  -- a rejected call is billed too
     created_at     TEXT NOT NULL
 );
 CREATE INDEX ai_calls_month ON ai_calls (created_at);
