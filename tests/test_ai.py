@@ -56,6 +56,7 @@ def test_the_prices_are_the_ones_i_gave(db):
     assert ai.price_of("deepseek-v4-pro") == (0.435, 0.87, False)
     assert ai.price_of("gpt-6-sol") == (2.0, 10.0, False)
     assert ai.price_of("openai/gpt-6-sol")[2] is False  # an OpenRouter name finds its model's price
+    assert ai.price_of("anthropic/claude-sonnet-5.5") == (2.0, 10.0, False)  # OpenRouter's dotted version name too
 
 
 def test_a_model_without_a_price_is_counted_at_the_cautious_default_and_marked_estimated(db, monkeypatch):

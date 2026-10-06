@@ -123,7 +123,8 @@ def price_of(model: str) -> tuple[float, float, bool]:
     """(dollars per million input tokens, per million output tokens, estimated?) from settings.yaml. A model without a price gets
     `pricing.default` (cautious) and is marked estimated."""
     table = config.settings().get("pricing") or {}
-    for key in (model, model.split("/")[-1]):
+    short = model.split("/")[-1]
+    for key in (model, short, short.replace(".", "-")):  # OpenRouter writes claude-sonnet-5.5, Anthropic claude-sonnet-5-5
         p = table.get(key)
         if p and p.get("input") is not None and p.get("output") is not None:
             return float(p["input"]), float(p["output"]), False
