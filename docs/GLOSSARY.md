@@ -381,3 +381,24 @@ toplam yükümlülük → `liabilities` · kira yükümlülüğü → `leases` �
 | kart kaydı başlığındaki kaynak | `2025 annual (10-K)` · `last 4 quarters to 2026-06-28 (10-Q)` |
 | kart YAML'ı: ek alanlar | `source.filing` · `price.price` · `free_cash.currency` · `free_cash.path_5y` (son 5 yılın serbest nakdi) · `price.market_value` · `price.pe` · `price.fcf_yield_latest` · `price.verdict` · `free_cash.average_3y` · `liquid` / `debt` (`value` + `parts`) · `info` (bilgi satırları: `lease_heavy`, `acquisitive`, `debt_free`, Yahoo notları) · `warnings[].detail` · kapsam dışında `out_of_scope` + `sic` |
 | hesaplanamayan değer (kartta) | `not_computed` |
+
+
+## Kod ve veritabanı adları (faz 2, 2026-10-06)
+
+**Modüller:** `shared/ai` (tek yapay zekâ istemcisi: sağlayıcı sırası, `/model` üstüne yazması, maliyet kaydı, aylık sınır; `fake` testler
+için; `python -m shared.ai ping`) · `shared/auditor` (denetçi: ortak motor + `cards/figure.md`, `reading.md`, `sell.md` kural kartları;
+`testset` hata kümeleri; `python -m shared.auditor testset`) · `shared/sec/filing` (bir raporun metni, alıntıyı kelimesi kelimesine
+doğrulama, yapay zekâya gidecek parçalar) · `agents/analysis/ai` (neden cevapları, ilk tez, tez kontrolü, düşüş uyarısı kontrolü,
+denetçi çağrıları) · `agents/analysis/sell` (satmayı düşün tetikleri) · `agents/analysis/ask` (eksik rakam isteği) ·
+`agents/analysis/modeltest` (güçlü model testi). Komutlar: `shared/commands/cards.py`, `shared/commands/aicmds.py`.
+
+**Veritabanı (sürüm 4):** `ai_calls` (her yapay zekâ çağrısı: iş, sağlayıcı, model, token, dolar; dolar boşsa fiyat yok) ·
+`audits.filing` · `card_entries.unverified` · `missing_data.asked_at` / `reminded_at`.
+
+**Kart:** uyarı kodu (`U1`…) bir koşulu tanır ve her girişte aynı kalır; kapatılmış uyarı `flag_status: closed` · uyarının `kind` alanı
+(`company_specific` / `general_risk`) yapay zekâ cevabından gelir · `thesis_status` (`intact` / `broken` / `watch`) · `unverified: yes`
+(denetçi karşı çıktı) · `sell_suggestion` (`trigger`, `status: sent | held`) · `audits` özeti · `thesis_check`.
+Satmayı düşün tetikleri: `thesis_broken` · `grade_weak` · `mid_after_solid`.
+
+**`settings.yaml`:** `ai` (alıntı ve parça sınırları, denetim örneklemesi) · `pricing` (milyon token başına dolar) · `model_aliases`
+(`opus-5.5` gibi kısa adlar). **`.env`:** `ANTHROPIC_API_KEY` · `DEEPSEEK_API_KEY` · `OPENAI_API_KEY` · `OPENROUTER_API_KEY`.

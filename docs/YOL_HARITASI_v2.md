@@ -506,6 +506,37 @@ A single bad quarter is **not** a sell trigger; it is a "check now": the card is
 10/10 as expected: `solid` Nvidia · `mid` Coca-Cola (borderline), Nike, Starbucks · `weak` Pfizer, Intel, Boeing, Snap, Dow, Rivian.
 IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 
+**Agent 3's AI parts — how phase 2 builds them (2026-10-06; written before the code, for my approval after the audit):**
+1. **Excerpts, not whole filings.** Code picks the paragraphs of the filing that match the question's keywords (at most about
+   12,000 characters per call) and sends only those; the quote check runs against the **whole** filing text. A quote shorter
+   than 20 characters is not accepted (it proves nothing). Whitespace, curly quotes and dashes are normalised before the match.
+2. **One "why?" call per analysis.** One item per ❌ measure and per flag; the answer is JSON: `answer`, `quote`, `kind`
+   (`company_specific` / `general_risk`). An item whose quote is not found word for word is written as "no verified quote" and
+   its answer is not shown as a fact.
+3. **First thesis** when no earlier entry has one: at most 3 reasons to own it and exactly 3 things that would break it.
+   **Thesis check** on later entries: `thesis_status` = `intact` / `broken` / `watch` (when unsure: `watch`), with the broken
+   point and a quote. The thesis lives in the card's `### Thesis`; my `/thesis` corrections are notes and are given to the AI.
+4. **Drop alert:** a `drop_alert` signal (`pending`) is answered from the latest filing (+ news when there is any: the web search
+   comes with agent 2, phase 5, so until then the answer says "filing only"); news only ever says `watch`; then `done`.
+5. **Sell suggestions only for stocks I hold** (`in_portfolio = yes`): thesis `broken`, grade fell to `weak`, or `mid` for 2
+   entries in a row after `solid`. The audit (card 3) runs first; on a fail the suggestion is **held** (written on the card
+   and in the message as held), never sent as advice. Without `--ai` there are no sell suggestions: the audit cannot run, and a suggestion is never sent unaudited.
+6. **The auditor runs** on a stock's first card (cards 1 + 2), with an open `data_check` (1), before every sell suggestion (3),
+   on `solid` ↔ `weak` (1 + 2), and on a random 1 in 5 routine updates (1 + 2). A fail: `unverified: yes` in the entry's data
+   block, a line in the message, results in `audits`; figures are never changed.
+7. **Money:** every call is a row in `ai_calls` (job, provider, model, tokens, dollars) — a new table (database version 4) so that
+   `/spend` can show spend by provider; the dollars are also added to the job's `runs` row. Prices per million tokens are in
+   `settings.yaml` (`pricing`); a model without a price is counted as 0 and shown as "unpriced" in `/spend`; OpenRouter's own cost
+   figure is used when it sends one. A call is refused when the month's spend has reached `budget.ai_monthly_max_usd`.
+8. **A refusal or an error of one provider** (no key, empty credit, rate limit, server error, safety refusal) moves the call to
+   the next provider in the job's list; when all fail the job stops with the reasons (never the keys).
+9. **Where AI runs:** `/analyze` always; `python -m agents.analysis KO --ai` and `--weekly --ai` on request (without `--ai` the
+   numbers only, as in phase 1); a stock out of scope gets no AI.
+10. **Missing-data message:** code fills the template (stock, figure, year, why, where to find it, how to answer); the cheap
+    model may only make it plainer, and code rejects its text if a ticker, year or command is lost.
+11. **`/model`:** a persistent override per job in the `settings` table (`model.<job>`), `default` clears it; a one-off
+    `/analyze KO opus-5.5` uses an alias list (`settings.yaml` `model_aliases`) and changes nothing stored.
+
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
 ### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)

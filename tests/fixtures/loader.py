@@ -22,6 +22,11 @@ def sec_submissions(ticker: str) -> dict:
     return load("sec", f"{ticker}_submissions.json.gz")
 
 
+def filing_text(ticker: str) -> dict:
+    """{"accession", "text"}: a real 10-Q as plain text (trimmed). NVDA, quarter to 2026-07-26."""
+    return load("filings", f"{ticker}_10Q.json.gz")
+
+
 TICKER_CIK = {"KO": 21344, "NVDA": 1045810, "NKE": 320187, "SBUX": 829224, "PFE": 78003, "INTC": 50863, "BA": 12927,
               "SNAP": 1564408, "DOW": 1751788, "RIVN": 1874178, "NVO": 353278, "GE": 40545, "JPM": 19617,
               "PLTR": 1321655}
@@ -53,6 +58,14 @@ class FixtureSources:
     def submissions(self, cik):
         self.calls.append(("submissions", cik))
         return sec_submissions(self._ticker(cik))
+
+    def filing_text(self, cik, accession, document):
+        from shared.sec import SecError
+
+        try:
+            return filing_text(self._ticker(cik))["text"]  # a saved 10-Q (NVDA only)
+        except FileNotFoundError:
+            raise SecError(f"no saved filing text for {self._ticker(cik)}") from None
 
     def chart(self, symbol, range_, interval):
         from shared.prices.yahoo import YahooError

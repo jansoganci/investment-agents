@@ -80,9 +80,10 @@ def test_undo_of_watch_for_a_new_stock_makes_it_a_candidate(db):
 
 def test_analyze_runs_after_the_confirmation_and_writes_runs(db, env):
     code, text = commands.run(["analyze", "KO"])
-    assert "estimated cost $0.00" in text and db.execute("SELECT count(*) FROM card_entries").fetchone()[0] == 0
+    assert "estimated cost about $" in text and db.execute("SELECT count(*) FROM card_entries").fetchone()[0] == 0
     code, text = do("analyze", "KO")
     assert code == 0 and "ANALYSIS · KO" in text
+    assert "AI skipped: the filing text could not be fetched" in text  # the numbers and the card are still written
     assert db.execute("SELECT count(*) FROM card_entries").fetchone()[0] == 1
     assert db.execute("SELECT job, status FROM runs").fetchall() == [("analysis", "ok")]
     code, text = do("undo", "1")
@@ -134,3 +135,12 @@ def test_data_refusals(db):
 def test_menu_marks_phase_1_commands_as_built():
     for name in ("watch", "archive", "unarchive", "analyze", "card", "green", "missing", "data"):
         assert commands.REGISTRY[name].built
+
+
+def test_analyze_takes_a_one_off_model_and_refuses_an_unknown_one(db):
+    code, text = commands.run(["analyze", "KO", "opus-5.5"])
+    assert code == 0 and "model opus-5.5" in text and "analyze KO opus-5.5 --yes" in text
+    code, text = commands.run(["analyze", "KO", "nonsense-9"])
+    assert code == 1 and "unknown model" in text
+    code, text = commands.run(["analyze", "KO", "opus-5.5", "extra"])
+    assert code == 1 and "usage" in text

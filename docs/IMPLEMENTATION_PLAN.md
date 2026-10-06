@@ -26,6 +26,8 @@ Every phase goes through the same loop:
 
 A new phase starts only when the previous one is done (`AGENTS.md`, fixed rule 5).
 
+**Second exception (my decision, 2026-10-06):** phase 2 is built before the Mac check of phases 0 and 1 and before the Air setup is finished (Hermes's limits are the first open item there); phase 2's real-model runs must come before 2026-10-19.
+
 **Exception (my decision, 2026-10-04):** phase 1 is built before phase 0 is done — only phase 0's Mac and Air checks are left, the Air is not ready, and phase 2's real-model runs must happen before the Anthropic credit ends on 2026-10-19; phase 1 does not need the Air (tested here on sample data); the Mac checks of phases 0 and 1 are done together, phase 0's Air check when the Air is ready.
 
 ## 2. Where things run
@@ -231,6 +233,23 @@ Drive; the strong-model test. The real-model runs happen before 2026-10-19.
 
 **Not in this phase:** agent 2's event audit (card 4, phase 5).
 
+**Result (2026-10-06):** built with a fake AI; the build choices are in roadmap section 3 ("Agent 3's AI parts — how phase 2 builds them").
+Database version 4 (`ai_calls`, `audits.filing`, `card_entries.unverified`, `missing_data.asked_at` / `reminded_at`). New: `shared/ai`
+(Anthropic through its SDK; DeepSeek, OpenAI, OpenRouter through the OpenAI-style SDK), `shared/auditor` (rule cards 1–3, test
+sets), `shared/sec/filing` (text, word-for-word quote check, excerpts), agent 3's AI parts and sell triggers, stable warning codes
+(U1 stays U1), the missing-data message, `--drop-alerts`, and the commands `/spend` `/model` `/note` `/thesis` `/closewarning`
+(`/analyze KO [model]` shows the estimated cost first). The model name in `settings.yaml` is fixed (`claude-sonnet-5-5`); only
+Sonnet 5.5 and Opus 5.5 have a price there — fill the others (`pricing`) from the providers' pages.
+
+**Mac check, in this order (all real calls, a few dollars in all; the Anthropic credit ends 2026-10-19):**
+1. `uv sync` · `uv run python -m shared.db upgrade` (the development database goes to version 4) · the four keys are in `.env`.
+2. `uv run python -m shared.ai ping` — every provider and model answers (a ✗ names the key or the model name to fix).
+3. `uv run python -m shared.auditor testset` — "All caught". If DeepSeek V4 Pro misses a case: `/model auditor gpt-6-sol` and run again.
+4. `uv run python -m agents.analysis.modeltest KO NVDA` — two companies' answers, models hidden (A / B); I choose; then `--reveal`.
+5. `uv run python -m agents.analysis KO --ai` (and 2 more): the cards in `Investing-dev/` read well, every quote is really in the filing,
+   the thesis has at most 3 reasons and exactly 3 breaks, `/spend` shows the cost.
+6. **The 20-stock acceptance test** (roadmap section 8, step 1): figures against the 10-K / 20-F by hand — liquid assets and total debt first.
+
 ## Phase 3 — Agent 4: Portfolio
 
 **Purpose:** my money in one place — the ledger, value and weights, the SPY and gold comparison, total wealth against the goal,
@@ -371,7 +390,7 @@ left stuck on purpose shows in `/status`.
 |---|---|---|---|---|---|---|---|---|
 | 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 (merged 2026-10-05) | merged before the Mac check (my decision, 2026-10-05): the Mac check runs on `main`, a fix comes as a small PR · Air setup started 2026-10-05 (`AIR_SETUP.md`) |
 | 1 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-1-analysis-numbers-arj800` · PR #4 → PR #5 (merged 2026-10-05) | built and audited 2026-10-05 (exception, section 1) · PR #4 went into the phase 0 branch, PR #5 brought it to `main` · Mac check together with phase 0's, on `main` (incl. the real Yahoo answers, section 8) · on the Air: `git pull` + `uv run python -m shared.db upgrade` (version 2 → 3) |
-| 2 | — | — | — | — | — | — | — | real-model runs before 2026-10-19 |
+| 2 | ✅ | ⏳ | — | ⏳ | — | — | `claude/phase-2-agent3-ai-arj800` | built 2026-10-06 with a fake AI; real-model runs (ping, auditor test set, strong-model test, 20 stocks) on the Mac **before 2026-10-19** |
 | 3 | — | — | — | — | — | — | — | |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
 | 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
@@ -403,9 +422,12 @@ off this list is my decision.
 | What to do when Yahoo has no market value | rare; until then the price line says `not_computed` (null) | my decision, later |
 | Stock comp from Yahoo when SEC has none (roadmap "Free cash") | decision 2026-10-05: not now; the gap goes to `missing_data` and I can enter it with `/data` | later |
 | The IPO year from the first S-1 / F-1 instead of the first annual report in SEC's data | phase 1 audit note; today NVO's share count spans 3 years, not 5 | later |
-| Fixed warning codes (U1 stays U1 on every entry) and `flag_kind` | needed by `/closewarning` and the AI reading | phase 2 |
+| ~~Fixed warning codes (U1 stays U1 on every entry) and `flag_kind`~~ | **done in phase 2** (a code is kept by what the warning is about; `kind` comes with the AI's answer) | — |
 | A line when a new filing's figures have not reached SEC's data for 2+ weeks | the weekly check waits silently today | phase 6 |
-| `absent` for a figure a company never reports (the ledger asks again each quarter) | comes with the Telegram requests for missing data | phase 2 |
+| `absent` for a figure a company never reports (the ledger asks again each quarter) | phase 2 asks once and reminds once, then stops; a command to mark `absent` is not built | my decision, later |
+| The 2-sentence "story" line at the top of a card | not in phase 2's list; agent 2 opens cards in phase 5 | 5 |
+| News in the drop-alert check | the web search comes with agent 2; until then the check reads the filing only and says so | 5 |
+| Agent 4's `drop_alert` signals (the consumer is built: `--drop-alerts`) | agent 4 does not exist yet | 3 |
 | A guard that the Mac never writes into the real `Investing/` | today only `.env` keeps them apart (optional idea) | later |
 | Small UAT items: info line for debt held for sale, a flag for a margin outside 0–100%, Coca-Cola's short-term borrowings name | each under 1%; checked in the 20-stock acceptance test | phase 2 |
 

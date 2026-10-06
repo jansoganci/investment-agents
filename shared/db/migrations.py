@@ -333,11 +333,45 @@ CREATE INDEX missing_data_stock ON missing_data (stock_id, figure, year);
 CREATE INDEX card_entries_stock ON card_entries (stock_id, date);
 """
 
+STEP_4 = """
+-- Phase 2 (2026-10-06).
+-- Every AI call: which job, which provider and model, tokens and dollars (NULL dollars = the model has no price in
+-- settings.yaml). `/spend` adds this up by provider; the dollars also go to the job's `runs` row. Append-only.
+CREATE TABLE ai_calls (
+    id             INTEGER PRIMARY KEY,
+    run_id         INTEGER REFERENCES runs (id),
+    job            TEXT NOT NULL,                 -- cheap / strong / auditor
+    provider       TEXT NOT NULL,
+    model          TEXT NOT NULL,
+    input_tokens   INTEGER,
+    output_tokens  INTEGER,
+    cost_usd       REAL,
+    created_at     TEXT NOT NULL
+);
+CREATE INDEX ai_calls_month ON ai_calls (created_at);
+
+CREATE TRIGGER ai_calls_no_delete BEFORE DELETE ON ai_calls
+BEGIN SELECT RAISE(ABORT, 'ai_calls is append-only: rows are never deleted'); END;
+CREATE TRIGGER ai_calls_no_update BEFORE UPDATE ON ai_calls
+BEGIN SELECT RAISE(ABORT, 'ai_calls is append-only: rows are never changed'); END;
+
+-- What the auditor and the AI found on a card entry: the audit row points at the entry it checked.
+ALTER TABLE audits ADD COLUMN filing TEXT;
+
+-- The plain request for a missing figure is sent once; if no answer comes it is reminded once (roadmap, "Asking for missing data").
+ALTER TABLE missing_data ADD COLUMN asked_at TEXT;
+ALTER TABLE missing_data ADD COLUMN reminded_at TEXT;
+
+-- An entry the auditor disagreed with is marked unverified.
+ALTER TABLE card_entries ADD COLUMN unverified INTEGER NOT NULL DEFAULT 0 CHECK (unverified IN (0, 1));
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
     (2, STEP_2),
     (3, STEP_3),
+    (4, STEP_4),
 ]
 
 

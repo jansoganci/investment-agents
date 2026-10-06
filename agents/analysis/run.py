@@ -11,11 +11,12 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from agents.analysis import card
+from agents.analysis import ai as ai_parts
+from agents.analysis import ask, card
 from agents.analysis.measures import Market, Result, analyse
-from shared import clock, drive, notify, prices, sec
+from shared import ai, auditor, clock, drive, notify, prices, sec
 from shared.prices import yahoo
-from shared.sec import FORMS
+from shared.sec import FORMS, filing
 from shared.sec.facts import Facts
 
 US_STATES = set("AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND "
@@ -35,6 +36,9 @@ class LiveSources:
 
     def submissions(self, cik):
         return sec.submissions(cik)
+
+    def filing_text(self, cik, accession, document):
+        return filing.html_to_text(sec.filing_html(cik, accession, document))
 
     def chart(self, symbol, range_, interval):
         return yahoo.chart(symbol, range_, interval)
@@ -183,7 +187,43 @@ def apply_rename(conn, ticker: str, found: dict, day: str) -> dict:
     return find_stock(conn, ticker)
 
 
-def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts: dict | None = None) -> Outcome:
+def _context(conn, stock, ticker: str, company: str, run, model, rng, news) -> "ai_parts.Context":
+    ctx = ai_parts.Context(ticker=ticker, company=company, run=run, model=model, news=news)
+    if rng is not None:
+        ctx.rng = rng
+    if stock:
+        ctx.stock_id = stock["id"]
+        ctx.in_portfolio = stock["in_portfolio"] == "yes"
+        ctx.grades = [g for (g,) in conn.execute("SELECT grade FROM card_entries WHERE stock_id=? AND record='fundamental' "
+                                                 "ORDER BY id", (stock["id"],))]
+        ctx.first = not ctx.grades
+        path = drive.find_card(ticker)
+        if path is not None and path.exists():
+            body = path.read_text(encoding="utf-8")
+            last = card.last_thesis(body)
+            if last:
+                ctx.previous_thesis_date, ctx.previous_thesis = last
+                ctx.notes = card.notes_since(body, last[0])
+    return ctx
+
+
+def _ai_part(conn, stock, ticker, company, cik, subs, source, r, src, run, model, rng, news):
+    """The AI parts for this analysis: (the part, its context). Any problem is noted, never raised."""
+    accn = source.get("filing")
+    doc = sec.primary_document(subs, accn) if accn else None
+    ctx = _context(conn, stock, ticker, company, run, model, rng, news)
+    if not (accn and doc):
+        return ai_parts.AIPart(notes=["AI skipped: the filing's main document was not found"]), ctx
+    try:
+        text = src.filing_text(cik, accn, doc)
+    except sec.SecError as exc:
+        return ai_parts.AIPart(notes=[f"AI skipped: the filing text could not be fetched ({exc})"]), ctx
+    return ai_parts.run_ai(r, text, ctx), ctx
+
+
+def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts: dict | None = None, *,
+            use_ai: bool = False, run=None, model: str | None = None, rng=None, news: list | None = None,
+            ask_missing: bool = False) -> Outcome:
     src = sources or LiveSources()
     day = today or clock.today_local()
     now = clock.utc_iso()
@@ -201,6 +241,12 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
     r.notes.extend(market_notes)
     company = (subs.get("name") or facts.name or ticker).title()
     source = _source(facts, r, cik)
+    old_path = drive.find_card(ticker)
+    r.codes, r.closed = card.assign_codes(
+        old_path.read_text(encoding="utf-8") if old_path is not None and old_path.exists() else None, r.flags)
+    part, ctx = (None, None)
+    if use_ai and not r.out_of_scope:  # the AI calls are slow: they run before the write lock, like SEC and Yahoo
+        part, ctx = _ai_part(conn, stock, ticker, company, cik, subs, source, r, src, run, model, rng, news)
 
     conn.commit()
     conn.execute("BEGIN IMMEDIATE")  # the card and the database change together, one writer at a time
@@ -225,9 +271,12 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
                      "exchange=coalesce(exchange, ?) WHERE id=?",
                      (cik, r.lynch_type, r.grade, day, r.out_of_scope, day, r.sector, _country(subs),
                       (subs.get("exchanges") or [None])[0], sid))
-        conn.execute("INSERT INTO card_entries (stock_id, date, record, who, source, grade, lynch_type, filing, "
-                     "created_at) VALUES (?, ?, 'fundamental', 'agent_3', ?, ?, ?, ?, ?)",
-                     (sid, day, source["label"], r.grade, r.lynch_type, facts.latest_accn, now))
+        conn.execute("INSERT INTO card_entries (stock_id, date, record, who, source, grade, lynch_type, thesis_status, "
+                     "unverified, filing, created_at) VALUES (?, ?, 'fundamental', 'agent_3', ?, ?, ?, ?, ?, ?, ?)",
+                     (sid, day, source["label"], r.grade, r.lynch_type, part.thesis_status if part else None,
+                      1 if part and part.unverified else 0, facts.latest_accn, now))
+        for a in (part.audits if part else []):
+            auditor.save(conn, sid, a, facts.latest_accn)
         _save_financials(conn, sid, facts, r, now)
         n_missing = _save_missing(conn, sid, r.missing, now)
         # the card last: if anything above fails, the card is not touched
@@ -238,7 +287,8 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
             head.update({"company": stock["company"] or company, "sector": stock["sector"] or r.sector,
                          "opened": stock["opened"] or day})
             card.write(path, card.new_card(head))
-        card.append(path, card.fundamental_entry(r, source, day, previous),
+        card.append(path, card.fundamental_entry(r, source, day, previous, part,
+                                                 ctx.previous_thesis_date if ctx else None),
                     {"lynch_type": r.lynch_type or "unclear", "grade": r.grade, "last_entry": day})
         conn.commit()
     except BaseException:
@@ -252,15 +302,27 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
     dec = [f"{n} {m['mark'] or 'not_computed'}" for n, m in r.measures.items() if m["decisive"]]
     if dec:
         lines.append("Decisive: " + ", ".join(dec))
-    if r.flags:
-        lines.append("Flags: " + "; ".join(f"{f['flag']} ({f['detail']})" for f in r.flags))
+    still_open = ai_parts.open_flags(r)
+    if still_open:
+        lines.append("Flags: " + "; ".join(f"{f['flag']} ({f['detail']})" for _, f in still_open))
+    if len(still_open) < len(r.flags):
+        lines.append(f"{len(r.flags) - len(still_open)} warning(s) closed by me stay closed.")
     if previous and previous["grade"] != r.grade:
         lines.append(f"Grade changed: {previous['grade']} → {r.grade}")
     if n_missing:
         lines.append(f"New missing figures: {n_missing} (see /missing)")
     lines.extend(market_notes)
+    if part is not None:
+        lines.extend(part.lines())
     lines.append(f"Card: {path}")
-    return Outcome(sid, ticker, r.grade, notify.message(f"ANALYSIS · {ticker}", lines), str(path))
+    text = notify.message(f"ANALYSIS · {ticker}", lines)
+    if part is not None and part.sell:
+        text += "\n\n" + part.sell["text"]
+    if ask_missing:
+        request = ask.request(conn, ticker, run)
+        if request:
+            text += "\n\n" + request
+    return Outcome(sid, ticker, r.grade, text, str(path))
 
 
 def latest_filing(subs: dict) -> str | None:
@@ -271,7 +333,7 @@ def latest_filing(subs: dict) -> str | None:
     return None
 
 
-def weekly(conn, sources=None, today: str | None = None) -> str | None:
+def weekly(conn, sources=None, today: str | None = None, *, use_ai: bool = False, run=None) -> str | None:
     """Every watching stock: a new 10-K / 10-Q / 20-F since its last entry → analyze. Archived stocks never.
     Returns a message only when something happened (an analysis or an error)."""
     src = sources or LiveSources()
@@ -289,11 +351,62 @@ def weekly(conn, sources=None, today: str | None = None) -> str | None:
                 raw = src.facts(cik)
                 if last and Facts(raw).latest_accn == last[0]:
                     continue  # a new filing is listed but its figures are not in SEC's data yet: next week again
-            out = analyze(conn, ticker, src, today, raw_facts=raw)
+            out = analyze(conn, ticker, src, today, raw_facts=raw, use_ai=use_ai, run=run)
             done.append(out.text)
         except Exception as exc:  # noqa: BLE001 — one stock's error must not stop the others
             errors.append(f"{ticker}: {type(exc).__name__}: {exc}")
-    if not done and not errors:
+    request = ask.request(conn, None, run)  # the gaps of this run, in one message (a figure is asked once, reminded once)
+    if not done and not errors and not request:
         return None
-    parts = done + ([notify.message("ANALYSIS · errors", errors)] if errors else [])
+    parts = done + ([notify.message("ANALYSIS · errors", errors)] if errors else []) + ([request] if request else [])
     return "\n\n".join(parts)
+
+
+def drop_alerts(conn, sources=None, today: str | None = None, *, run=None, news=None) -> str | None:
+    """Each pending `drop_alert` signal (agent 4, phase 3): the latest filing (+ the news handed in) against the thesis.
+    A dated note goes on the card, the signal becomes `done`. News alone only says `watch` (roadmap, "Agent 3's AI parts")."""
+    src = sources or LiveSources()
+    day = today or clock.today_local()
+    out = []
+    rows = conn.execute("SELECT id, stock_id, detail FROM signals WHERE kind='drop_alert' AND status='pending' ORDER BY id").fetchall()
+    for sig_id, stock_id, detail in rows:
+        cur = conn.execute("SELECT * FROM stocks WHERE id = ?", (stock_id,))
+        stock = dict(zip([d[0] for d in cur.description], cur.fetchone()))
+        if stock["status"] == "archived":  # an archived stock is never analyzed
+            conn.execute("UPDATE signals SET status='done' WHERE id=?", (sig_id,))
+            conn.commit()
+            continue
+        try:
+            subs = src.submissions(stock["cik"])
+            accn = latest_filing(subs)
+            doc = sec.primary_document(subs, accn) if accn else None
+            if not doc:
+                raise sec.SecError("the latest filing's main document was not found")
+            text = src.filing_text(stock["cik"], accn, doc)
+            ctx = _context(conn, stock, stock["ticker"], stock["company"] or stock["ticker"], run, None, None,
+                           (news or {}).get(stock["ticker"]))
+            if ctx.previous_thesis is None:
+                out.append(f"DROP ALERT · {stock['ticker']} — no thesis is written yet; run /analyze {stock['ticker']} first.")
+                continue
+            res = ai_parts.drop_alert_check(type("R", (), {"grade": stock["grade"]})(), text, ctx)
+        except (ai.AIError, ai_parts.AIFormatError, sec.SecError) as exc:
+            out.append(f"DROP ALERT · {stock['ticker']} — the check could not run ({exc}); the alert stays pending.")
+            continue
+        note = (f"Drop alert checked against the latest filing ({accn}) — thesis {res['status']}. {res['reason']}"
+                + (f' Quote: "{res["quote"]}"' if res["quote"] else "")
+                + (" (filing and news)" if res["news_used"] else " (filing only; no news was available)"))
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            conn.execute("INSERT INTO card_entries (stock_id, date, record, who, source, thesis_status, created_at) "
+                         "VALUES (?, ?, 'note', 'agent_3', 'drop alert', ?, ?)", (stock_id, day, res["status"], clock.utc_iso()))
+            conn.execute("UPDATE signals SET status='done' WHERE id=?", (sig_id,))
+            path = drive.find_card(stock["ticker"])
+            if path is not None:
+                card.append(path, card.note_entry(day, note, who="agent_3"), {"last_entry": day})
+            conn.commit()
+        except BaseException:
+            conn.rollback()
+            raise
+        out.append(f"DROP ALERT · {stock['ticker']} — thesis {res['status']}: {res['reason']}"
+                   + (f"\nRun /analyze {stock['ticker']} for a full check." if res["status"] != "intact" else ""))
+    return "\n\n".join(out) if out else None
