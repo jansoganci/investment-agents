@@ -1,0 +1,191 @@
+"""Agent 3's AI parts with a fake AI: quotes are checked by code, the thesis, the audits, the sell suggestion."""
+
+import json
+import random
+
+import pytest
+
+from agents.analysis import ai as parts
+from agents.analysis import sell
+from shared import ai
+from shared.ai.fake import FakeAI
+from tests.analysis.test_measures import run as analyse_run
+from tests.fixtures.loader import filing_text
+
+pytestmark = pytest.mark.usefixtures("db")
+
+TEXT = filing_text("NVDA")["text"]
+NOTES = "As of July 26, 2026, we had $33.5 billion aggregate principal amount of senior notes outstanding."
+R = analyse_run("NVDA", quarters=True)
+THESIS = {"reasons": ["It sells the chips AI runs on.", "Cash flow pays for the growth."],
+          "breaks": ["Revenue growth turns negative.", "Debt rises above free cash flow for years.", "A major customer leaves."]}
+
+
+def ctx(**kw):
+    base = dict(ticker="NVDA", company="Nvidia", rng=random.Random(1))
+    base.update(kw)
+    return parts.Context(**base)
+
+
+def items_in(prompt):
+    """The ITEMS list (strong calls) or {"items": [...]} (auditor calls) the code put in the prompt."""
+    head = prompt.split("\n\nFILING EXCERPTS")[0]
+    if '"items"' in head.split("\n")[0] + head[:20]:
+        return json.loads(head[head.index("{"):])["items"]
+    return json.loads(head[head.index("ITEMS:\n") + 7:])
+
+
+def handler(why_quote=NOTES, verdict="pass", thesis=THESIS, check=None):
+    def h(job, system, prompt):
+        if job == "auditor":
+            return [{"id": i["id"], "verdict": verdict if not isinstance(verdict, dict) else verdict.get(i["id"], "pass"),
+                     "quote": NOTES, "reason": "ok"} for i in items_in(prompt)]
+        if system.startswith("You help a long-term"):
+            return [{"id": i["id"], "answer": f"because of {i['id']}", "quote": why_quote, "kind": "company_specific"}
+                    for i in items_in(prompt)]
+        if system.startswith("You write the investment thesis"):
+            return thesis
+        if system.startswith("You check whether"):
+            return check or {"status": "intact", "point": None, "reason": "nothing changed", "quote": ""}
+        raise AssertionError(system[:40])
+    return h
+
+
+def test_why_answers_are_shown_only_with_a_quote_found_in_the_filing(monkeypatch):
+    FakeAI(handler()).install(monkeypatch)
+    why = parts.ask_why(R, TEXT, ctx())
+    assert why and all(w.verified and w.kind == "company_specific" and w.quote == NOTES for w in why)
+    FakeAI(handler(why_quote="NVIDIA settled a lawsuit for 4 billion dollars in July 2026.")).install(monkeypatch)
+    why = parts.ask_why(R, TEXT, ctx())
+    assert not any(w.verified for w in why) and all(w.answer.startswith("no verified quote") for w in why)
+    assert all(w.quote == "" and w.kind is None for w in why)
+
+
+def test_every_flag_and_every_weak_measure_gets_a_why_item():
+    ids = [i["id"] for i in parts.why_items(R)]
+    assert ids == [f"U{n}" for n in range(1, len(R.flags) + 1)]  # NVDA has flags and no weak measure
+    weak = analyse_run("RIVN")
+    assert any(i["id"].startswith("M:") for i in parts.why_items(weak))
+
+
+def test_the_first_thesis_has_at_most_3_reasons_and_exactly_3_breaks(monkeypatch):
+    fake = FakeAI(lambda *a: {"reasons": ["a"], "breaks": ["one", "two"]}).install(monkeypatch)
+    answers = iter([{"reasons": ["a"], "breaks": ["one", "two"]}, THESIS])
+    fake.handler = lambda *a: next(answers)
+    t = parts.first_thesis(R, [], TEXT, ctx())
+    assert t == THESIS and len(fake.calls) == 2  # a bad shape is told and tried once more
+    assert "could not be used" in fake.calls[1][2]
+    FakeAI(lambda *a: {"reasons": ["a"], "breaks": ["one"]}).install(monkeypatch)
+    with pytest.raises(parts.AIFormatError):
+        parts.first_thesis(R, [], TEXT, ctx())
+
+
+def test_the_thesis_text_is_plain_and_numbered():
+    txt = parts.thesis_text(THESIS)
+    assert txt.startswith("Why it is owned:\n1. It sells") and "What would break it:\n1. Revenue" in txt
+    assert txt.endswith("3. A major customer leaves.")
+
+
+def test_a_thesis_is_never_broken_without_a_verified_quote(monkeypatch):
+    broken = {"status": "broken", "point": 2, "reason": "debt exploded", "quote": "NVIDIA borrowed 90 billion dollars more."}
+    FakeAI(handler(check=broken)).install(monkeypatch)
+    c = parts.thesis_check(R, [], TEXT, ctx(previous_thesis=parts.thesis_text(THESIS)))
+    assert c["status"] == "watch" and "no verified quote" in c["reason"] and c["quote"] == ""
+    broken["quote"] = NOTES
+    c = parts.thesis_check(R, [], TEXT, ctx(previous_thesis=parts.thesis_text(THESIS)))
+    assert (c["status"], c["point"], c["quote"]) == ("broken", 2, NOTES)
+
+
+def test_the_drop_alert_check_with_news_only_says_watch(monkeypatch):
+    FakeAI(lambda *a: {"status": "broken", "reason": "the news says so", "quote": "Reuters: the CEO resigned amid probe."}).install(monkeypatch)
+    out = parts.drop_alert_check(R, TEXT, ctx(previous_thesis="t", news=["Reuters: the CEO resigned amid probe."]))
+    assert out["status"] == "watch" and out["news_used"] and out["quote"] == ""
+    FakeAI(lambda *a: {"status": "broken", "reason": "debt", "quote": NOTES}).install(monkeypatch)
+    assert parts.drop_alert_check(R, TEXT, ctx(previous_thesis="t"))["status"] == "broken"  # evidence in the filing
+
+
+# --- run_ai ---------------------------------------------------------------------------------------------------------------
+
+def test_a_first_card_gets_the_thesis_and_both_audits(monkeypatch):
+    FakeAI(handler()).install(monkeypatch)
+    part = parts.run_ai(R, TEXT, ctx())
+    assert part.thesis == THESIS and part.thesis_status == "intact" and part.check is None
+    assert sorted(a.audit for a in part.audits) == ["figure", "reading"] and not part.unverified and part.sell is None
+
+
+def test_an_audit_fail_marks_the_entry_unverified_and_says_which_figure(monkeypatch):
+    FakeAI(handler(verdict={"liquid": "fail"})).install(monkeypatch)
+    part = parts.run_ai(R, TEXT, ctx())
+    assert part.unverified and any("figure: liquid" in line for line in part.lines())
+
+
+def test_a_routine_update_is_audited_one_time_in_five():
+    ko = analyse_run("KO", quarters=True)
+    c = lambda s: parts.Context(ticker="KO", company="KO", first=False, grades=["solid"], rng=random.Random(s))
+    ran = [bool(parts.should_audit(c(s), ko, "solid", False)) for s in range(500)]
+    assert 0.12 < sum(ran) / 500 < 0.28  # about 1 in 5
+
+
+def test_the_audit_rules():
+    rng = random.Random(7)
+    base = dict(ticker="X", company="X", rng=rng)
+    no_dc = analyse_run("PLTR", quarters=True)  # no data_check flag
+    assert parts.should_audit(parts.Context(first=True, **base), no_dc, None, False) >= {"figure", "reading"}
+    assert parts.should_audit(parts.Context(first=False, **base), no_dc, "mid", True) >= {"figure"}  # an open data check
+    solid_weak = analyse_run("RIVN")  # grade weak
+    assert parts.should_audit(parts.Context(first=False, **base), solid_weak, "solid", False) == {"figure", "reading"}
+
+
+def test_when_the_ai_fails_the_numbers_still_stand(monkeypatch):
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    fake.fail = {"anthropic", "openrouter", "openai", "deepseek"}
+    part = parts.run_ai(R, TEXT, ctx())
+    assert part.thesis is None and part.why == [] and any("could not be written" in n for n in part.notes)
+
+
+def test_an_out_of_scope_stock_gets_no_ai(monkeypatch):
+    fake = FakeAI(handler()).install(monkeypatch)
+    part = parts.run_ai(analyse_run("JPM"), TEXT, ctx())
+    assert fake.calls == [] and part.thesis is None
+
+
+# --- selling --------------------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("held,grade,grades,thesis,expected", [
+    (True, "weak", ["mid"], "intact", "grade_weak"),
+    (True, "weak", ["weak"], "intact", None),                     # already weak: it was said then
+    (True, "mid", ["solid", "mid"], "intact", "mid_after_solid"),
+    (True, "mid", ["solid"], "intact", None),                      # one mid is a "check now"
+    (True, "mid", ["mid", "mid"], "intact", None),                 # not after a solid
+    (True, "solid", ["solid"], "broken", "thesis_broken"),
+    (True, "solid", ["solid"], "watch", None),
+    (False, "weak", ["solid"], "broken", None),                    # not held: no sell suggestion
+])
+def test_sell_triggers(held, grade, grades, thesis, expected):
+    assert sell.trigger(held, grade, grades, thesis) == expected
+
+
+def test_a_sell_suggestion_with_clean_audits_is_sent_with_its_evidence(monkeypatch):
+    broken = {"status": "broken", "point": 1, "reason": "growth turned", "quote": NOTES}
+    FakeAI(handler(check=broken)).install(monkeypatch)
+    part = parts.run_ai(R, TEXT, ctx(first=False, in_portfolio=True, grades=["solid"], previous_thesis=parts.thesis_text(THESIS)))
+    assert part.sell["trigger"] == "thesis_broken" and part.sell["status"] == "sent"
+    assert "CONSIDER SELLING · NVDA" in part.sell["text"] and "The decision is yours." in part.sell["text"]
+    assert "Check the figure before acting" in part.sell["text"]  # NVDA has an open data_check flag
+    assert sorted(a.audit for a in part.audits) == ["figure", "reading", "sell"]  # everything behind it is checked
+
+
+def test_a_failed_audit_holds_the_sell_suggestion_back(monkeypatch):
+    broken = {"status": "broken", "point": 1, "reason": "growth turned", "quote": NOTES}
+    FakeAI(handler(check=broken, verdict={"debt": "fail"})).install(monkeypatch)
+    part = parts.run_ai(R, TEXT, ctx(first=False, in_portfolio=True, grades=["solid"], previous_thesis=parts.thesis_text(THESIS)))
+    assert part.sell["status"] == "held" and part.sell["text"].startswith("SELL SUGGESTION HELD · NVDA")
+    assert "figure: debt" in part.sell["text"] and "CONSIDER SELLING" not in part.sell["text"]
+
+
+def test_a_sell_suggestion_whose_audit_cannot_run_is_held(monkeypatch):
+    broken = {"status": "broken", "point": 1, "reason": "growth turned", "quote": NOTES}
+    fake = FakeAI(handler(check=broken)).install(monkeypatch)
+    fake.fail = {"deepseek", "openrouter", "openai"}  # the auditor job has no working provider; the writer (anthropic) does
+    part = parts.run_ai(R, TEXT, ctx(first=False, in_portfolio=True, grades=["solid"], previous_thesis=parts.thesis_text(THESIS)))
+    assert part.sell["status"] == "held" and "could not run" in part.sell["text"]

@@ -36,7 +36,7 @@ def user_agent() -> str:
     return ua
 
 
-def _get(url: str, tries: int = 3) -> dict:
+def _get_bytes(url: str, tries: int = 3) -> bytes:
     global _last_call
     for attempt in range(tries):
         wait = 0.15 - (time.monotonic() - _last_call)  # stay well under 10 requests a second
@@ -49,7 +49,7 @@ def _get(url: str, tries: int = 3) -> dict:
                 body = resp.read()
                 if resp.headers.get("Content-Encoding") == "gzip":
                     body = gzip.decompress(body)
-                return json.loads(body)
+                return body
         except urllib.error.HTTPError as exc:
             if exc.code == 404:
                 raise SecError(f"SEC has no data at {url}") from exc
@@ -63,6 +63,10 @@ def _get(url: str, tries: int = 3) -> dict:
                 continue
             raise SecError(f"SEC could not be reached ({exc.reason})") from exc
     raise SecError(f"SEC could not be reached: {url}")
+
+
+def _get(url: str, tries: int = 3) -> dict:
+    return json.loads(_get_bytes(url, tries))
 
 
 def cik10(cik: str | int) -> str:
@@ -85,4 +89,21 @@ def lookup(ticker: str) -> dict | None:
         if tk.upper().replace(".", "-") == want:
             same = [t.upper() for c, _n, t, _e in data["data"] if c == cik]  # share classes of the same company
             return {"cik": cik10(cik), "name": name, "ticker": tk.upper(), "exchange": exchange, "all_tickers": same}
+    return None
+
+
+def filing_url(cik: str | int, accession: str, document: str) -> str:
+    return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession.replace('-', '')}/{document}"
+
+
+def filing_html(cik: str | int, accession: str, document: str) -> str:
+    """The main document of a filing (HTML), as text. Used for the quotes and the excerpts the AI reads (phase 2)."""
+    return _get_bytes(filing_url(cik, accession, document)).decode("utf-8", errors="replace")
+
+
+def primary_document(subs: dict, accession: str) -> str | None:
+    recent = (subs.get("filings") or {}).get("recent") or {}
+    for accn, doc in zip(recent.get("accessionNumber", []), recent.get("primaryDocument", [])):
+        if accn == accession:
+            return doc
     return None

@@ -88,6 +88,39 @@ def note_entry(day: str, text: str, who: str = "user") -> str:
     return f"## {day} · note · {who}\n{text}\n"
 
 
+# --- reading the card back ---------------------------------------------------------------------------------------------
+
+THESIS_NONE = ("Not written", "Unchanged")
+
+
+def entries(text: str) -> list[dict]:
+    """[{date, record, who, body}] in order; the body is everything under the heading."""
+    out = []
+    for chunk in text.split("\n## ")[1:]:
+        heading, _, body = chunk.partition("\n")
+        parts = [x.strip() for x in heading.split("·")]
+        out.append({"date": parts[0], "record": parts[1] if len(parts) > 1 else "", "who": parts[2] if len(parts) > 2 else "",
+                    "body": body})
+    return out
+
+
+def last_thesis(text: str) -> tuple[str, str] | None:
+    """(date, thesis text) of the newest entry that really has a thesis; None when no entry has one yet."""
+    for e in reversed(entries(text)):
+        if "### Thesis\n" not in e["body"]:
+            continue
+        thesis = e["body"].split("### Thesis\n", 1)[1].split("\n### ", 1)[0].strip()
+        if thesis and not thesis.startswith(THESIS_NONE):
+            return e["date"], thesis
+    return None
+
+
+def notes_since(text: str, day: str) -> list[str]:
+    """My notes (`record: note`, who: user) on or after `day`, e.g. a corrected thesis or a closed warning."""
+    return [f"{e['date']}: {e['body'].strip()}" for e in entries(text)
+            if e["record"] == "note" and e["who"] == "user" and e["date"] >= day]
+
+
 # --- the fundamental entry --------------------------------------------------------------------------------------------
 
 def _num(v, digits=4):
