@@ -88,6 +88,7 @@ class Context:
     grades: list = field(default_factory=list)   # earlier entries' grades, oldest first
     previous_thesis: str | None = None
     previous_thesis_date: str | None = None
+    filing: str | None = None               # the filing the figures come from (named in a sell suggestion)
     notes: list = field(default_factory=list)    # my notes since that thesis
     run: object = None
     stock_id: int | None = None
@@ -363,14 +364,31 @@ def run_ai(r, text: str, ctx: Context) -> AIPart:
     if trig:
         evidence = _evidence(r, part, trig)
         item = {"id": "sell", "claim": f"{sell.TRIGGERS[trig]} — " + " | ".join(evidence), "terms": ["risk", "revenue", "debt"]}
-        res = audit("sell", [item])
-        failed = [a for a in part.audits if a.result == "fail"]
-        held = "; ".join(f"{a.audit}: " + ", ".join(i["id"] for i in a.failed()) for a in failed) or None
-        if res is not None and res.error and not held:
-            held = f"the sell audit could not run ({res.error})"  # an unaudited suggestion is held back as well
-        text_out = sell.message(ctx.ticker, trig, evidence, data_check, held)
+        audit("sell", [item])
+        held = hold_reason(done)
+        text_out = sell.message(ctx.ticker, trig, evidence, data_check, held, ctx.filing)
         part.sell = {"trigger": trig, "text": text_out, "status": "held" if held else "sent", "evidence": evidence}
     return part
+
+
+def hold_reason(done: dict) -> tuple[str, str] | None:
+    """Why a sell suggestion is held back, or None when every audit behind it passed (roadmap, "Changes after the phase 2 audit").
+    The figure audit and the sell audit must have run and passed; the reading audit must pass when it ran."""
+    for kind in ("figure", "sell"):
+        if done.get(kind) is None:
+            return "not_run", f"the {kind} audit did not run"
+    ran = [a for a in done.values() if a is not None]
+    errors = [a for a in ran if a.error]
+    if errors:
+        return "not_run", "; ".join(f"{a.audit}: {a.error}" for a in errors)
+    failed = [a for a in ran if a.result == "fail"]
+    if failed:
+        return "disagrees", "; ".join(f"{a.audit}: " + ", ".join(i["id"] for i in a.failed()) for a in failed)
+    unconfirmed = [a for a in ran if a.result != "pass"]
+    if unconfirmed:
+        return "unconfirmed", "; ".join(
+            f"{a.audit} ({sum(i['verdict'] != 'pass' for i in a.items)} of {len(a.items)} items not confirmed)" for a in unconfirmed)
+    return None
 
 
 def _evidence(r, part: AIPart, trig: str) -> list[str]:

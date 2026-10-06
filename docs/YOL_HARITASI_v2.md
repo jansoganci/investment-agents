@@ -537,6 +537,29 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 11. **`/model`:** a persistent override per job in the `settings` table (`model.<job>`), `default` clears it; a one-off
     `/analyze KO opus-5.5` uses an alias list (`settings.yaml` `model_aliases`) and changes nothing stored.
 
+**Changes after the phase 2 audit (2026-10-06, my decisions):**
+12. **No threshold in the audit result.** An audit is `pass` only when **every** item passes; `fail` when any item fails (the entry is
+    marked `unverified`); otherwise `not_found` ("could not confirm": a note, no mark). An audit with no items is `not_found`.
+13. **A sell suggestion is sent only when every audit behind it is `pass`** (figure audit, the sell audit, and the reading audit when
+    it ran). Anything else holds it, and the message says why: the auditor disagrees (`fail`) · the auditor could not confirm
+    (`not_found`) · the audit could not run (an error). The message names the filing the evidence comes from.
+14. **A quote the auditor gives for a figure or a sell claim must contain a number** (a general sentence such as "in millions, except per
+    share" proves nothing); every quote is still checked word for word against the filing.
+15. **Excerpts keep the table rows** that carry the figures (a short line with a number is not dropped), so the figure audit can see
+    the balance sheet.
+16. **The auditor is never of the writer's model family** (Anthropic / DeepSeek / OpenAI; OpenRouter models count as their maker).
+    `/model` refuses a choice that breaks it; at call time the models of the writer's family are skipped in the auditor's list, and
+    if none is left the audit is "could not run" (so a sell suggestion is held).
+17. **Money:** prices are in `settings.yaml` (`pricing`); a model without a price is counted at a cautious default price
+    (`pricing.default`) and shown as "estimated" in `/spend`; a call that was billed but rejected (a refusal, an answer cut at the token
+    limit) is logged too; `ping` and the auditor test set are logged as well. Every call keeps its stock (`ai_calls.stock_id`).
+18. **Warning identity:** a warning is recognised by what it says with its amounts masked and its **years kept** (a new year's debt
+    jump is a new warning); two warnings of the same shape in one entry are told apart by their full text; codes written by phase 1
+    (no `key`) are not trusted. A closed warning stays closed only while its identity is the same.
+19. **Records on a card:** `note` records are mine, except that agent 3 also writes a dated `note · agent_3` when it checks a drop alert.
+20. **The strong-model test** records the model that really answered and does not fall back to another one (it stops instead).
+21. **Without `--ai`** no AI call is made at all (the missing-data message is the plain template).
+
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
 ### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)

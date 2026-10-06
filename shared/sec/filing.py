@@ -71,8 +71,8 @@ def excerpts(text: str, terms: list[str], max_chars: int = 12000, per_paragraph:
     terms = [t.lower() for t in terms if t]
     scored = []
     for i, para in enumerate(text.split("\n")):
-        if len(para) < 40:
-            continue
+        if len(para) < 40 and not (len(para) >= 8 and re.search(r"\d", para)):
+            continue  # short prose is noise; a short line with a number is a table row (`Long-term debt 32,366 7,469`)
         low = para.lower()
         score = sum(low.count(t) for t in terms)
         if score:

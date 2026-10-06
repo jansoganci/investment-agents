@@ -212,6 +212,7 @@ def _ai_part(conn, stock, ticker, company, cik, subs, source, r, src, run, model
     accn = source.get("filing")
     doc = sec.primary_document(subs, accn) if accn else None
     ctx = _context(conn, stock, ticker, company, run, model, rng, news)
+    ctx.filing = accn
     if not (accn and doc):
         return ai_parts.AIPart(notes=["AI skipped: the filing's main document was not found"]), ctx
     try:

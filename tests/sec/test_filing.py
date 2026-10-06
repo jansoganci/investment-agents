@@ -49,3 +49,11 @@ def test_primary_document_and_url():
     assert doc and sec.primary_document(subs, "0000000000-00-000000") is None
     assert sec.filing_url("0001045810", "0001045810-26-000075", "x.htm") == \
         "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/x.htm"
+
+
+def test_a_short_table_row_with_a_number_is_kept_and_short_prose_is_not():
+    text = "Long-term debt 32,366 7,469\nTotal assets 99,000 88,000\nSee the notes.\nDebt\nWe issued notes. " + "x" * 50
+    parts = filing.excerpts(text, ["long-term debt", "debt", "see the notes"])
+    assert "Long-term debt 32,366 7,469" in parts and "See the notes." not in parts and "Debt" not in parts
+    real = filing.excerpts(filing_text("NVDA")["text"], ["long-term debt"], max_chars=3000)
+    assert "Long-term debt 32,366 7,469" in real
