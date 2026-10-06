@@ -83,6 +83,25 @@ def chain(job: str, conn=None, model: str | None = None) -> list[dict]:
     return base
 
 
+def family(provider: str, model: str) -> str:
+    """Who made the model: `anthropic`, `deepseek`, `openai` (an OpenRouter model counts as its maker's).
+    The auditor must never be of the writer's family (roadmap, "Changes after the phase 2 audit")."""
+    name = model.lower()
+    if provider == "openrouter" and "/" in name:
+        name = name.split("/")[0]
+    if provider == "anthropic" or name.startswith(("anthropic", "claude")):
+        return "anthropic"
+    if provider == "deepseek" or name.startswith("deepseek"):
+        return "deepseek"
+    if provider == "openai" or name.startswith(("openai", "gpt", "o1", "o3")):
+        return "openai"
+    return provider
+
+
+def entry_family(entry: dict) -> str:
+    return family(entry["provider"], entry["model"])
+
+
 def model_names() -> list[str]:
     s = config.settings()
     names = set((s.get("model_aliases") or {}))
@@ -135,7 +154,9 @@ def spend_by_provider(conn) -> list[dict]:
 # --- the call -------------------------------------------------------------------------------------------------------------
 
 def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = None, run=None, stock_id=None,
-         model: str | None = None, conn=None) -> Reply:
+         model: str | None = None, conn=None, exclude_families: set | None = None, only_first: bool = False) -> Reply:
+    """`exclude_families`: models of these makers are skipped (the auditor never uses the writer's family).
+    `only_first`: no fallback to the next provider (the strong-model test must know which model answered)."""
     s = config.settings()
     own = conn is None
     conn = conn or dbmod.connect()
@@ -146,7 +167,15 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
             raise AIError(f"the monthly AI limit is reached (${spent:.2f} of ${limit}); nothing was sent")
         tokens = max_tokens or (s.get("ai") or {}).get("max_tokens", 6000)
         errors = []
-        for entry in chain(job, conn, model):
+        entries = chain(job, conn, model)
+        if exclude_families:
+            entries = [e for e in entries if entry_family(e) not in exclude_families]
+            if not entries:
+                raise AIError(f"every model of the job '{job}' is of the writer's family ({', '.join(sorted(exclude_families))}): "
+                              "the check cannot be independent")
+        if only_first:
+            entries = entries[:1]
+        for entry in entries:
             backend = BACKENDS.get(entry["provider"])
             if backend is None:
                 errors.append(f"{entry['provider']}: unknown provider")

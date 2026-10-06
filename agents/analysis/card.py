@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 from pathlib import Path
@@ -91,22 +92,28 @@ def note_entry(day: str, text: str, who: str = "user") -> str:
 
 # --- reading the card back ---------------------------------------------------------------------------------------------
 
+_YEAR_OR_NUMBER = re.compile(r"((?<!\d)(?:19|20)\d\d(?!\d))|[-+]?\d[\d.,]*(?:e[-+]?\d+)?%?|→|×")
+
+
 def flag_key(flag: dict) -> str:
-    """What a warning is about, with its numbers masked: the same condition keeps its code on every entry
-    ("debt 8.5 → 33.4 bn (2026)" and "debt 9.1 → 34.0 bn (2027)" are one warning)."""
-    detail = re.sub(r"[-+]?\d[\d.,]*(?:e[-+]?\d+)?%?|→|×", "#", flag["detail"])
+    """What a warning is about: its words, with the amounts masked and the years kept ("debt 8.5 → 33.4 bn (2026)" is the same
+    warning as "debt 9.1 → 12.0 bn (2026)", but a debt jump in 2029 is a new one). Roadmap, "Changes after the phase 2 audit"."""
+    detail = _YEAR_OR_NUMBER.sub(lambda m: m.group(1) or "#", flag["detail"])
     detail = re.sub(r"#(?:\s*#)+", "#", detail)
     squeezed = re.sub(r"\s+", " ", detail).strip()
     return f"{flag['flag']}:{squeezed}"
 
 
 def _keys(items: list[dict], name: str) -> list[str]:
-    """One key per warning of an entry; the same key twice in one entry gets a counter."""
-    seen, out = {}, []
-    for w in items:
-        k = flag_key({"flag": w[name], "detail": w["detail"]})
-        seen[k] = seen.get(k, 0) + 1
-        out.append(k if seen[k] == 1 else f"{k}~{seen[k]}")
+    """One key per warning of an entry. Warnings of the same shape in one entry are told apart by their full text (so an order
+    change or one of them disappearing cannot shift a code onto another warning)."""
+    base = [flag_key({"flag": w[name], "detail": w["detail"]}) for w in items]
+    out = []
+    for k, w in zip(base, items):
+        if base.count(k) > 1:
+            full = re.sub(r"\s+", " ", w["detail"]).strip()
+            k = k + "~" + hashlib.sha1(full.encode()).hexdigest()[:8]
+        out.append(k)
     return out
 
 
@@ -121,19 +128,26 @@ def _yaml_of(body: str) -> dict:
 
 def assign_codes(text: str | None, flags: list[dict]) -> tuple[list[str], set[str]]:
     """(a code for each flag, the codes I closed). A condition keeps the code it first had (U1 stays U1); a new condition
-    gets the next number; a closed warning stays closed while its condition (its key) is the same."""
-    known, top = {}, 0
+    gets the next number; a closed warning stays closed while its condition is the same (same words and years; amounts may move).
+    Two warnings of one shape are matched by their full text."""
+    known, by_detail, top = {}, {}, 0
     for e in entries(text or ""):
         warnings = _yaml_of(e["body"]).get("warnings") or []
-        for w, k in zip(warnings, _keys(warnings, "name")):
-            known.setdefault(w.get("key") or k, w["code"])
+        for w in warnings:
             top = max(top, int(re.sub(r"\D", "", w["code"]) or 0))
+            if w.get("key"):  # codes written by phase 1 have no key: they were numbered by position and are not trusted
+                known.setdefault(w["key"], w["code"])
+                by_detail.setdefault((w["key"].split("~")[0], re.sub(r"\s+", " ", w["detail"]).strip()), w["code"])
     codes = []
-    for f, k in zip(flags, _keys([{"name": f["flag"], "detail": f["detail"]} for f in flags], "name")):
-        if k not in known:
+    items = [{"name": f["flag"], "detail": f["detail"]} for f in flags]
+    for f, k in zip(flags, _keys(items, "name")):
+        base = flag_key({"flag": f["flag"], "detail": f["detail"]})
+        code = known.get(k) or by_detail.get((base, re.sub(r"\s+", " ", f["detail"]).strip()))
+        if code is None:
             top += 1
-            known[k] = f"U{top}"
-        codes.append(known[k])
+            code = f"U{top}"
+            known[k] = code
+        codes.append(code)
     return codes, closed_warnings(text or "")
 
 

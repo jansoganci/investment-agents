@@ -61,7 +61,8 @@ def parse_items(text: str) -> list[dict]:
     return data
 
 
-def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, model: str | None = None) -> AuditResult:
+def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, model: str | None = None,
+          exclude_families: set | None = None) -> AuditResult:
     """`items`: [{"id", "claim", ...}]; `text`: the filing text the quotes must be found in."""
     if kind not in KINDS:
         raise ValueError(f"unknown audit '{kind}'")
@@ -72,7 +73,8 @@ def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, m
     prompt = json.dumps({"items": [{k: v for k, v in i.items() if k != "terms"} for i in items]}, ensure_ascii=False,
                         indent=1) + "\n\nFILING EXCERPTS:\n" + "\n---\n".join(excerpts)
     try:
-        reply = ai.call("auditor", prompt, system=ENGINE + card_text(kind), run=run, stock_id=stock_id, model=model)
+        reply = ai.call("auditor", prompt, system=ENGINE + card_text(kind), run=run, stock_id=stock_id, model=model,
+                        exclude_families=exclude_families)
         parsed = parse_items(reply.text)
     except (ai.AIError, ValueError, json.JSONDecodeError) as exc:
         return AuditResult(kind, "not_found", [], error=f"{type(exc).__name__}: {exc}")

@@ -98,3 +98,11 @@ def test_notes_need_a_card(db, monkeypatch):
     stocks_row = db.execute("INSERT INTO stocks (cik, ticker, company, status, created_at) VALUES ('1', 'ABC', 'Abc', 'candidate', 'x')")
     db.commit()
     assert "has no card yet" in commands.run(["note", "ABC", "hello"])[1]
+
+
+def test_model_refuses_a_choice_that_puts_writer_and_auditor_in_one_family(db):
+    assert "different model family" in commands.run(["model", "auditor", "sonnet-5.5"])[1]   # the writer is Anthropic
+    assert "different model family" in commands.run(["model", "strong", "deepseek-v4-pro"])[1]  # the auditor is DeepSeek
+    assert do("model", "strong", "gpt-6-sol")[0] == 0
+    assert "both would be openai" in commands.run(["model", "auditor", "gpt-6-sol"])[1]
+    assert do("model", "auditor", "sonnet-5.5")[0] == 0  # now the writer is OpenAI, so Anthropic may audit

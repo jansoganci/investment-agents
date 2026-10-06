@@ -176,3 +176,29 @@ def test_an_answer_cut_at_max_tokens_is_a_provider_error(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     with pytest.raises(ProviderError, match="cut at max_tokens"):
         backends.anthropic_backend({"model": "m"}, "", "p", 10)
+
+
+@pytest.mark.parametrize("provider,model,maker", [
+    ("anthropic", "claude-sonnet-5-5", "anthropic"), ("openrouter", "anthropic/claude-sonnet-5.5", "anthropic"),
+    ("deepseek", "deepseek-v4-pro", "deepseek"), ("openrouter", "deepseek/deepseek-v4-pro", "deepseek"),
+    ("openai", "gpt-6-sol", "openai"), ("openrouter", "openai/gpt-6-sol", "openai")])
+def test_a_model_belongs_to_its_maker_even_through_openrouter(provider, model, maker):
+    assert ai.family(provider, model) == maker
+
+
+def test_call_skips_the_models_of_an_excluded_family(db, monkeypatch):
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    fake.fail = {"deepseek", "openrouter"}  # the auditor's own family is down: the next maker is used
+    reply = ai.call("auditor", "p", conn=db, exclude_families={"anthropic"})
+    assert (reply.provider, reply.model) == ("openai", "gpt-6-sol")
+    fake.fail = set()
+    with pytest.raises(AIError, match="writer's family"):
+        ai.call("auditor", "p", conn=db, exclude_families={"deepseek", "openai"})  # nothing independent is left
+
+
+def test_only_first_does_not_fall_back(db, monkeypatch):
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    fake.fail = {"anthropic"}
+    with pytest.raises(AIError, match="anthropic claude-sonnet-5-5"):
+        ai.call("strong", "p", conn=db, only_first=True)
+    assert fake.calls == []
