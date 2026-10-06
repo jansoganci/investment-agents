@@ -572,6 +572,13 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
     tightens again, the library is updated.
 25. **Open (later, not now):** the "why?" answer for a multi-year measure reads only the newest filing (often a 10-Q); the 10-K would
     explain more. It would cost more per analysis; decided after the 20-stock test.
+26. **Equity stakes are not liquid assets — said to the auditor** (found in the second real run, 2026-10-06: the auditor failed Nvidia's
+    liquid assets because "42.8 billion of marketable equity securities" were left out; that is our rule, not an error). Rule card 1 and the
+    figure claim now say it: liquid assets = cash + short-term investments + marketable **debt** securities; marketable equity securities and
+    stakes in other companies are left out on purpose. The auditor still fails a missing debt-securities part.
+27. **A missing-figure row closes when the figure is found** (same run: Nvidia's old "Marketable securities, last 4 quarters" request was
+    asked again, because the row from an earlier run on older data stayed open). Each analysis now closes the open rows of that stock whose
+    figure it found (status `tag_added`) and the rows of a last-4-quarters period a newer one has replaced.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 

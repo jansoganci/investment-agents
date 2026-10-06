@@ -300,7 +300,8 @@ def figure_items(r) -> list[dict]:
     if last in r.liquid:
         v = r.liquid[last]
         items.append({"id": "liquid", "claim": "liquid assets = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())
-                      + f" = {v.value:,.0f}, period end {last}", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
+                      + f" = {v.value:,.0f}, period end {last}", "note": "by our rule only cash, short-term investments and marketable debt securities count; "
+                      "equity securities and stakes in other companies are left out on purpose", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
     if last in r.debt:
         v = r.debt[last]
         items.append({"id": "debt", "claim": "debt = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())

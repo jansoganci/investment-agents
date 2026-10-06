@@ -241,7 +241,7 @@ def test_the_hold_reason_names_a_disagreement_a_missing_audit_and_an_error():
 def test_the_figure_audit_sees_the_balance_sheet_row_of_debt(monkeypatch):
     fake = FakeAI(handler()).install(monkeypatch)
     parts.run_ai(R, TEXT, ctx())
-    figure_prompt = next(p for job, s, p in fake.calls if job == "auditor" and "debt" in p.split("FILING EXCERPTS")[0])
+    figure_prompt = next(p for job, s, p in fake.calls if job == "auditor" and "\"id\": \"debt\"" in p.split("FILING EXCERPTS")[0])
     assert "Long-term debt 32,366 7,469" in figure_prompt  # a 27-character table row used to be dropped
 
 
