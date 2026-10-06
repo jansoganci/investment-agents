@@ -256,3 +256,12 @@ def test_the_auditor_is_never_of_the_writers_family(monkeypatch):
     fake.fail = {"anthropic", "openrouter", "deepseek"}  # only the writer's maker is left for the auditor
     part = parts.run_ai(R, TEXT, held_ctx())
     assert part.sell["status"] == "held" and "audit could not run" in part.sell["text"]
+
+
+def test_a_borderline_flag_gets_no_why_question():
+    import copy
+    r = copy.copy(R)
+    r.flags = R.flags + [{"flag": "borderline", "detail": "capital_return"}]
+    r.codes = [f"U{i}" for i in range(1, len(r.flags) + 1)]
+    ids = [i["id"] for i in parts.why_items(r)]
+    assert f"U{len(r.flags)}" not in ids and len(ids) == len(R.flags)

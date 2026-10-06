@@ -8,6 +8,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "anthropic>=1.11.0",
     "openai>=3.24.0",
+    "yfinance>=1.7.0",
 ]
 
 [dependency-groups]

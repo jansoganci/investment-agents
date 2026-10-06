@@ -560,6 +560,19 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 20. **The strong-model test** records the model that really answered and does not fall back to another one (it stops instead).
 21. **Without `--ai`** no AI call is made at all (the missing-data message is the plain template).
 
+**After the first real-model run on the Air (2026-10-06, my decisions):**
+22. **A figure that sits on several rows may be quoted as several rows**, separated by ` | `: every row is checked word for word against
+    the filing (each at least 12 characters), and the whole quote must contain a number. (The auditor's correct "pass" was refused
+    because liquid assets are three rows.) Everything else about quotes stays as it is.
+23. **No "why?" question for a `borderline` flag** (it only says "within 10% of a threshold"; the models had nothing to explain and the
+    call was wasted). The flag stays on the card.
+24. **Prices come from Yahoo through the `yfinance` library** (replaces the plain HTTP calls: Yahoo answered HTTP 429 to scripts from three
+    networks, while `yfinance`, which behaves like a browser, works). Same data as before: daily closes with dividends and splits, closed
+    days only (an open day is skipped), market value in USD from Yahoo's own figure. `yfinance` is not an official API: if Yahoo
+    tightens again, the library is updated.
+25. **Open (later, not now):** the "why?" answer for a multi-year measure reads only the newest filing (often a 10-Q); the 10-K would
+    explain more. It would cost more per analysis; decided after the 20-stock test.
+
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
 ### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)

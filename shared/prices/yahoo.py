@@ -1,68 +1,99 @@
-"""Yahoo Finance (free, no key): daily closes, split and dividend history, the ready-made market value, FX.
+"""Yahoo Finance through the `yfinance` library (decision 2026-10-06; roadmap, "After the first real-model run"): daily closes, split and
+dividend history, the ready-made market value, FX.
 
-    chart(symbol, range_, interval)  → the raw chart answer (closes, adjusted closes, dividends, splits)
+    chart(symbol, range_, interval)  → the answer in Yahoo's chart format (closes, adjusted closes, dividends, splits)
     parse_chart(raw)                 → {currency, price, rows, dividends, splits}
+    quotes(symbols)                  → {symbol: {marketCap, currency, regularMarketPrice}}
     market_values(symbols)           → {symbol: market value in USD or None} (Yahoo's own figure; decision 2026-10-05)
 
-Yahoo has no official API; requests are spaced and a "too many requests" answer is retried a few times, then given up.
+Yahoo has no official API and answers plain scripts with HTTP 429; `yfinance` behaves like a browser. Requests are spaced and a
+"too many requests" answer is retried a few times, then given up. Tests put a stand-in for `_yf()`.
 """
 
 from __future__ import annotations
 
-import http.cookiejar
-import json
+import math
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from datetime import datetime, timedelta, timezone
 
-UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
 SPACING = 1.0  # seconds between requests
+RETRIES = 3
 
-_jar = http.cookiejar.CookieJar()
-_opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(_jar))
 _last = 0.0
-_crumb: str | None = None
 
 
 class YahooError(RuntimeError):
     pass
 
 
-def _get(url: str, tries: int = 3, raw: bool = False):
+def _yf():
+    import yfinance
+
+    return yfinance
+
+
+def _space() -> None:
     global _last
-    for attempt in range(tries):
-        wait = SPACING - (time.monotonic() - _last)
-        if wait > 0:
-            time.sleep(wait)
-        _last = time.monotonic()
+    wait = SPACING - (time.monotonic() - _last)
+    if wait > 0:
+        time.sleep(wait)
+    _last = time.monotonic()
+
+
+def _call(what: str, fn):
+    """Run one yfinance call with spacing and a few retries when Yahoo says "too many requests"."""
+    for attempt in range(RETRIES):
+        _space()
         try:
-            with _opener.open(urllib.request.Request(url, headers={"User-Agent": UA}), timeout=30) as resp:
-                body = resp.read().decode("utf-8")
-                return body if raw else json.loads(body)
-        except urllib.error.HTTPError as exc:
-            if exc.code == 429 and attempt < tries - 1:
+            return fn()
+        except Exception as exc:  # noqa: BLE001 — yfinance raises its own types; all become YahooError
+            limited = "429" in str(exc) or "too many" in str(exc).lower() or type(exc).__name__ == "YFRateLimitError"
+            if limited and attempt < RETRIES - 1:
                 time.sleep(5 * 2 ** attempt)
                 continue
-            if exc.code == 404 and raw:
-                return ""  # fc.yahoo.com answers 404 but sets the cookie
-            raise YahooError(f"Yahoo answered {exc.code} for {url.split('?')[0]}") from exc
-        except urllib.error.URLError as exc:
-            if attempt < tries - 1:
-                time.sleep(2 ** attempt)
-                continue
-            raise YahooError(f"Yahoo could not be reached ({exc.reason})") from exc
-    raise YahooError("Yahoo could not be reached")
+            raise YahooError(f"Yahoo did not answer for {what} ({type(exc).__name__}: {exc})") from exc
+    raise YahooError(f"Yahoo could not be reached for {what}")
+
+
+def _num(x):
+    try:
+        x = float(x)
+    except (TypeError, ValueError):
+        return None
+    return None if math.isnan(x) else x
 
 
 def chart(symbol: str, range_: str = "10y", interval: str = "1d") -> dict:
-    q = urllib.parse.urlencode({"range": range_, "interval": interval, "events": "div,split"})
-    data = _get(f"https://query2.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(symbol)}?{q}")
-    result = (data.get("chart") or {}).get("result") or []
-    if not result:
+    """Closes, adjusted closes, dividends and splits for `symbol`, in the shape of Yahoo's chart answer (`parse_chart` reads it)."""
+    ticker = _yf().Ticker(symbol)
+    df = _call(symbol, lambda: ticker.history(period=range_, interval=interval, auto_adjust=False, actions=True))
+    if df is None or len(df) == 0:
         raise YahooError(f"Yahoo has no chart for {symbol}")
-    return result[0]
+    try:
+        info = _call(symbol, lambda: ticker.fast_info)
+        currency, tz_name = info["currency"], info["timezone"]
+    except (YahooError, KeyError, TypeError):
+        currency, tz_name = None, None
+    index = list(df.index)
+    tz_name = tz_name or str(getattr(df.index, "tz", None) or "") or None
+    offset = int(index[-1].utcoffset().total_seconds()) if getattr(index[-1], "utcoffset", None) and index[-1].utcoffset() else 0
+    stamps = [int(ts.timestamp()) for ts in index]
+    closes = [_num(v) for v in df["Close"]]
+    adj = [_num(v) for v in (df["Adj Close"] if "Adj Close" in df else df["Close"])]
+    dividends, splits = {}, {}
+    if "Dividends" in df:
+        for st, v in zip(stamps, df["Dividends"]):
+            if _num(v):
+                dividends[str(st)] = {"date": st, "amount": float(v)}
+    if "Stock Splits" in df:
+        for st, v in zip(stamps, df["Stock Splits"]):
+            if _num(v):
+                splits[str(st)] = {"date": st, "numerator": float(v), "denominator": 1.0}  # 10.0 = 10 for 1; 0.125 = 1 for 8
+    last = next((c for c in reversed(closes) if c is not None), None)
+    return {"meta": {"symbol": symbol, "currency": currency, "regularMarketPrice": last, "gmtoffset": offset,
+                     "exchangeTimezoneName": tz_name, "instrumentType": None},
+            "timestamp": stamps, "indicators": {"quote": [{"close": closes}], "adjclose": [{"adjclose": adj}]},
+            "events": {"dividends": dividends, "splits": splits}}
 
 
 def _day(ts: int, offset: int) -> str:
@@ -85,21 +116,17 @@ def parse_chart(raw: dict) -> dict:
             "rows": rows, "dividends": dividends, "splits": splits}
 
 
-def _get_crumb() -> str:
-    global _crumb
-    if _crumb is None:
-        _get("https://fc.yahoo.com/", raw=True)  # sets the session cookie
-        crumb = _get("https://query2.finance.yahoo.com/v1/test/getcrumb", raw=True).strip()
-        if not crumb or " " in crumb or len(crumb) > 40:
-            raise YahooError(f"Yahoo gave no session key ({crumb[:40]!r})")
-        _crumb = crumb
-    return _crumb
-
-
 def quotes(symbols: list[str]) -> dict[str, dict]:
-    q = urllib.parse.urlencode({"symbols": ",".join(symbols), "crumb": _get_crumb()})
-    data = _get(f"https://query2.finance.yahoo.com/v7/finance/quote?{q}")
-    return {r["symbol"]: r for r in (data.get("quoteResponse") or {}).get("result") or []}
+    """Yahoo's market value, currency and last price for each symbol it answers for."""
+    out = {}
+    for s in symbols:
+        info = _call(s, lambda s=s: _yf().Ticker(s).fast_info)
+        try:
+            out[s] = {"symbol": s, "marketCap": _num(info["market_cap"]), "currency": info["currency"],
+                      "regularMarketPrice": _num(info["last_price"])}
+        except (KeyError, TypeError):
+            continue
+    return out
 
 
 def market_values(symbols: list[str]) -> dict[str, float | None]:

@@ -27,7 +27,8 @@ VERDICTS = ("pass", "fail", "not_found")
 ENGINE = """You are an auditor. You check; you never produce or correct figures and you never write new claims.
 Answer with JSON only, no other text: a list of objects, one per item you were given, in this form:
 {"id": "<the item's id>", "verdict": "pass" | "fail" | "not_found", "quote": "<the row or sentence from the filing, word for word>", "reason": "<one short sentence>"}
-A `quote` must be copied from the excerpts exactly. If you cannot find the evidence in the excerpts, the verdict is "not_found".
+A `quote` must be copied from the excerpts exactly. When a figure sits on several rows (for example the parts of liquid assets), copy each
+row exactly and separate the rows with " | ". If you cannot find the evidence in the excerpts, the verdict is "not_found".
 Below is the rule card for this check.
 
 """
@@ -86,7 +87,7 @@ def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, m
         quote = (p.get("quote") or "").strip()
         reason = p.get("reason") or ""
         needs_number = kind in ("figure", "sell") and not re.search(r"\d", quote)  # "in millions" proves nothing about a figure
-        if verdict in ("pass", "fail") and (needs_number or not filing.quote_in(text, quote, cfg.get("min_quote_chars", 20))):
+        if verdict in ("pass", "fail") and (needs_number or not filing.quote_ok(text, quote, cfg.get("min_quote_chars", 20))):
             # a verdict that does not carry a real quote is not believed (a fail without evidence would be as bad as a pass)
             verdict, reason = "not_found", f"no verified quote ({reason})".strip()
         out.append({"id": str(i["id"]), "verdict": verdict, "quote": quote, "reason": reason})

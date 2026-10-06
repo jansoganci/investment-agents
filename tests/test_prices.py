@@ -112,3 +112,82 @@ def test_cli_ticker_writes_a_runs_row(db, monkeypatch, capsys):
     assert main(["--ticker", "KO"]) == 0
     assert "PRICES · KO" in capsys.readouterr().out
     assert db.execute("SELECT job, status FROM runs").fetchall() == [("prices", "ok")]
+
+
+# --- the yfinance backend, against a stand-in library ----------------------------------------------------------------------
+
+def _frame():
+    import pandas as pd
+    idx = pd.DatetimeIndex(["2026-09-30", "2026-10-01", "2026-10-02"], tz="America/New_York")
+    return pd.DataFrame({"Close": [60.0, float("nan"), 61.5], "Adj Close": [59.0, float("nan"), 60.5],
+                         "Dividends": [0.0, 0.0, 0.5], "Stock Splits": [10.0, 0.0, 0.125]}, index=idx)
+
+
+class _Ticker:
+    def __init__(self, symbol, frame=None, fail=None):
+        self.symbol, self.frame, self.fail = symbol, frame, fail
+        self.fast_info = {"currency": "USD", "timezone": "America/New_York", "market_cap": 2.9e11, "last_price": 61.5}
+
+    def history(self, **kw):
+        self.seen = kw
+        if self.fail:
+            raise self.fail
+        return self.frame
+
+
+def test_chart_through_yfinance_is_read_by_parse_chart(monkeypatch):
+    import types
+    t = _Ticker("KO", _frame())
+    monkeypatch.setattr(yahoo, "_yf", lambda: types.SimpleNamespace(Ticker=lambda s: t))
+    monkeypatch.setattr(yahoo, "SPACING", 0)
+    p = yahoo.parse_chart(yahoo.chart("KO", "10y", "1d"))
+    assert t.seen == {"period": "10y", "interval": "1d", "auto_adjust": False, "actions": True}
+    assert p["currency"] == "USD" and p["price"] == 61.5
+    assert p["rows"] == [("2026-09-30", 60.0, 59.0), ("2026-10-02", 61.5, 60.5)]  # the day with no close is left out
+    assert p["dividends"] == [("2026-10-02", 0.5)]
+    assert p["splits"] == [("2026-09-30", 10.0), ("2026-10-02", 0.125)]  # 10 for 1, and a 1-for-8 reverse split
+
+
+def test_chart_errors_become_yahoo_errors(monkeypatch):
+    import types
+    monkeypatch.setattr(yahoo, "SPACING", 0)
+    monkeypatch.setattr(yahoo.time, "sleep", lambda s: None)
+    monkeypatch.setattr(yahoo, "_yf", lambda: types.SimpleNamespace(Ticker=lambda s: _Ticker(s, None, RuntimeError("429 Too Many Requests"))))
+    with pytest.raises(yahoo.YahooError, match="Yahoo did not answer for KO"):
+        yahoo.chart("KO")
+    import pandas as pd
+    monkeypatch.setattr(yahoo, "_yf", lambda: types.SimpleNamespace(Ticker=lambda s: _Ticker(s, pd.DataFrame())))
+    with pytest.raises(yahoo.YahooError, match="no chart for ZZZ"):
+        yahoo.chart("ZZZ")
+
+
+def test_a_rate_limit_is_retried_before_giving_up(monkeypatch):
+    import types
+    calls = []
+
+    class Flaky(_Ticker):
+        def history(self, **kw):
+            calls.append(1)
+            if len(calls) < 3:
+                raise RuntimeError("429 Too Many Requests")
+            return _frame()
+    monkeypatch.setattr(yahoo, "SPACING", 0)
+    monkeypatch.setattr(yahoo.time, "sleep", lambda s: None)
+    monkeypatch.setattr(yahoo, "_yf", lambda: types.SimpleNamespace(Ticker=lambda s: Flaky(s)))
+    assert yahoo.parse_chart(yahoo.chart("KO"))["rows"]
+    assert len(calls) == 3
+
+
+def test_quotes_and_market_values_through_yfinance(monkeypatch):
+    import types
+
+    class Q(_Ticker):
+        def __init__(self, symbol):
+            super().__init__(symbol)
+            if symbol == "NVO":
+                self.fast_info = {"currency": "DKK", "timezone": "x", "market_cap": 3e11, "last_price": 500}
+            if symbol == "XYZ":
+                self.fast_info = {}
+    monkeypatch.setattr(yahoo, "SPACING", 0)
+    monkeypatch.setattr(yahoo, "_yf", lambda: types.SimpleNamespace(Ticker=lambda s: Q(s)))
+    assert yahoo.market_values(["KO", "NVO", "XYZ"]) == {"KO": 2.9e11, "NVO": None, "XYZ": None}

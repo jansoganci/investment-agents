@@ -178,6 +178,8 @@ def why_items(r) -> list[dict]:
             items.append({"id": f"M:{name}", "what": f"measure {name} is weak (value {m['value']}; {m.get('note') or 'no note'})",
                           "terms": MEASURE_TERMS.get(name, [])})
     for code, f in open_flags(r):
+        if f["flag"] == "borderline":  # "within 10% of a threshold": nothing to explain (roadmap, "After the first real-model run")
+            continue
         items.append({"id": code, "what": f"flag {f['flag']}: {f['detail']}", "terms": FLAG_TERMS.get(f["flag"], [])})
     return items[:MAX_ITEMS]
 

@@ -94,3 +94,21 @@ def test_a_figure_or_sell_quote_without_a_number_proves_nothing(monkeypatch):
     FakeAI(lambda *a: answer({"debt": "pass", "cash": "pass"}, quote=plain)).install(monkeypatch)
     assert auditor.audit("figure", ITEMS, TEXT).result == "not_found"
     assert auditor.audit("reading", ITEMS, TEXT).result == "pass"  # a reading quote may be plain prose
+
+
+def test_a_figure_on_several_rows_may_be_quoted_as_several_rows(monkeypatch):
+    rows = "Long-term debt 32,366 7,469 | As of July 26, 2026, we had $33.5 billion aggregate principal amount of senior notes outstanding."
+    FakeAI(lambda *a: answer({"debt": "pass", "cash": "pass"}, quote=rows)).install(monkeypatch)
+    assert auditor.audit("figure", ITEMS, TEXT).result == "pass"
+    invented = "Long-term debt 32,366 7,469 | Long-term debt 99,999 1,111"
+    FakeAI(lambda *a: answer({"debt": "pass", "cash": "pass"}, quote=invented)).install(monkeypatch)
+    res = auditor.audit("figure", ITEMS, TEXT)
+    assert res.result == "not_found" and "no verified quote" in res.items[0]["reason"]  # one invented row spoils the quote
+
+
+def test_quote_ok_checks_every_row_and_keeps_single_quotes_as_before():
+    from shared.sec import filing
+    assert filing.quote_ok(TEXT, "Long-term debt 32,366 7,469")
+    assert filing.quote_ok(TEXT, "Long-term debt 32,366 7,469 | Long-term debt 32,366 7,469")
+    assert not filing.quote_ok(TEXT, "Long-term debt 32,366 7,469 | in millions")  # a part too short or not in the filing
+    assert not filing.quote_ok(TEXT, "a" * 30)

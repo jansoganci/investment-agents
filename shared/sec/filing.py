@@ -84,3 +84,11 @@ def excerpts(text: str, terms: list[str], max_chars: int = 12000, per_paragraph:
         picked.append((i, para))
         used += len(para)
     return [p for _, p in sorted(picked)]
+
+
+def quote_ok(text: str, quote: str, min_chars: int = MIN_QUOTE, min_part: int = 12) -> bool:
+    """A quote, or several rows separated by ` | ` (a figure spread over rows): every part appears in the filing word for word."""
+    parts = [p.strip() for p in re.split(r"\s\|\s", quote) if p.strip()]
+    if len(parts) <= 1:
+        return quote_in(text, quote, min_chars)
+    return all(quote_in(text, p, min_part) for p in parts)

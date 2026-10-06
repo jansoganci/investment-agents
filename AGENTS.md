@@ -235,7 +235,13 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   otherwise "could not confirm") · price list given by me (DeepSeek, GPT-6 Sol) and a cautious default price for unknown models ·
   agent 3 may write a dated `note · agent_3` for a checked drop alert. Also fixed: balance-sheet rows kept in the excerpts, the auditor is never
   of the writer's model family, warning identity keeps years, billed-but-rejected calls logged, `ping` and the test set logged, strong-model
-  test records who answered. **342 tests pass.** Still not tried with a real model (Mac check).
+  test records who answered. **342 tests pass.**
+  **First real-model run on the Air (2026-10-06, in an isolated worktree `~/check-repo` with throwaway `DATA_DIR` / `DRIVE_DIR`):** `ping` 8/8 ✓;
+  auditor test set 8/10 (the 2 misses were correct passes whose quote spanned several rows → rule 22: several rows allowed, each checked);
+  strong-model test (A / B, B looked better; I still choose and `--reveal`) · no "why?" for `borderline` flags (rule 23) · **Yahoo 429 solved by
+  `yfinance`** (rule 24; prices, splits, market value live: NVDA share count and price line now computed) · OpenRouter's dotted model names find
+  their price. Open: the 10-K for multi-year "why?" (rule 25, later). **Rule for me: tests and trials run only in an isolated worktree on the Air or on the main
+  Mac, never in `~/projects/investment-agents` (the Air's production copy stays on `main`).**
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
 - **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,
