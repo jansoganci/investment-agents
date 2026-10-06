@@ -88,12 +88,16 @@ class Context:
     grades: list = field(default_factory=list)   # earlier entries' grades, oldest first
     previous_thesis: str | None = None
     previous_thesis_date: str | None = None
+    filing: str | None = None               # the filing the figures come from (named in a sell suggestion)
     notes: list = field(default_factory=list)    # my notes since that thesis
     run: object = None
     stock_id: int | None = None
     rng: random.Random = field(default_factory=random.Random)
     model: str | None = None                # a one-off model for the strong job (/analyze KO opus-5.5)
     news: list | None = None
+    families: set = field(default_factory=set)   # makers of the models that wrote this analysis
+    models: list = field(default_factory=list)   # provider:model that really answered, in order
+    no_fallback: bool = False               # the strong-model test: no other model may answer instead
 
 
 @dataclass
@@ -140,7 +144,10 @@ def ask_json(job: str, system: str, prompt: str, check, ctx: Context):
     problem = None
     for _ in range(2):
         text = prompt if problem is None else prompt + f"\n\nYour previous answer could not be used ({problem}). Answer again, JSON only."
-        reply = ai.call(job, text, system=system, run=ctx.run, stock_id=ctx.stock_id, model=ctx.model if job == "strong" else None)
+        reply = ai.call(job, text, system=system, run=ctx.run, stock_id=ctx.stock_id, model=ctx.model if job == "strong" else None,
+                        only_first=ctx.no_fallback)
+        ctx.families.add(ai.family(reply.provider, reply.model))
+        ctx.models.append(f"{reply.provider}:{reply.model}")
         try:
             data = parse_json(reply.text)
             check(data)
@@ -171,6 +178,8 @@ def why_items(r) -> list[dict]:
             items.append({"id": f"M:{name}", "what": f"measure {name} is weak (value {m['value']}; {m.get('note') or 'no note'})",
                           "terms": MEASURE_TERMS.get(name, [])})
     for code, f in open_flags(r):
+        if f["flag"] == "borderline":  # "within 10% of a threshold": nothing to explain (roadmap, "After the first real-model run")
+            continue
         items.append({"id": code, "what": f"flag {f['flag']}: {f['detail']}", "terms": FLAG_TERMS.get(f["flag"], [])})
     return items[:MAX_ITEMS]
 
@@ -291,7 +300,8 @@ def figure_items(r) -> list[dict]:
     if last in r.liquid:
         v = r.liquid[last]
         items.append({"id": "liquid", "claim": "liquid assets = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())
-                      + f" = {v.value:,.0f}, period end {last}", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
+                      + f" = {v.value:,.0f}, period end {last}", "note": "by our rule only cash, short-term investments and marketable debt securities count; "
+                      "equity securities and stakes in other companies are left out on purpose", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
     if last in r.debt:
         v = r.debt[last]
         items.append({"id": "debt", "claim": "debt = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())
@@ -349,7 +359,8 @@ def run_ai(r, text: str, ctx: Context) -> AIPart:
     def audit(kind, items):
         if kind in done or not items:
             return done.get(kind)
-        res = auditor.audit(kind, items, text, run=ctx.run, stock_id=ctx.stock_id)
+        writer = ctx.families or {ai.entry_family(ai.chain("strong", None, ctx.model)[0])}
+        res = auditor.audit(kind, items, text, run=ctx.run, stock_id=ctx.stock_id, exclude_families=writer)
         part.audits.append(res)
         done[kind] = res
         return res
@@ -363,14 +374,31 @@ def run_ai(r, text: str, ctx: Context) -> AIPart:
     if trig:
         evidence = _evidence(r, part, trig)
         item = {"id": "sell", "claim": f"{sell.TRIGGERS[trig]} — " + " | ".join(evidence), "terms": ["risk", "revenue", "debt"]}
-        res = audit("sell", [item])
-        failed = [a for a in part.audits if a.result == "fail"]
-        held = "; ".join(f"{a.audit}: " + ", ".join(i["id"] for i in a.failed()) for a in failed) or None
-        if res is not None and res.error and not held:
-            held = f"the sell audit could not run ({res.error})"  # an unaudited suggestion is held back as well
-        text_out = sell.message(ctx.ticker, trig, evidence, data_check, held)
+        audit("sell", [item])
+        held = hold_reason(done)
+        text_out = sell.message(ctx.ticker, trig, evidence, data_check, held, ctx.filing)
         part.sell = {"trigger": trig, "text": text_out, "status": "held" if held else "sent", "evidence": evidence}
     return part
+
+
+def hold_reason(done: dict) -> tuple[str, str] | None:
+    """Why a sell suggestion is held back, or None when every audit behind it passed (roadmap, "Changes after the phase 2 audit").
+    The figure audit and the sell audit must have run and passed; the reading audit must pass when it ran."""
+    for kind in ("figure", "sell"):
+        if done.get(kind) is None:
+            return "not_run", f"the {kind} audit did not run"
+    ran = [a for a in done.values() if a is not None]
+    errors = [a for a in ran if a.error]
+    if errors:
+        return "not_run", "; ".join(f"{a.audit}: {a.error}" for a in errors)
+    failed = [a for a in ran if a.result == "fail"]
+    if failed:
+        return "disagrees", "; ".join(f"{a.audit}: " + ", ".join(i["id"] for i in a.failed()) for a in failed)
+    unconfirmed = [a for a in ran if a.result != "pass"]
+    if unconfirmed:
+        return "unconfirmed", "; ".join(
+            f"{a.audit} ({sum(i['verdict'] != 'pass' for i in a.items)} of {len(a.items)} items not confirmed)" for a in unconfirmed)
+    return None
 
 
 def _evidence(r, part: AIPart, trig: str) -> list[str]:

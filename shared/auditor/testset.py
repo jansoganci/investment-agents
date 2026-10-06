@@ -18,6 +18,8 @@ PFIZER = ("Short-term borrowings, including current portion of long-term debt 3,
           "Total debt 40,000 at year end.")
 NET = ("We may become subject to claims, lawsuits or regulatory proceedings that could be costly and harm our business.\n"
        "Revenue increased 28% year over year, driven by new large customers and expansion of existing customers.")
+NVDA = ("Cash and cash equivalents $ 22,443 $ 10,605\nMarketable securities 34,143 31,238\nTotal cash, cash equivalents and marketable "
+        "securities $ 56,586 $ 41,843\nLong-term debt 32,366 7,469")
 REV = "Revenue increased 12% to $4.1 billion in the quarter, driven by higher volumes. Management expects growth to continue."
 
 CASES = [
@@ -28,6 +30,12 @@ CASES = [
     ("figure", "liquid assets: all parts present", KO,
      [{"id": "liquid", "claim": "liquid assets = cash 10,270 + short-term investments 3,602 + marketable securities 1,934 = 15,806, in millions",
        "terms": ["cash and cash equivalents", "short-term investments", "marketable securities"]}], "pass"),
+    ("figure", "Nvidia liquid assets: the securities under a new name are missed", NVDA,
+     [{"id": "liquid", "claim": "liquid assets = Cash and cash equivalents 22,443 = 22,443 (no marketable securities found), in millions",
+       "terms": ["cash and cash equivalents", "marketable securities"]}], "fail"),
+    ("figure", "Nvidia liquid assets: cash + marketable securities", NVDA,
+     [{"id": "liquid", "claim": "liquid assets = cash 22,443 + marketable securities 34,143 = 56,586, in millions",
+       "terms": ["cash and cash equivalents", "marketable securities"]}], "pass"),
     ("figure", "Boeing debt: only the current part", BOEING,
      [{"id": "debt", "claim": "debt = Current portion of long-term debt 8,460 = 8,460, in millions", "terms": ["debt"]}], "fail"),
     ("figure", "Pfizer 2020 debt: one item, not the total", PFIZER,
@@ -48,10 +56,10 @@ CASES = [
 ]
 
 
-def run(model: str | None = None) -> list[dict]:
+def run(model: str | None = None, run=None) -> list[dict]:
     out = []
     for card, name, text, items, want in CASES:
-        res = auditor.audit(card, items, text, model=model)
+        res = auditor.audit(card, items, text, model=model, run=run)
         got = res.items[0]["verdict"] if res.items else "no_answer"
         out.append({"card": card, "case": name, "want": want, "got": got, "ok": got == want, "reason": (res.items or [{}])[0].get("reason", res.error)})
     return out

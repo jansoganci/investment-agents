@@ -97,3 +97,16 @@ def test_weekly_analyzes_watching_stocks_with_a_new_filing_only(db, env, src):
     msg = run.weekly(db, src, today="2026-10-12")
     assert msg and "ANALYSIS · KO" in msg
     assert db.execute("SELECT count(*) FROM card_entries").fetchone()[0] == 3
+
+
+def test_a_figure_found_later_closes_its_open_row(db, env, src):
+    run.analyze(db, "KO", src, today="2026-10-05")
+    sid = db.execute("SELECT id FROM stocks WHERE ticker='KO'").fetchone()[0]
+    db.execute("INSERT INTO missing_data (stock_id, year, figure, names_tried, status, created_at) "
+               "VALUES (?, '2024', 'revenue', '[]', 'open', '2026-10-01')", (sid,))
+    db.execute("INSERT INTO missing_data (stock_id, year, figure, names_tried, status, created_at) "
+               "VALUES (?, 'TTM 2020-01-01', 'cash', '[]', 'open', '2026-10-01')", (sid,))
+    db.commit()
+    run.analyze(db, "KO", src, today="2026-10-06")
+    rows = db.execute("SELECT figure, status FROM missing_data WHERE stock_id=? AND created_at='2026-10-01'", (sid,)).fetchall()
+    assert {r[1] for r in rows} == {"tag_added"}

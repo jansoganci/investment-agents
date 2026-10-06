@@ -51,3 +51,10 @@ def test_the_cheap_model_text_is_used_only_if_nothing_is_lost(db, monkeypatch):
     assert ask.simplify(original) == original  # a changed command: the template stays
     FakeAI(lambda *a: original.replace("2026", "year")).install(monkeypatch)
     assert ask.simplify(original) == original  # a lost year: the template stays
+
+
+def test_without_ai_the_message_is_the_plain_template_and_no_model_is_called(db, monkeypatch):
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    stock_with_missing(db, [("2026", "interest")])
+    text = ask.request(db, plain=False, today="2026-10-06")
+    assert "/data NKE 2026 interest" in text and fake.calls == []

@@ -189,3 +189,79 @@ def test_a_sell_suggestion_whose_audit_cannot_run_is_held(monkeypatch):
     fake.fail = {"deepseek", "openrouter", "openai"}  # the auditor job has no working provider; the writer (anthropic) does
     part = parts.run_ai(R, TEXT, ctx(first=False, in_portfolio=True, grades=["solid"], previous_thesis=parts.thesis_text(THESIS)))
     assert part.sell["status"] == "held" and "could not run" in part.sell["text"]
+
+
+BROKEN = {"status": "broken", "point": 1, "reason": "growth turned", "quote": NOTES}
+HELD_CTX = dict(first=False, in_portfolio=True, grades=["solid"], filing="0001045810-26-000075")
+
+
+def held_ctx():
+    return ctx(previous_thesis=parts.thesis_text(THESIS), **HELD_CTX)
+
+
+def test_an_auditor_that_confirms_nothing_holds_the_sell_suggestion(monkeypatch):
+    FakeAI(handler(check=BROKEN, verdict="not_found")).install(monkeypatch)
+    part = parts.run_ai(R, TEXT, held_ctx())
+    assert part.sell["status"] == "held" and "could not confirm the evidence" in part.sell["text"]
+    assert "CONSIDER SELLING" not in part.sell["text"] and not part.unverified  # not confirmed is a note, not a mark
+    assert "Source: filing 0001045810-26-000075" in part.sell["text"]
+
+
+def test_an_auditor_that_answers_with_an_empty_list_holds_it_too(monkeypatch):
+    def h(job, system, prompt):
+        return [] if job == "auditor" else handler(check=BROKEN)(job, system, prompt)
+    FakeAI(h).install(monkeypatch)
+    assert parts.run_ai(R, TEXT, held_ctx()).sell["status"] == "held"
+
+
+def test_one_unconfirmed_audit_among_passes_still_holds_it(monkeypatch):
+    FakeAI(handler(check=BROKEN, verdict={"debt": "not_found"})).install(monkeypatch)
+    part = parts.run_ai(R, TEXT, held_ctx())
+    assert part.sell["status"] == "held" and "figure (1 of " in part.sell["text"]
+
+
+def test_only_all_pass_sends_it(monkeypatch):
+    FakeAI(handler(check=BROKEN)).install(monkeypatch)
+    part = parts.run_ai(R, TEXT, held_ctx())
+    assert part.sell["status"] == "sent" and parts.hold_reason({}) == ("not_run", "the figure audit did not run")
+
+
+def test_the_hold_reason_names_a_disagreement_a_missing_audit_and_an_error():
+    ok = lambda kind, result="pass", error=None, items=(): type("A", (), {
+        "audit": kind, "result": result, "error": error, "items": list(items),
+        "failed": lambda self: [i for i in self.items if i["verdict"] == "fail"]})()
+    bad = {"id": "debt", "verdict": "fail", "quote": "", "reason": ""}
+    assert parts.hold_reason({"figure": ok("figure"), "sell": ok("sell")}) is None
+    assert parts.hold_reason({"figure": ok("figure", "fail", items=[bad]), "sell": ok("sell")}) == ("disagrees", "figure: debt")
+    assert parts.hold_reason({"sell": ok("sell")}) == ("not_run", "the figure audit did not run")
+    assert parts.hold_reason({"figure": ok("figure", "not_found", error="no model answered"), "sell": ok("sell")})[0] == "not_run"
+    assert parts.hold_reason({"figure": ok("figure"), "sell": ok("sell"), "reading": ok("reading", "not_found", items=[{"verdict": "not_found"}])})[0] == "unconfirmed"
+
+
+def test_the_figure_audit_sees_the_balance_sheet_row_of_debt(monkeypatch):
+    fake = FakeAI(handler()).install(monkeypatch)
+    parts.run_ai(R, TEXT, ctx())
+    figure_prompt = next(p for job, s, p in fake.calls if job == "auditor" and "\"id\": \"debt\"" in p.split("FILING EXCERPTS")[0])
+    assert "Long-term debt 32,366 7,469" in figure_prompt  # a 27-character table row used to be dropped
+
+
+def test_the_auditor_is_never_of_the_writers_family(monkeypatch):
+    fake = FakeAI(handler(check=BROKEN)).install(monkeypatch)
+    fake.fail = {"anthropic", "openrouter"}  # the writer falls back to GPT-6 Sol (openai)
+    part = parts.run_ai(R, TEXT, held_ctx())
+    writers = {m for m in fake.models if m.startswith("openai")}
+    auditors = [m for (job, _s, _p), m in zip(fake.calls, fake.models) if job == "auditor"]
+    assert writers and auditors and all(m.startswith("deepseek") for m in auditors)  # never openai, the writer's maker
+    assert part.sell["status"] == "sent"
+    fake.fail = {"anthropic", "openrouter", "deepseek"}  # only the writer's maker is left for the auditor
+    part = parts.run_ai(R, TEXT, held_ctx())
+    assert part.sell["status"] == "held" and "audit could not run" in part.sell["text"]
+
+
+def test_a_borderline_flag_gets_no_why_question():
+    import copy
+    r = copy.copy(R)
+    r.flags = R.flags + [{"flag": "borderline", "detail": "capital_return"}]
+    r.codes = [f"U{i}" for i in range(1, len(r.flags) + 1)]
+    ids = [i["id"] for i in parts.why_items(r)]
+    assert f"U{len(r.flags)}" not in ids and len(ids) == len(R.flags)

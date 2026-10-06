@@ -51,12 +51,39 @@ def test_the_cost_goes_to_the_runs_row(db, monkeypatch):
     assert db.execute("SELECT run_id FROM ai_calls").fetchone()[0] == r.id
 
 
-def test_a_model_without_a_price_is_unpriced_not_free(db, monkeypatch):
+def test_the_prices_are_the_ones_i_gave(db):
+    assert ai.price_of("deepseek-v4-flash") == (0.14, 0.28, False)
+    assert ai.price_of("deepseek-v4-pro") == (0.435, 0.87, False)
+    assert ai.price_of("gpt-6-sol") == (2.0, 10.0, False)
+    assert ai.price_of("openai/gpt-6-sol")[2] is False  # an OpenRouter name finds its model's price
+    assert ai.price_of("anthropic/claude-sonnet-5.5") == (2.0, 10.0, False)  # OpenRouter's dotted version name too
+
+
+def test_a_model_without_a_price_is_counted_at_the_cautious_default_and_marked_estimated(db, monkeypatch):
+    assert ai.cost_of("some-new-model", 1000, 500) == (pytest.approx((1000 * 5 + 500 * 25) / 1e6), True)
+    settings = config.settings()
+    settings["model_aliases"] = dict(settings["model_aliases"], fresh={"provider": "deepseek", "model": "deepseek-v9"})
+    monkeypatch.setattr(config, "settings", lambda: settings)
     FakeAI(lambda *a: "x").install(monkeypatch)
-    reply = ai.call("auditor", "p", conn=db)  # deepseek-v4-pro has no price yet
-    assert reply.cost_usd is None
-    assert db.execute("SELECT cost_usd FROM ai_calls").fetchone()[0] is None
-    assert ai.spend_by_provider(db) == [{"provider": "deepseek", "calls": 1, "usd": 0, "unpriced": 1}]
+    reply = ai.call("auditor", "p", conn=db, model="fresh")
+    assert reply.estimated and reply.cost_usd == pytest.approx(0.0175)
+    assert db.execute("SELECT estimated, cost_usd FROM ai_calls").fetchone() == (1, pytest.approx(0.0175))
+    assert ai.spend_by_provider(db) == [{"provider": "deepseek", "calls": 1, "usd": pytest.approx(0.0175), "estimated": 1, "rejected": 0}]
+
+
+def test_a_call_keeps_its_stock(db, monkeypatch):
+    db.execute("INSERT INTO stocks (cik, ticker, company, status, created_at) VALUES ('1', 'NVDA', 'Nvidia', 'candidate', 'x')")
+    FakeAI(lambda *a: "x").install(monkeypatch)
+    ai.call("strong", "p", conn=db, stock_id=1)
+    assert db.execute("SELECT stock_id FROM ai_calls").fetchone()[0] == 1
+
+
+def test_the_month_starts_on_the_utc_clock(monkeypatch):
+    from datetime import datetime, timezone
+    from shared import clock
+    # 22:30 UTC on 31 October is 01:30 on 1 November in Turkey: the stamps are UTC, so the month is still October
+    monkeypatch.setattr(clock, "now_utc", lambda: datetime(2026, 10, 31, 22, 30, tzinfo=timezone.utc))
+    assert ai.month_start() == "2026-10-01"
 
 
 def test_one_providers_error_moves_to_the_next(db, monkeypatch):
@@ -95,7 +122,7 @@ def test_ai_calls_is_append_only(db, monkeypatch):
 
 def test_estimate(db):
     assert ai.estimate("strong", 40000, 1500, conn=db) == pytest.approx(10000 * 2e-6 + 1500 * 10e-6)
-    assert ai.estimate("auditor", 40000, conn=db) is None  # no price
+    assert ai.estimate("auditor", 40000, conn=db) == pytest.approx(10000 * 0.435e-6 + 1500 * 0.87e-6)
 
 
 # --- the real backends, against stand-in SDK clients ----------------------------------------------------------------------
@@ -176,3 +203,58 @@ def test_an_answer_cut_at_max_tokens_is_a_provider_error(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     with pytest.raises(ProviderError, match="cut at max_tokens"):
         backends.anthropic_backend({"model": "m"}, "", "p", 10)
+
+
+@pytest.mark.parametrize("provider,model,maker", [
+    ("anthropic", "claude-sonnet-5-5", "anthropic"), ("openrouter", "anthropic/claude-sonnet-5.5", "anthropic"),
+    ("deepseek", "deepseek-v4-pro", "deepseek"), ("openrouter", "deepseek/deepseek-v4-pro", "deepseek"),
+    ("openai", "gpt-6-sol", "openai"), ("openrouter", "openai/gpt-6-sol", "openai")])
+def test_a_model_belongs_to_its_maker_even_through_openrouter(provider, model, maker):
+    assert ai.family(provider, model) == maker
+
+
+def test_call_skips_the_models_of_an_excluded_family(db, monkeypatch):
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    fake.fail = {"deepseek", "openrouter"}  # the auditor's own family is down: the next maker is used
+    reply = ai.call("auditor", "p", conn=db, exclude_families={"anthropic"})
+    assert (reply.provider, reply.model) == ("openai", "gpt-6-sol")
+    fake.fail = set()
+    with pytest.raises(AIError, match="writer's family"):
+        ai.call("auditor", "p", conn=db, exclude_families={"deepseek", "openai"})  # nothing independent is left
+
+
+def test_only_first_does_not_fall_back(db, monkeypatch):
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    fake.fail = {"anthropic"}
+    with pytest.raises(AIError, match="anthropic claude-sonnet-5-5"):
+        ai.call("strong", "p", conn=db, only_first=True)
+    assert fake.calls == []
+
+
+def test_a_billed_but_rejected_call_is_logged_and_counted(db, monkeypatch):
+    monkeypatch.setattr(backends, "make_anthropic", lambda key, timeout: _Anthropic(stop="max_tokens"))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    with pytest.raises(AIError, match="cut at max_tokens"):  # the next providers have no key
+        ai.call("strong", "p", conn=db)
+    row = db.execute("SELECT provider, outcome, input_tokens, output_tokens, cost_usd, estimated FROM ai_calls").fetchone()
+    assert row == ("anthropic", "cut", 120, 40, pytest.approx(120 * 2e-6 + 40 * 10e-6), 0)
+    assert ai.month_spend(db) > 0 and ai.spend_by_provider(db)[0]["rejected"] == 1
+
+
+@pytest.mark.parametrize("finish,refusal,outcome", [("length", None, "cut"), ("stop", "I cannot help", "refused"),
+                                                    ("content_filter", None, "refused")])
+def test_openai_style_cut_and_refused_answers_are_provider_errors_with_their_usage(monkeypatch, finish, refusal, outcome):
+    stub = _OpenAI(finish=finish)
+    stub.refusal = refusal
+    orig = stub.create
+
+    def create(**kw):
+        resp = orig(**kw)
+        resp.choices[0].message.refusal = refusal
+        return resp
+    stub.create = create
+    monkeypatch.setattr(backends, "make_openai", lambda *a: stub)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "key")
+    with pytest.raises(ProviderError) as exc:
+        backends.openai_style_backend("deepseek")({"model": "m"}, "", "p", 10)
+    assert exc.value.outcome == outcome and exc.value.usage == (200, 50, None)

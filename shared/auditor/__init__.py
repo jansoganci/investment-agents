@@ -6,8 +6,8 @@ word, or the item is `not_found`. A different model family from the writer (`aud
     result = auditor.audit("figure", items, text, run=run)      # AuditResult
     auditor.save(conn, stock_id, result)                        # a row in `audits`
 
-Overall result: `fail` if any item fails; `pass` if no item fails and at least 70% pass; otherwise `not_found` (could not
-confirm — noted, but the card is not marked unverified).
+Overall result (roadmap, "Changes after the phase 2 audit"): `pass` only when every item passes; `fail` when any item fails; otherwise
+`not_found` (could not confirm — noted, but the card is not marked unverified). No items: `not_found`.
 """
 
 from __future__ import annotations
@@ -27,7 +27,8 @@ VERDICTS = ("pass", "fail", "not_found")
 ENGINE = """You are an auditor. You check; you never produce or correct figures and you never write new claims.
 Answer with JSON only, no other text: a list of objects, one per item you were given, in this form:
 {"id": "<the item's id>", "verdict": "pass" | "fail" | "not_found", "quote": "<the row or sentence from the filing, word for word>", "reason": "<one short sentence>"}
-A `quote` must be copied from the excerpts exactly. If you cannot find the evidence in the excerpts, the verdict is "not_found".
+A `quote` must be copied from the excerpts exactly. When a figure sits on several rows (for example the parts of liquid assets), copy each
+row exactly and separate the rows with " | ". If you cannot find the evidence in the excerpts, the verdict is "not_found".
 Below is the rule card for this check.
 
 """
@@ -61,7 +62,8 @@ def parse_items(text: str) -> list[dict]:
     return data
 
 
-def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, model: str | None = None) -> AuditResult:
+def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, model: str | None = None,
+          exclude_families: set | None = None) -> AuditResult:
     """`items`: [{"id", "claim", ...}]; `text`: the filing text the quotes must be found in."""
     if kind not in KINDS:
         raise ValueError(f"unknown audit '{kind}'")
@@ -72,7 +74,8 @@ def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, m
     prompt = json.dumps({"items": [{k: v for k, v in i.items() if k != "terms"} for i in items]}, ensure_ascii=False,
                         indent=1) + "\n\nFILING EXCERPTS:\n" + "\n---\n".join(excerpts)
     try:
-        reply = ai.call("auditor", prompt, system=ENGINE + card_text(kind), run=run, stock_id=stock_id, model=model)
+        reply = ai.call("auditor", prompt, system=ENGINE + card_text(kind), run=run, stock_id=stock_id, model=model,
+                        exclude_families=exclude_families)
         parsed = parse_items(reply.text)
     except (ai.AIError, ValueError, json.JSONDecodeError) as exc:
         return AuditResult(kind, "not_found", [], error=f"{type(exc).__name__}: {exc}")
@@ -83,7 +86,8 @@ def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, m
         verdict = p.get("verdict") if p.get("verdict") in VERDICTS else "not_found"
         quote = (p.get("quote") or "").strip()
         reason = p.get("reason") or ""
-        if verdict in ("pass", "fail") and not filing.quote_in(text, quote, cfg.get("min_quote_chars", 20)):
+        needs_number = kind in ("figure", "sell") and not re.search(r"\d", quote)  # "in millions" proves nothing about a figure
+        if verdict in ("pass", "fail") and (needs_number or not filing.quote_ok(text, quote, cfg.get("min_quote_chars", 20))):
             # a verdict that does not carry a real quote is not believed (a fail without evidence would be as bad as a pass)
             verdict, reason = "not_found", f"no verified quote ({reason})".strip()
         out.append({"id": str(i["id"]), "verdict": verdict, "quote": quote, "reason": reason})
@@ -94,7 +98,7 @@ def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, m
 def overall(items: list[dict]) -> str:
     if any(i["verdict"] == "fail" for i in items):
         return "fail"
-    if items and sum(i["verdict"] == "pass" for i in items) / len(items) >= 0.7:
+    if items and all(i["verdict"] == "pass" for i in items):
         return "pass"
     return "not_found"
 

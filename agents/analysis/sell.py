@@ -27,16 +27,24 @@ def trigger(in_portfolio: bool, grade: str, grades: list[str], thesis_status: st
     return None
 
 
-def message(ticker: str, key: str, evidence: list[str], data_check_open: bool, held: str | None) -> str:
-    """The text of the suggestion (it goes to Telegram through the analysis message)."""
+HOLD_TEXT = {"disagrees": "The auditor disagrees: {d}. Not advice until the figures are checked.",
+             "unconfirmed": "The auditor could not confirm the evidence: {d}. Not advice until it is checked.",
+             "not_run": "The audit could not run ({d}). Not advice until it has run."}
+
+
+def message(ticker: str, key: str, evidence: list[str], data_check_open: bool, held: tuple[str, str] | None = None,
+            filing: str | None = None) -> str:
+    """The text of the suggestion (it goes to Telegram through the analysis message). `held`: (why, detail) when it is held back."""
     lines = []
     if held:
         lines.append(f"SELL SUGGESTION HELD · {ticker} — {TRIGGERS[key]}")
-        lines.append(f"The auditor disagrees: {held}. It is not advice until the figures are checked.")
+        lines.append(HOLD_TEXT[held[0]].format(d=held[1]))
     else:
         lines.append(f"CONSIDER SELLING · {ticker} — {TRIGGERS[key]}")
         if data_check_open:
             lines.append("Check the figure before acting: a data check is open on this card.")
     lines += [f"- {e}" for e in evidence]
+    if filing:
+        lines.append(f"Source: filing {filing}")
     lines.append("The decision is yours.")
     return "\n".join(lines)

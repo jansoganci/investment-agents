@@ -238,8 +238,13 @@ Database version 4 (`ai_calls`, `audits.filing`, `card_entries.unverified`, `mis
 (Anthropic through its SDK; DeepSeek, OpenAI, OpenRouter through the OpenAI-style SDK), `shared/auditor` (rule cards 1–3, test
 sets), `shared/sec/filing` (text, word-for-word quote check, excerpts), agent 3's AI parts and sell triggers, stable warning codes
 (U1 stays U1), the missing-data message, `--drop-alerts`, and the commands `/spend` `/model` `/note` `/thesis` `/closewarning`
-(`/analyze KO [model]` shows the estimated cost first). The model name in `settings.yaml` is fixed (`claude-sonnet-5-5`); only
-Sonnet 5.5 and Opus 5.5 have a price there — fill the others (`pricing`) from the providers' pages.
+(`/analyze KO [model]` shows the estimated cost first). The model name in `settings.yaml` is fixed (`claude-sonnet-5-5`); the prices of all five models are there (DeepSeek and GPT-6 Sol
+given by me, 2026-10-06); an unknown model is counted at a cautious default.
+
+**Phase 2 audit (2026-10-06, a separate session):** 1 blocker and 8 should-fix found and fixed on the same branch (roadmap section 3,
+"Changes after the phase 2 audit"): a sell suggestion is sent only when every audit behind it passed · the audit has no threshold ·
+excerpts keep balance-sheet rows · the auditor is never of the writer's family · warning identity keeps years · rejected calls are
+logged and counted · the strong-model test records who answered and does not fall back. 342 tests pass.
 
 **Mac check, in this order (all real calls, a few dollars in all; the Anthropic credit ends 2026-10-19):**
 1. `uv sync` · `uv run python -m shared.db upgrade` (the development database goes to version 4) · the four keys are in `.env`.
@@ -406,7 +411,7 @@ off this list is my decision.
 | What | Why not now | Comes back when |
 |---|---|---|
 | Saved Yahoo answers for the tests (`tests/fixtures/yahoo/`) | Yahoo answered "too many requests" to the cloud machine for hours; the price job is tested on an answer built by hand in Yahoo's format | the Mac check runs `uv run python tests/fixtures/fetch_yahoo.py` once and pushes the files |
-| Yahoo answers HTTP 429 on the Air and on the cloud machine (2026-10-06) | cause not found (not our request headers; the Air has no VPN); until it works there is no price line and Nvidia's share count cannot be confirmed (a split) | the same `curl` test on the main Mac; if Yahoo is blocked for good, I choose another price source |
+| ~~Yahoo answers HTTP 429 on the Air and on the cloud machine (2026-10-06)~~ | **solved 2026-10-06:** the price job uses `yfinance` (roadmap, "After the first real-model run", item 24); live on the cloud machine: NVDA splits found, price line and share count computed | — |
 | The Mac check of phases 0 and 1 | both are merged into `main` (2026-10-05, before the check — my decision); the check is still owed, on `main` | next, on my Mac; a fix comes as a small PR |
 | Finishing the Air setup (`AIR_SETUP.md`) and phase 0's Air check | started 2026-10-05; done: tools, project, Drive, Telegram, `.env`, 216 tests, the real data check (2026-10-06). **First next: limit Hermes (phase 5, in the Air's terminal)**, then OpenRouter and the tests (phases 6–7) | at the latest before phase 4 |
 | The third external review | it has not arrived | it arrives: before phase 1 is merged → into phase 1; later → a fix of its own |

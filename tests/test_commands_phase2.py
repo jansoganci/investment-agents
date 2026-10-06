@@ -58,8 +58,13 @@ def test_spend_adds_up_by_provider_and_shows_what_is_left(db, monkeypatch):
     ai.call("strong", "p", conn=db)
     ai.call("auditor", "p", conn=db)
     text = commands.run(["spend"])[1]
-    assert "- anthropic: $0.01 · 1 calls" in text and "- deepseek: $0.00 · 1 calls, 1 unpriced" in text
+    assert "- anthropic: $0.01 · 1 calls" in text and "- deepseek: $0.00 · 1 calls" in text
     assert "of $30" in text and "$29.99 left" in text
+    db.execute("INSERT INTO ai_calls (job, provider, model, cost_usd, estimated, outcome, created_at) "
+               "VALUES ('strong', 'openai', 'gpt-9', 0.5, 1, 'cut', ?)", (ai.month_start() + "T01:00:00Z",))
+    db.commit()
+    text = commands.run(["spend"])[1]
+    assert "- openai: $0.50 · 1 calls, 1 at the default price (no price in settings.yaml), 1 billed but rejected" in text
 
 
 def test_note_thesis_and_closewarning_write_dated_notes_and_undo_withdraws_them(db, env, monkeypatch):
@@ -98,3 +103,11 @@ def test_notes_need_a_card(db, monkeypatch):
     stocks_row = db.execute("INSERT INTO stocks (cik, ticker, company, status, created_at) VALUES ('1', 'ABC', 'Abc', 'candidate', 'x')")
     db.commit()
     assert "has no card yet" in commands.run(["note", "ABC", "hello"])[1]
+
+
+def test_model_refuses_a_choice_that_puts_writer_and_auditor_in_one_family(db):
+    assert "different model family" in commands.run(["model", "auditor", "sonnet-5.5"])[1]   # the writer is Anthropic
+    assert "different model family" in commands.run(["model", "strong", "deepseek-v4-pro"])[1]  # the auditor is DeepSeek
+    assert do("model", "strong", "gpt-6-sol")[0] == 0
+    assert "both would be openai" in commands.run(["model", "auditor", "gpt-6-sol"])[1]
+    assert do("model", "auditor", "sonnet-5.5")[0] == 0  # now the writer is OpenAI, so Anthropic may audit

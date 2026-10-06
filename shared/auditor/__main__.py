@@ -16,7 +16,7 @@ def main(argv=None) -> int:
         from shared import ai
         from shared import db as dbmod
 
-        results = testset.run(argv[1] if len(argv) == 2 else None)
+        results = testset.run(argv[1] if len(argv) == 2 else None, run=run)
         conn = dbmod.connect()
         try:
             spent = ai.month_spend(conn)

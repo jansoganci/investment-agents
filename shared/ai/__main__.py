@@ -6,11 +6,17 @@ import os
 import sys
 
 from shared import ai, config
+from shared import db as dbmod
 from shared.ai import ProviderError, backends
 
 
 def ping() -> str:
     seen, lines = set(), ["AI PING (each provider and model once; a few tokens each)"]
+    try:
+        conn = dbmod.connect()  # the calls are logged like any other (they cost a little)
+    except dbmod.DatabaseMissing:
+        conn = None
+        lines.append("(no database yet: these calls are not logged — run: uv run python -m shared.db init)")
     for job, entries in (config.settings().get("models") or {}).items():
         if job == "hermes_chat":
             continue
@@ -28,11 +34,20 @@ def ping() -> str:
                 continue
             try:
                 reply = backend(dict(e, job="ping"), "", "Reply with the single word: OK", 200)
-                cost = ai.cost_of(reply.model, reply.input_tokens, reply.output_tokens)
-                price = "" if cost is not None else " (no price in settings.yaml)"
+                cost, est = ai.cost_of(reply.model, reply.input_tokens, reply.output_tokens)
+                reply.cost_usd, reply.estimated, reply.job = cost, est, "ping"
+                if conn is not None:
+                    ai.log_reply(conn, None, reply)
+                price = " (no price in settings.yaml: counted at the default)" if est else ""
                 lines.append(f"✓ {e['provider']} {e['model']} — answered {reply.text.strip()[:20]!r}{price}")
             except ProviderError as exc:
+                if conn is not None and exc.usage:
+                    n_in, n_out, given = exc.usage
+                    c, est = (given, False) if given is not None else ai.cost_of(e["model"], n_in, n_out)
+                    ai.log_reply(conn, None, ai.Reply("", e["provider"], e["model"], n_in, n_out, c, "ping", est), None, exc.outcome)
                 lines.append(f"✗ {e['provider']} {e['model']} — {exc}")
+    if conn is not None:
+        conn.close()
     return "\n".join(lines)
 
 

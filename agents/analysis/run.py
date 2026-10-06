@@ -142,7 +142,21 @@ def _save_financials(conn, stock_id: int, facts: Facts, r: Result, now: str) -> 
     return new
 
 
-def _save_missing(conn, stock_id: int, missing: list[dict], now: str) -> int:
+def _close_found(conn, stock_id: int, missing: list[dict], covered: set[str]) -> None:
+    """An open row whose figure is found now (SEC added the figure, our names caught up, or I gave it) is closed; so is a row
+    for a last-4-quarters period that has been replaced by a newer one. Without this a figure found later is still asked."""
+    still = {(m["year"], m["figure"]) for m in missing}
+    for rid, year, figure in conn.execute("SELECT id, year, figure FROM missing_data WHERE stock_id=? AND status='open'",
+                                          (stock_id,)).fetchall():
+        found_now = year in covered and (year, figure) not in still
+        replaced = (year or "").startswith("TTM ") and year not in covered
+        if found_now or replaced:
+            conn.execute("UPDATE missing_data SET status='tag_added' WHERE id=?", (rid,))
+
+
+def _save_missing(conn, stock_id: int, missing: list[dict], now: str, covered: set[str] | None = None) -> int:
+    if covered is not None:
+        _close_found(conn, stock_id, missing, covered)
     new = 0
     for m in missing:
         if conn.execute("SELECT 1 FROM missing_data WHERE stock_id=? AND year=? AND figure=? AND status='open'",
@@ -212,6 +226,7 @@ def _ai_part(conn, stock, ticker, company, cik, subs, source, r, src, run, model
     accn = source.get("filing")
     doc = sec.primary_document(subs, accn) if accn else None
     ctx = _context(conn, stock, ticker, company, run, model, rng, news)
+    ctx.filing = accn
     if not (accn and doc):
         return ai_parts.AIPart(notes=["AI skipped: the filing's main document was not found"]), ctx
     try:
@@ -278,7 +293,7 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
         for a in (part.audits if part else []):
             auditor.save(conn, sid, a, facts.latest_accn)
         _save_financials(conn, sid, facts, r, now)
-        n_missing = _save_missing(conn, sid, r.missing, now)
+        n_missing = _save_missing(conn, sid, r.missing, now, {facts.year_label(e) for e in facts.ends})
         # the card last: if anything above fails, the card is not touched
         path = drive.find_card(ticker) or drive.card_path(ticker, stock["company"] or company)
         if not path.exists():
@@ -319,7 +334,7 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
     if part is not None and part.sell:
         text += "\n\n" + part.sell["text"]
     if ask_missing:
-        request = ask.request(conn, ticker, run)
+        request = ask.request(conn, ticker, run, plain=use_ai)
         if request:
             text += "\n\n" + request
     return Outcome(sid, ticker, r.grade, text, str(path))
@@ -355,7 +370,7 @@ def weekly(conn, sources=None, today: str | None = None, *, use_ai: bool = False
             done.append(out.text)
         except Exception as exc:  # noqa: BLE001 — one stock's error must not stop the others
             errors.append(f"{ticker}: {type(exc).__name__}: {exc}")
-    request = ask.request(conn, None, run)  # the gaps of this run, in one message (a figure is asked once, reminded once)
+    request = ask.request(conn, None, run, plain=use_ai)  # the gaps of this run, in one message (a figure is asked once, reminded once)
     if not done and not errors and not request:
         return None
     parts = done + ([notify.message("ANALYSIS · errors", errors)] if errors else []) + ([request] if request else [])

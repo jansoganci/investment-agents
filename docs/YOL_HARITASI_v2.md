@@ -526,8 +526,8 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
    block, a line in the message, results in `audits`; figures are never changed.
 7. **Money:** every call is a row in `ai_calls` (job, provider, model, tokens, dollars) — a new table (database version 4) so that
    `/spend` can show spend by provider; the dollars are also added to the job's `runs` row. Prices per million tokens are in
-   `settings.yaml` (`pricing`); a model without a price is counted as 0 and shown as "unpriced" in `/spend`; OpenRouter's own cost
-   figure is used when it sends one. A call is refused when the month's spend has reached `budget.ai_monthly_max_usd`.
+   `settings.yaml` (`pricing`); a model without a price is counted at the cautious default price and shown as "estimated" in `/spend`
+   (item 17 below); OpenRouter's own cost figure is used when it sends one. A call is refused when the month's spend has reached `budget.ai_monthly_max_usd`.
 8. **A refusal or an error of one provider** (no key, empty credit, rate limit, server error, safety refusal) moves the call to
    the next provider in the job's list; when all fail the job stops with the reasons (never the keys).
 9. **Where AI runs:** `/analyze` always; `python -m agents.analysis KO --ai` and `--weekly --ai` on request (without `--ai` the
@@ -536,6 +536,49 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
     model may only make it plainer, and code rejects its text if a ticker, year or command is lost.
 11. **`/model`:** a persistent override per job in the `settings` table (`model.<job>`), `default` clears it; a one-off
     `/analyze KO opus-5.5` uses an alias list (`settings.yaml` `model_aliases`) and changes nothing stored.
+
+**Changes after the phase 2 audit (2026-10-06, my decisions):**
+12. **No threshold in the audit result.** An audit is `pass` only when **every** item passes; `fail` when any item fails (the entry is
+    marked `unverified`); otherwise `not_found` ("could not confirm": a note, no mark). An audit with no items is `not_found`.
+13. **A sell suggestion is sent only when every audit behind it is `pass`** (figure audit, the sell audit, and the reading audit when
+    it ran). Anything else holds it, and the message says why: the auditor disagrees (`fail`) · the auditor could not confirm
+    (`not_found`) · the audit could not run (an error). The message names the filing the evidence comes from.
+14. **A quote the auditor gives for a figure or a sell claim must contain a number** (a general sentence such as "in millions, except per
+    share" proves nothing); every quote is still checked word for word against the filing.
+15. **Excerpts keep the table rows** that carry the figures (a short line with a number is not dropped), so the figure audit can see
+    the balance sheet.
+16. **The auditor is never of the writer's model family** (Anthropic / DeepSeek / OpenAI; OpenRouter models count as their maker).
+    `/model` refuses a choice that breaks it; at call time the models of the writer's family are skipped in the auditor's list, and
+    if none is left the audit is "could not run" (so a sell suggestion is held).
+17. **Money:** prices are in `settings.yaml` (`pricing`); a model without a price is counted at a cautious default price
+    (`pricing.default`) and shown as "estimated" in `/spend`; a call that was billed but rejected (a refusal, an answer cut at the token
+    limit) is logged too; `ping` and the auditor test set are logged as well. Every call keeps its stock (`ai_calls.stock_id`).
+18. **Warning identity:** a warning is recognised by what it says with its amounts masked and its **years kept** (a new year's debt
+    jump is a new warning); two warnings of the same shape in one entry are told apart by their full text; codes written by phase 1
+    (no `key`) are not trusted. A closed warning stays closed only while its identity is the same.
+19. **Records on a card:** `note` records are mine, except that agent 3 also writes a dated `note · agent_3` when it checks a drop alert.
+20. **The strong-model test** records the model that really answered and does not fall back to another one (it stops instead).
+21. **Without `--ai`** no AI call is made at all (the missing-data message is the plain template).
+
+**After the first real-model run on the Air (2026-10-06, my decisions):**
+22. **A figure that sits on several rows may be quoted as several rows**, separated by ` | `: every row is checked word for word against
+    the filing (each at least 12 characters), and the whole quote must contain a number. (The auditor's correct "pass" was refused
+    because liquid assets are three rows.) Everything else about quotes stays as it is.
+23. **No "why?" question for a `borderline` flag** (it only says "within 10% of a threshold"; the models had nothing to explain and the
+    call was wasted). The flag stays on the card.
+24. **Prices come from Yahoo through the `yfinance` library** (replaces the plain HTTP calls: Yahoo answered HTTP 429 to scripts from three
+    networks, while `yfinance`, which behaves like a browser, works). Same data as before: daily closes with dividends and splits, closed
+    days only (an open day is skipped), market value in USD from Yahoo's own figure. `yfinance` is not an official API: if Yahoo
+    tightens again, the library is updated.
+25. **Open (later, not now):** the "why?" answer for a multi-year measure reads only the newest filing (often a 10-Q); the 10-K would
+    explain more. It would cost more per analysis; decided after the 20-stock test.
+26. **Equity stakes are not liquid assets — said to the auditor** (found in the second real run, 2026-10-06: the auditor failed Nvidia's
+    liquid assets because "42.8 billion of marketable equity securities" were left out; that is our rule, not an error). Rule card 1 and the
+    figure claim now say it: liquid assets = cash + short-term investments + marketable **debt** securities; marketable equity securities and
+    stakes in other companies are left out on purpose. The auditor still fails a missing debt-securities part.
+27. **A missing-figure row closes when the figure is found** (same run: Nvidia's old "Marketable securities, last 4 quarters" request was
+    asked again, because the row from an earlier run on older data stayed open). Each analysis now closes the open rows of that stock whose
+    figure it found (status `tag_added`) and the rows of a last-4-quarters period a newer one has replaced.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 

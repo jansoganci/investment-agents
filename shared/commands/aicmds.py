@@ -21,14 +21,15 @@ def _spend(conn, args):
     if not rows:
         lines.append("No AI calls yet.")
     for r in rows:
-        extra = f", {r['unpriced']} unpriced (no price in settings.yaml)" if r["unpriced"] else ""
+        extra = (f", {r['estimated']} at the default price (no price in settings.yaml)" if r["estimated"] else "") + \
+                (f", {r['rejected']} billed but rejected" if r["rejected"] else "")
         lines.append(f"- {r['provider']}: ${r['usd']:.2f} · {r['calls']} calls{extra}")
     total = ai.month_spend(conn)
     if limit is not None:
         lines.append(f"Total ${total:.2f} of ${limit} · ${max(limit - total, 0):.2f} left")
     else:
         lines.append(f"Total ${total:.2f}")
-    lines.append("An unpriced call is counted as $0 here; the real bill is on the provider's page.")
+    lines.append("Counted from the tokens at the prices in settings.yaml; the real bill is on the provider's page.")
     return "\n".join(lines)
 
 
@@ -55,6 +56,12 @@ def _model_plan(conn, args):
     value = None if name.lower() == "default" else name
     if value is not None and ai.resolve(value) is None:
         raise Refused(f"Unknown model '{name}'. Known: {', '.join(ai.model_names())}.")
+    if value is not None and job in ("strong", "auditor"):
+        other = "auditor" if job == "strong" else "strong"
+        mine, theirs = ai.entry_family(ai.resolve(value)), ai.entry_family(ai.chain(other, conn)[0])
+        if mine == theirs:
+            raise Refused(f"The auditor must be of a different model family than the writer: both would be {mine} "
+                          f"(the {other} job runs {ai.chain(other, conn)[0]['model']}). Choose another model.")
     now = _current(conn, job)
     after = f"{ai.resolve(value)['model']}" if value else "the default in settings.yaml"
     preview = [f"{job}: {now} → {after}" + ("" if value is None else " (first; the others stay as fallbacks)"),
