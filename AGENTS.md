@@ -221,6 +221,14 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   (`uv run python tests/fixtures/fetch_yahoo.py` once, then push). The data itself: `tests/fixtures/sec/` (13 companies).
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
+- **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,
+  golden set 10/10 on live SEC, cards append-only, `/watch` previews only, a bank is out of scope; the one blocker is Yahoo (HTTP 429
+  on the Air and on the cloud machine, cause not found yet; the test of the same `curl` on the main Mac is still to do). Found with
+  real data and fixed (decision A, 2026-10-06; roadmap section 3 "A company with no debt"): a company with no debt (Palantir) is
+  counted as debt 0 under 4 conditions instead of asking 7 questions; Nvidia's marketable securities moved to `DebtSecuritiesCurrent`
+  (liquid 56.6 bn, matches the 10-Q). Palantir's type `cyclical` stays (a known limit of the type rule; revisit in the 20-stock test).
+  Samples: PLTR added, NVDA refreshed. **223 tests pass.** Open: the Yahoo test on the main Mac · the NVDA debt (8.5 → 33.4 bn, a
+  25 bn $ bond in June 2026) stays flagged "check the figure" — checked against the 10-Q by me.
 - **Air setup started (2026-10-05):** clone at `~/projects/investment-agents` (the docs' example is `~/investment-agents`;
   scheduled jobs use the real full path). First check by Hermes (read-only, `sudo -n`, no password): time zone Istanbul,
   FileVault, firewall, no sleep (AC and battery), wake for network ✓ · setup phase 2 done: `uv` at

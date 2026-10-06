@@ -34,8 +34,8 @@ SYNONYMS: dict[str, dict[str, list[str]]] = {
         "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
         "short_term_investments": ["ShortTermInvestments", "OtherShortTermInvestments"],
         # `MarketableSecurities` only counts when no `MarketableSecuritiesNoncurrent` is reported that year (then it is the
-        # current line; Coca-Cola renamed its line in 2021)
-        "marketable_securities": ["MarketableSecuritiesCurrent", "MarketableSecurities"],
+        # current line; Coca-Cola renamed its line in 2021). `DebtSecuritiesCurrent`: Nvidia from its July 2026 10-Q
+        "marketable_securities": ["MarketableSecuritiesCurrent", "MarketableSecurities", "DebtSecuritiesCurrent"],
         "short_term_investments_partial": ["AvailableForSaleSecuritiesDebtSecuritiesCurrent",
                                            "DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurrent"],
         "assets": ["Assets"],
@@ -105,6 +105,20 @@ DEBT_GROUPS: dict[str, list[tuple[list[str], bool, bool]]] = {
 SHORT_TERM_DEBT: dict[str, list[str]] = {"us-gaap": ["ShortTermBorrowings", "CommercialPaper"], "ifrs-full": []}
 
 
+# Debt-balance names that stop the "no debt" assumption when they hold a value other than zero (roadmap section 3, "A company
+# with no debt"). The group names and `SHORT_TERM_DEBT` count too.
+DEBT_BALANCE_EXTRA: dict[str, list[str]] = {
+    "us-gaap": ["DebtInstrumentCarryingAmount", "NotesPayable", "SeniorNotes", "SecuredDebt", "UnsecuredDebt", "LineOfCredit",
+                "LongTermLineOfCredit"],
+    "ifrs-full": [],
+}
+
+
+def debt_balance_names(taxonomy: str) -> set[str]:
+    return ({n for group, _, _ in DEBT_GROUPS[taxonomy] for n in group} | set(SHORT_TERM_DEBT[taxonomy])
+            | set(DEBT_BALANCE_EXTRA[taxonomy]))
+
+
 # names read only to check another name (kept in the sample data)
 CHECK_NAMES = {"us-gaap": {"MarketableSecuritiesNoncurrent"}, "ifrs-full": set()}
 
@@ -112,5 +126,5 @@ CHECK_NAMES = {"us-gaap": {"MarketableSecuritiesNoncurrent"}, "ifrs-full": set()
 def all_names(taxonomy: str) -> set[str]:
     names = {n for names in SYNONYMS[taxonomy].values() for n in names} | CHECK_NAMES[taxonomy]
     names |= {n for group, _, _ in DEBT_GROUPS[taxonomy] for n in group}
-    names |= set(SHORT_TERM_DEBT[taxonomy])
+    names |= set(SHORT_TERM_DEBT[taxonomy]) | set(DEBT_BALANCE_EXTRA[taxonomy])
     return names

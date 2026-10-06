@@ -387,8 +387,9 @@ off this list is my decision.
 | What | Why not now | Comes back when |
 |---|---|---|
 | Saved Yahoo answers for the tests (`tests/fixtures/yahoo/`) | Yahoo answered "too many requests" to the cloud machine for hours; the price job is tested on an answer built by hand in Yahoo's format | the Mac check runs `uv run python tests/fixtures/fetch_yahoo.py` once and pushes the files |
+| Yahoo answers HTTP 429 on the Air and on the cloud machine (2026-10-06) | cause not found (not our request headers; the Air has no VPN); until it works there is no price line and Nvidia's share count cannot be confirmed (a split) | the same `curl` test on the main Mac; if Yahoo is blocked for good, I choose another price source |
 | The Mac check of phases 0 and 1 | both are merged into `main` (2026-10-05, before the check — my decision); the check is still owed, on `main` | next, on my Mac; a fix comes as a small PR |
-| Finishing the Air setup (`AIR_SETUP.md`) and phase 0's Air check | started 2026-10-05; the first pass found `uv` missing, Remote Login and Screen Sharing off, no separate `agents` user | at the latest before phase 4 |
+| Finishing the Air setup (`AIR_SETUP.md`) and phase 0's Air check | started 2026-10-05; done: tools, project, Drive, Telegram, `.env`, 216 tests, the real data check (2026-10-06). **First next: limit Hermes (phase 5, in the Air's terminal)**, then OpenRouter and the tests (phases 6–7) | at the latest before phase 4 |
 | The third external review | it has not arrived | it arrives: before phase 1 is merged → into phase 1; later → a fix of its own |
 
 **Moved to a later phase (from phase 0's audit):**

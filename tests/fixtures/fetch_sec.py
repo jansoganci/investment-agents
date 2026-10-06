@@ -15,9 +15,10 @@ from shared.sec.synonyms import all_names  # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "sec"
 
-# golden set (BAGLAM.md section 9) + Novo Nordisk (IFRS / 20-F) + traps: GE (1:8 reverse split, 2021), JPM (a bank)
+# golden set (BAGLAM.md section 9) + Novo Nordisk (IFRS / 20-F) + traps: GE (1:8 reverse split, 2021), JPM (a bank), PLTR (no debt)
 COMPANIES = {"KO": 21344, "NVDA": 1045810, "NKE": 320187, "SBUX": 829224, "PFE": 78003, "INTC": 50863, "BA": 12927,
-             "SNAP": 1564408, "DOW": 1751788, "RIVN": 1874178, "NVO": 353278, "GE": 40545, "JPM": 19617}
+             "SNAP": 1564408, "DOW": 1751788, "RIVN": 1874178, "NVO": 353278, "GE": 40545, "JPM": 19617,
+             "PLTR": 1321655}
 SINCE = "2016-01-01"
 
 
