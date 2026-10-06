@@ -1,0 +1,180 @@
+"""The one AI client (roadmap section 10.1 and "Agent 3's AI parts — how phase 2 builds them").
+
+    reply = ai.call("strong", prompt, system=system, run=run, stock_id=3)
+    reply.text
+
+A job (`cheap`, `strong`, `auditor`) has an ordered provider list in `settings.yaml` (my credits first, then OpenRouter).
+A call tries the list in order; one provider's error or refusal moves it to the next. A Telegram override (`/model`) puts
+one model first. Every call is a row in `ai_calls`, its dollars go to the job's `runs` row, and a call is refused when
+the month's spend has reached the limit. The providers are in `shared/ai/backends.py`; tests use `shared/ai/fake.py`.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, replace
+from typing import Callable
+
+from shared import clock, config
+from shared import db as dbmod
+
+
+class AIError(RuntimeError):
+    """The call could not be made (every provider failed, or the monthly limit is reached). The message has no secrets."""
+
+
+class ProviderError(Exception):
+    """One provider failed (no key, empty credit, rate limit, server error, a safety refusal): the next one is tried."""
+
+
+@dataclass
+class Reply:
+    text: str
+    provider: str
+    model: str
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cost_usd: float | None = None      # None = no price known for this model (shown as "unpriced")
+    job: str = ""
+
+
+# provider → backend(entry, system, prompt, max_tokens) -> Reply. Filled by `shared.ai.backends`; tests replace it.
+BACKENDS: dict[str, Callable[[dict, str, str, int], Reply]] = {}
+
+
+# --- which models, in which order -----------------------------------------------------------------------------------------
+
+def _override(conn, job: str) -> str | None:
+    row = conn.execute("SELECT value FROM settings WHERE key = ? AND void = 0 ORDER BY id DESC LIMIT 1",
+                       (f"model.{job}",)).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def resolve(name: str) -> dict | None:
+    """A model name or alias (`opus-5.5`, `gpt-6-sol`) → a provider entry; None if it is unknown."""
+    s = config.settings()
+    alias = (s.get("model_aliases") or {}).get(name)
+    if alias:
+        return dict(alias)
+    for entries in (s.get("models") or {}).values():
+        for e in entries:
+            if e["model"] == name:
+                return dict(e)
+    for entries in (s.get("models") or {}).values():
+        for e in entries:
+            if e["model"].endswith("/" + name):
+                return dict(e)
+    return None
+
+
+def chain(job: str, conn=None, model: str | None = None) -> list[dict]:
+    """The provider entries a call of `job` tries, in order. A one-off `model`, or my stored override, goes first."""
+    s = config.settings()
+    base = [dict(e) for e in (s.get("models") or {}).get(job, [])]
+    if not base:
+        raise AIError(f"no models are set for the job '{job}' in settings.yaml")
+    name = model
+    if name is None and conn is not None:
+        name = _override(conn, job)
+    if name:
+        first = resolve(name)
+        if first is None:
+            raise AIError(f"unknown model '{name}' (known: {', '.join(sorted(model_names()))})")
+        return [first] + [e for e in base if e != first]
+    return base
+
+
+def model_names() -> list[str]:
+    s = config.settings()
+    names = set((s.get("model_aliases") or {}))
+    for entries in (s.get("models") or {}).values():
+        names |= {e["model"] for e in entries}
+    return sorted(names)
+
+
+# --- money ----------------------------------------------------------------------------------------------------------------
+
+def price_of(model: str) -> tuple[float, float] | None:
+    """(dollars per million input tokens, per million output tokens) from settings.yaml, or None (unpriced)."""
+    table = config.settings().get("pricing") or {}
+    for key in (model, model.split("/")[-1]):
+        p = table.get(key)
+        if p and p.get("input") is not None and p.get("output") is not None:
+            return float(p["input"]), float(p["output"])
+    return None
+
+
+def cost_of(model: str, input_tokens: int | None, output_tokens: int | None) -> float | None:
+    p = price_of(model)
+    if p is None or input_tokens is None or output_tokens is None:
+        return None
+    return (input_tokens * p[0] + output_tokens * p[1]) / 1_000_000
+
+
+def estimate(job: str, input_chars: int, output_tokens: int = 1500, model: str | None = None, conn=None) -> float | None:
+    """A rough cost before a call (about 4 characters a token); None when the first model has no price."""
+    first = chain(job, conn, model)[0]
+    return cost_of(first["model"], input_chars // 4, output_tokens)
+
+
+def month_start() -> str:
+    return clock.today_local()[:7] + "-01"
+
+
+def month_spend(conn) -> float:
+    return conn.execute("SELECT coalesce(sum(cost_usd), 0) FROM ai_calls WHERE created_at >= ?",
+                        (month_start(),)).fetchone()[0]
+
+
+def spend_by_provider(conn) -> list[dict]:
+    rows = conn.execute(
+        "SELECT provider, count(*), coalesce(sum(cost_usd), 0), sum(cost_usd IS NULL) FROM ai_calls "
+        "WHERE created_at >= ? GROUP BY provider ORDER BY provider", (month_start(),)).fetchall()
+    return [{"provider": p, "calls": n, "usd": usd, "unpriced": u or 0} for p, n, usd, u in rows]
+
+
+# --- the call -------------------------------------------------------------------------------------------------------------
+
+def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = None, run=None, stock_id=None,
+         model: str | None = None, conn=None) -> Reply:
+    s = config.settings()
+    own = conn is None
+    conn = conn or dbmod.connect()
+    try:
+        limit = (s.get("budget") or {}).get("ai_monthly_max_usd")
+        spent = month_spend(conn)
+        if limit is not None and spent >= limit:
+            raise AIError(f"the monthly AI limit is reached (${spent:.2f} of ${limit}); nothing was sent")
+        tokens = max_tokens or (s.get("ai") or {}).get("max_tokens", 6000)
+        errors = []
+        for entry in chain(job, conn, model):
+            backend = BACKENDS.get(entry["provider"])
+            if backend is None:
+                errors.append(f"{entry['provider']}: unknown provider")
+                continue
+            try:
+                reply = backend(dict(entry, job=job), system, prompt, tokens)
+            except ProviderError as exc:
+                errors.append(f"{entry['provider']} {entry['model']}: {exc}")
+                continue
+            if reply.cost_usd is None:
+                reply = replace(reply, cost_usd=cost_of(reply.model, reply.input_tokens, reply.output_tokens))
+            reply = replace(reply, job=job)
+            _log(conn, run, reply, stock_id)
+            return reply
+        raise AIError(f"no model answered the job '{job}': " + " | ".join(errors))
+    finally:
+        if own:
+            conn.close()
+
+
+def _log(conn, run, reply: Reply, stock_id) -> None:
+    conn.execute("INSERT INTO ai_calls (run_id, job, provider, model, input_tokens, output_tokens, cost_usd, created_at) "
+                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                 (getattr(run, "id", None), reply.job, reply.provider, reply.model, reply.input_tokens,
+                  reply.output_tokens, reply.cost_usd, clock.utc_iso()))
+    conn.commit()
+    if run is not None and reply.cost_usd:
+        run.add_cost(reply.cost_usd)
+
+
+from shared.ai import backends  # noqa: E402,F401 — registers the real providers in BACKENDS

@@ -43,7 +43,7 @@ models:
     - {provider: deepseek,   model: deepseek-v4-flash}
     - {provider: openrouter, model: deepseek/deepseek-v4-flash}
   strong:       # agent 2 (tone, news flow, score reasons), agent 3 (why answers, thesis, drop-alert check)
-    - {provider: anthropic,  model: claude-sonnet-5.5, effort: high}
+    - {provider: anthropic,  model: claude-sonnet-5-5, effort: high}
     - {provider: openrouter, model: anthropic/claude-sonnet-5.5}
     - {provider: openai,     model: gpt-6-sol}
     - {provider: openrouter, model: openai/gpt-6-sol}
@@ -55,3 +55,28 @@ models:
   hermes_chat:  # set in Hermes itself, listed here for reference
     - {provider: openai-codex, model: chatgpt-subscription}
     - {provider: deepseek,     model: deepseek-v4-pro}
+
+# AI client (phase 2, roadmap "Agent 3's AI parts — how phase 2 builds them")
+ai:
+  excerpt_chars: 12000             # at most this much of a filing goes to a model per call
+  min_quote_chars: 20              # a shorter quote proves nothing and is not accepted
+  max_tokens: 6000                 # one answer
+  timeout_s: 180
+  audit_sample: 5                  # a random 1 in 5 routine updates is audited
+
+# Price per million tokens in dollars, by model name. A model without a price is counted as 0 and shown as "unpriced" in
+# /spend. Fill these from each provider's price page (only claude-sonnet-5-5 is known today: 2 / 10, cache reads 0.20).
+pricing:
+  claude-sonnet-5-5:   {input: 2.00, output: 10.00}
+  claude-opus-5-5:     {input: 4.00, output: 20.00}
+  deepseek-v4-flash:   {input: null, output: null}
+  deepseek-v4-pro:     {input: null, output: null}
+  gpt-6-sol:           {input: null, output: null}
+
+# Short names for /analyze KO opus-5.5 and /model strong gpt-6-sol (a one-off or stored override).
+model_aliases:
+  opus-5.5:   {provider: anthropic, model: claude-opus-5-5, effort: high}
+  sonnet-5.5: {provider: anthropic, model: claude-sonnet-5-5, effort: high}
+  gpt-6-sol:  {provider: openai, model: gpt-6-sol}
+  deepseek-v4-pro:   {provider: deepseek, model: deepseek-v4-pro}
+  deepseek-v4-flash: {provider: deepseek, model: deepseek-v4-flash}
