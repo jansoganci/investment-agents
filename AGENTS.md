@@ -232,7 +232,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   **Not here:** news in the drop-alert check (phase 5) · the card's 2-sentence story · `absent` marking.
   **Audit of phase 2 (separate session, 2026-10-06):** 1 blocker (a sell suggestion went out although the auditor confirmed nothing) and
   8 should-fix, all fixed on the same branch; my decisions: no audit threshold (every item must pass; any fail marks `unverified`;
-  otherwise "could not confirm") · fiyat list given by me (DeepSeek, GPT-6 Sol) and a cautious default price for unknown models ·
+  otherwise "could not confirm") · price list given by me (DeepSeek, GPT-6 Sol) and a cautious default price for unknown models ·
   agent 3 may write a dated `note · agent_3` for a checked drop alert. Also fixed: balance-sheet rows kept in the excerpts, the auditor is never
   of the writer's model family, warning identity keeps years, billed-but-rejected calls logged, `ping` and the test set logged, strong-model
   test records who answered. **342 tests pass.** Still not tried with a real model (Mac check).
