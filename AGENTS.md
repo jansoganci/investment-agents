@@ -76,7 +76,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-05 (phases 0 and 1 merged into `main`; Air setup through Drive and Telegram; Hermes limits are next)
+- **Last update:** 2026-10-06 (phases 0 and 1 merged and run for real on the Air; Hermes limits are next)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -229,6 +229,12 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   (liquid 56.6 bn, matches the 10-Q). Palantir's type `cyclical` stays (a known limit of the type rule; revisit in the 20-stock test).
   Samples: PLTR added, NVDA refreshed. **223 tests pass.** Open: the Yahoo test on the main Mac · the NVDA debt (8.5 → 33.4 bn, a
   25 bn $ bond in June 2026) stays flagged "check the figure" — checked against the 10-Q by me.
+- **First real run on the Air (2026-10-06):** after PR #8 (`git pull`), Hermes ran `agents.analysis` for PLTR (mid / cyclical, no flags, no
+  missing figures) and NVDA (solid / cyclical, flags only from Yahoo and the real debt jump) against the real database
+  (`~/investment-agents-data`, version 3) and the real `Investing/Stocks/` (cards `NVDA - Nvidia Corp`, `PLTR - Palantir Technologies Inc.`).
+  `.env` `DRIVE_DIR` is the symlink `~/investing-drive` → `/Users/jans./Drive'ım/Investing`. `/status` shows a `prices` run stuck in
+  `running` (a price job killed on purpose; the `/status` warning for stuck jobs is phase 6 — leave it). Still open: Yahoo 429, and
+  that I see the two cards in Drive on the web.
 - **Air setup started (2026-10-05):** clone at `~/projects/investment-agents` (the docs' example is `~/investment-agents`;
   scheduled jobs use the real full path). First check by Hermes (read-only, `sudo -n`, no password): time zone Istanbul,
   FileVault, firewall, no sleep (AC and battery), wake for network ✓ · setup phase 2 done: `uv` at
