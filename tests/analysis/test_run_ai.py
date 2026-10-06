@@ -166,3 +166,14 @@ def test_the_weekly_run_uses_the_ai_only_when_asked(db, env, src, monkeypatch):
     text = run.weekly(db, src, today="2026-10-20", use_ai=True)
     assert "ANALYSIS · NVDA" in text and fake.calls
     assert "Why it is owned:" in drive.find_card("NVDA").read_text()
+
+
+def test_a_failed_thesis_check_says_the_old_thesis_stands(db, env, src, monkeypatch):
+    FakeAI(handler()).install(monkeypatch)
+    run.analyze(db, "NVDA", src, today="2026-10-06", use_ai=True)
+    fake = FakeAI(lambda *a: "x").install(monkeypatch)
+    fake.fail = {"anthropic", "deepseek", "openai", "openrouter"}
+    run.analyze(db, "NVDA", src, today="2026-10-13", use_ai=True)
+    last = entries_of("NVDA")[-1]["body"]
+    assert "Unchanged — see the thesis of 2026-10-06. Not checked this time" in last
+    assert card.last_thesis(drive.find_card("NVDA").read_text())[0] == "2026-10-06"

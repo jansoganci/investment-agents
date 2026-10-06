@@ -520,7 +520,7 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
    comes with agent 2, phase 5, so until then the answer says "filing only"); news only ever says `watch`; then `done`.
 5. **Sell suggestions only for stocks I hold** (`in_portfolio = yes`): thesis `broken`, grade fell to `weak`, or `mid` for 2
    entries in a row after `solid`. The audit (card 3) runs first; on a fail the suggestion is **held** (written on the card
-   and in the message as held), never sent as advice.
+   and in the message as held), never sent as advice. Without `--ai` there are no sell suggestions: the audit cannot run, and a suggestion is never sent unaudited.
 6. **The auditor runs** on a stock's first card (cards 1 + 2), with an open `data_check` (1), before every sell suggestion (3),
    on `solid` ↔ `weak` (1 + 2), and on a random 1 in 5 routine updates (1 + 2). A fail: `unverified: yes` in the entry's data
    block, a line in the message, results in `audits`; figures are never changed.

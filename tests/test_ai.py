@@ -168,3 +168,11 @@ def test_a_content_filter_is_a_provider_error(monkeypatch):
     monkeypatch.setenv("DEEPSEEK_API_KEY", "key")
     with pytest.raises(ProviderError, match="content filter"):
         backends.openai_style_backend("deepseek")({"model": "m"}, "", "p", 10)
+
+
+def test_an_answer_cut_at_max_tokens_is_a_provider_error(monkeypatch):
+    stub = _Anthropic(stop="max_tokens")
+    monkeypatch.setattr(backends, "make_anthropic", lambda key, timeout: stub)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    with pytest.raises(ProviderError, match="cut at max_tokens"):
+        backends.anthropic_backend({"model": "m"}, "", "p", 10)

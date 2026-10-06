@@ -290,6 +290,8 @@ def _thesis_section(part, previous_thesis_date: str | None) -> str:
         c = part.check
         line = f"Unchanged — see the thesis of {previous_thesis_date}. Status: {c['status']}. {c['reason']}".strip()
         return line + (f'\nQuote: "{c["quote"]}"' if c["quote"] else "")
+    if previous_thesis_date:
+        return f"Unchanged — see the thesis of {previous_thesis_date}. Not checked this time: the AI answer could not be used (see the info lines)."
     return "Not written yet — the AI answer could not be used this time (see the info lines)."
 
 

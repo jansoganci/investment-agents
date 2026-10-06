@@ -60,7 +60,7 @@ models:
 ai:
   excerpt_chars: 12000             # at most this much of a filing goes to a model per call
   min_quote_chars: 20              # a shorter quote proves nothing and is not accepted
-  max_tokens: 6000                 # one answer
+  max_tokens: 16000                # one answer (the model's thinking counts too)
   timeout_s: 180
   audit_sample: 5                  # a random 1 in 5 routine updates is audited
 

@@ -53,6 +53,8 @@ def anthropic_backend(entry: dict, system: str, prompt: str, max_tokens: int) ->
         raise ProviderError("could not be reached") from exc
     if msg.stop_reason == "refusal":
         raise ProviderError("the model refused (safety classifier)")
+    if msg.stop_reason == "max_tokens":
+        raise ProviderError("the answer was cut at max_tokens (thinking counts too); raise `ai.max_tokens`")
     text = "".join(b.text for b in msg.content if b.type == "text")
     return Reply(text, "anthropic", entry["model"], msg.usage.input_tokens, msg.usage.output_tokens)
 
