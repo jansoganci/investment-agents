@@ -151,3 +151,18 @@ def test_an_archived_stock_drop_alert_is_closed_without_a_check(db, env, src, mo
     fake = FakeAI(lambda *a: "x").install(monkeypatch)
     assert run.drop_alerts(db, src, today="2026-10-13") is None and fake.calls == []
     assert db.execute("SELECT status FROM signals").fetchone()[0] == "done"
+
+
+def test_the_weekly_run_uses_the_ai_only_when_asked(db, env, src, monkeypatch):
+    run.analyze(db, "NVDA", src, today="2026-10-06")
+    db.execute("UPDATE stocks SET status='watching'")
+    db.execute("UPDATE card_entries SET filing='an-older-filing'")  # so the newest filing counts as new
+    db.commit()
+    fake = FakeAI(handler()).install(monkeypatch)
+    text = run.weekly(db, src, today="2026-10-13")
+    assert "ANALYSIS · NVDA" in text and fake.calls == []  # without --ai: numbers only
+    db.execute("UPDATE card_entries SET filing='an-older-filing'")
+    db.commit()
+    text = run.weekly(db, src, today="2026-10-20", use_ai=True)
+    assert "ANALYSIS · NVDA" in text and fake.calls
+    assert "Why it is owned:" in drive.find_card("NVDA").read_text()

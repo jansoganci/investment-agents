@@ -219,6 +219,17 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   **Not here:** Yahoo refused this cloud machine all day ("too many requests"), so the price job is tested on an answer built by
   hand in Yahoo's format, and the real Yahoo answers (prices, splits, market value) are checked on the Mac
   (`uv run python tests/fixtures/fetch_yahoo.py` once, then push). The data itself: `tests/fixtures/sec/` (13 companies).
+- **Phase 2 built (2026-10-06)** on `claude/phase-2-agent3-ai-arj800` (from `main` after PR #8; second exception to rule 5: before the Mac check
+  of phases 0 and 1 and before the Air setup is done; the real-model runs must come before 2026-10-19). `shared/ai` (ordered providers,
+  `/model` override, costs into `ai_calls` and `runs`, monthly limit, fake mode), `shared/auditor` (cards 1–3 in `cards/`, `testset`),
+  `shared/sec/filing` (quote check word for word), agent 3's AI parts (why answers with quotes, first thesis, thesis check,
+  drop-alert check, sell suggestion for held stocks, held back when an audit fails, `unverified`), stable warning codes, missing-data
+  requests (once, reminded once), commands `/spend` `/model` `/note` `/thesis` `/closewarning` and `/analyze KO [model]` with its cost.
+  Database version 4. `python -m agents.analysis KO --ai` · `--weekly --ai` · `--drop-alerts` · `python -m shared.ai ping` ·
+  `python -m shared.auditor testset` · `python -m agents.analysis.modeltest KO NVDA`. Build choices written in the roadmap
+  (section 3, "Agent 3's AI parts — how phase 2 builds them") for my approval after the audit. **Not tried with a real model yet:**
+  the Mac check (plan, phase 2) does that. Pricing for DeepSeek and GPT-6 Sol models is empty in `settings.yaml` (shown as unpriced).
+  **Not here:** news in the drop-alert check (phase 5) · the card's 2-sentence story · `absent` marking.
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
 - **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,

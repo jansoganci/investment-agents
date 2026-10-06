@@ -35,17 +35,17 @@ def one(src, ticker: str, model: str, run) -> tuple[list, str]:
     return parts.ask_why(r, text, ctx), r.grade
 
 
-def main(argv: list[str]) -> str:
+def main(argv: list[str], src=None) -> str:
     key_path = config.data_dir() / KEY
     if argv == ["--reveal"]:
         return key_path.read_text() if key_path.exists() else "No test has been run yet."
     if len(argv) < 2:
         raise SystemExit(__doc__)
     tickers, models = argv[:2], (argv[2:4] if len(argv) >= 4 else ["default", "gpt-6-sol"])
-    src, rng, key, out = LiveSources(), random.Random(), {}, ["STRONG-MODEL TEST — which answers are clearer, better supported? Models are hidden (A / B)."]
+    src, rng, key, out = src or LiveSources(), random.Random(), {}, ["STRONG-MODEL TEST — which answers are clearer, better supported? Models are hidden (A / B)."]
 
     def work(run):
-        for ticker in tickers:
+        for n, ticker in enumerate(tickers, 1):
             order = [0, 1]
             rng.shuffle(order)
             answers = {}
@@ -53,7 +53,7 @@ def main(argv: list[str]) -> str:
                 model = None if models[idx] == "default" else models[idx]
                 why, grade = one(src, ticker, model, run)
                 answers[slot] = why
-                key[f"{ticker} {slot}"] = models[idx]
+                key[f"{n}. {ticker} {slot}"] = models[idx]
             out.append(f"\n=== {ticker} (grade {grade}) ===")
             for w in answers["A"]:
                 b = next((x for x in answers["B"] if x.id == w.id), None)
