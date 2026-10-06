@@ -457,6 +457,10 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
     if leases.get(last) and leases[last] >= 0.05e9:
         notes.append(f"lease_heavy: leases {leases[last]/1e9:.1f} bn (debt including leases "
                      f"{((debt_last or 0) + leases[last])/1e9:.1f} bn)")
+    assumed = [e for e in getattr(facts, "debt_assumed", []) if e in Y[-5:]]
+    if assumed:
+        notes.append("debt_free: no borrowings reported, debt counted as 0 (assumed) for " + ", ".join(facts.year_label(e) for e in assumed)
+                     + " — an unused credit line is not debt")
     if acq.get(last) and acq[last] >= 0.05e9:
         notes.append(f"acquisitive: {acq[last]/1e9:.1f} bn spent on acquisitions in the latest year")
 

@@ -266,6 +266,8 @@ Formulas:
   `MarketableSecuritiesCurrent` · `MarketableSecurities` (only when no noncurrent line sits next to it; Coca-Cola renamed its line
   in 2021); a partial tag (`AvailableForSaleSecuritiesDebtSecuritiesCurrent`, …) only if nothing else is found.
   (The trial missed these at Coca-Cola, Nvidia, Nike and Pfizer; Nvidia uses a company-only tag that SEC's standard data never shows.)
+  **Nvidia, 2026-10-06:** its July 2026 10-Q reports the marketable securities as `DebtSecuritiesCurrent` (34.1 bn $; cash 22.4 +
+  34.1 = 56.6 bn $, the figure in the filing) — added to the marketable-securities list, tried after the two older names.
   **A part reported the year before but missing this year (decision: 2026-10-05):** the total is still computed (the part counted
   as not held), with a `data_check` flag and a `missing_data` row, so I am asked to check it.
 - Capital return (per year) = operating profit × (1 − tax rate) ÷ (total assets − current liabilities − liquid assets);
@@ -396,6 +398,19 @@ Lynch dividend ratio (for dividend payers) ≥ 2 attractive · 1–2 fair · < 1
   every candidate total; if they disagree, a flag. Flags: debt suddenly drops to zero from one year to the
   next · debt is larger than total liabilities · debt changed more than 30% in a year. Debt of a business held for sale and
   leases: info lines only.
+- **A company with no debt (decision: 2026-10-06; Palantir):** a year with no debt figure at all is not always a gap — a company
+  without borrowings has no debt line. Code counts the debt of an end as **0 (assumed)** only when **all** of these hold:
+  (1) no debt group is complete for that end; (2) no debt-balance name (the group names, `ShortTermBorrowings`,
+  `CommercialPaper`, `DebtInstrumentCarryingAmount`, `NotesPayable`, `SeniorNotes`, `SecuredDebt`, `UnsecuredDebt`,
+  `LineOfCredit`, `LongTermLineOfCredit`) has a value other than zero with a period end in the 12 months up to that end;
+  (3) interest expense, if reported, is at most 1% of revenue (a fee on an unused credit line is not debt service — Palantir
+  paid about 3 million $ in 2023); (4) cash and revenue are found for that end. **Also zero:** a complete-looking group where every
+  part found is zero and only the other part is not reported (Palantir 2021: `LongTermDebtNoncurrent` = 0, no current-portion line).
+  An unused credit line is not debt (the line's size is not a balance). The card gets one info line
+  ("debt: none reported, counted as 0 (assumed)", with the years); there is **no** `missing_data` row for debt or for the interest
+  expense of those years, and the debt measures use 0 (so `cash_over_debt` applies). If any condition fails, nothing changes: the
+  figure is `not_computed`, the ledger asks, and I can answer with `/data`. A company that reports its debt under a name we do
+  not know and also pays real interest is caught by (3) or (2); the synonym list is filled from the ledger as before.
 - **Consistency checks:** gross profit = revenue − cost · margin 0–100% · a sudden drop to zero / a 10-times jump → flagged.
   **No year is dropped (decision: 2026-10-05):** the flag says "check the figure" (Rivian 2021 → 2022 is a real jump).
 - **Trace:** the card records which name and which filing each figure came from.

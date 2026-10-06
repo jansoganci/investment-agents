@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from shared.sec import FORMS_ANNUAL, FORMS_QUARTER
-from shared.sec.synonyms import DEBT_GROUPS, INSTANT, SHORT_TERM_DEBT, SYNONYMS, UNIT_KIND
+from shared.sec.synonyms import DEBT_GROUPS, INSTANT, SHORT_TERM_DEBT, SYNONYMS, UNIT_KIND, debt_balance_names
 
 SAME_DAY = 10  # fiscal-year ends less than 10 days apart are the same year (52/53-week years)
 
@@ -262,6 +262,7 @@ class Facts:
         if "debt" in self._cache:
             return self._cache["debt"]
         out = {}
+        self.debt_assumed: list[str] = []  # ends counted as 0 without a figure (roadmap: "A company with no debt")
         for e in self.ends:
             forms = FORMS_QUARTER if e == self.ttm_end else FORMS_ANNUAL
             cands = []
@@ -277,6 +278,12 @@ class Facts:
                 if ("debt", self.year_label(e)) in self.user_values:
                     v = float(self.user_values[("debt", self.year_label(e))])
                     out[e] = Debt(v, "user", "user", None, e, parts={"user": v})
+                    continue
+                zero = self._debt_zero(e, forms)
+                if zero is not None:
+                    out[e] = zero
+                    if zero.assumed:
+                        self.debt_assumed.append(e)
                     continue
                 self._miss("debt", e, [n for g, _, _ in DEBT_GROUPS[self.taxonomy] for n in g])
                 continue
@@ -296,11 +303,36 @@ class Facts:
         self._cache["debt"] = out
         return out
 
+    def _debt_zero(self, end: str, forms) -> "Debt | None":
+        """Debt of 0 for an end with no complete debt group, or None (roadmap section 3, "A company with no debt").
+        Zero when every part of a group that was found is zero, or when nothing in the debt-balance names has a value other
+        than zero in the 12 months up to `end`, interest expense (if any) is at most 1% of revenue, and cash and revenue exist."""
+        unit = self.currency
+        for names, _, _ in DEBT_GROUPS[self.taxonomy]:
+            found = [self._best(n, unit, end, forms) for n in names]
+            found = [v for v in found if v is not None]
+            if found and all(v.value == 0 for v in found):
+                return Debt(0.0, "+".join(v.tag for v in found), found[0].form, found[0].accn, end, found[0].filed,
+                            {v.tag: 0.0 for v in found})
+        since = date.fromordinal(_d(end).toordinal() - 365).isoformat()
+        for tag in debt_balance_names(self.taxonomy):
+            for rows in self.raw.get(tag, {}).get("units", {}).values():
+                if any(r.get("val") and since < r.get("end", "") <= end for r in rows):
+                    return None
+        revenue, cash = self._lookup("revenue", end), self._lookup("cash", end)
+        if revenue is None or cash is None:
+            return None
+        interest = self._lookup("interest", end)
+        if interest is not None and revenue.value and interest.value > 0.01 * revenue.value:
+            return None
+        return Debt(0.0, "assumed", "assumed", None, end, "", {"assumed": 0.0}, assumed=True)
+
 
 @dataclass
 class Debt(Value):
     candidates: list = field(default_factory=list)
     disagree: bool = False
+    assumed: bool = False  # counted as 0 because nothing is reported (a company with no debt)
 
 
 def _names(taxonomy: str) -> set[str]:

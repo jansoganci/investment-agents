@@ -42,10 +42,62 @@ def test_marketable_securities_with_a_noncurrent_line_is_not_current():
 
 
 def test_a_liquid_part_that_disappears_is_noted():
-    # Nvidia reported marketable securities until FY2026; the gap is noted for a data check and the ledger
-    f = facts("NVDA")
+    # a part reported the year before but missing now is noted for a data check and the ledger. Nvidia's July 2026 10-Q
+    # moved its marketable securities to `DebtSecuritiesCurrent`; with that name taken out the gap shows
+    raw = sec_facts("NVDA")
+    del raw["facts"]["us-gaap"]["DebtSecuritiesCurrent"]
+    f = Facts(raw, sec_submissions("NVDA"))
     f.liquid()
     assert "marketable_securities" in f.liquid_gaps.get(f.ttm_end, [])
+
+
+def test_nvidia_marketable_securities_under_the_new_name():
+    # July 2026: cash 22.443 + `DebtSecuritiesCurrent` 34.143 = 56.586 bn, the figure in the 10-Q (user check, 2026-10-06)
+    f = facts("NVDA")
+    liq = f.liquid()[f.ttm_end]
+    assert liq.value == pytest.approx(56.586 * BN, rel=1e-4)
+    assert "DebtSecuritiesCurrent" in liq.parts
+    assert not f.liquid_gaps.get(f.ttm_end)
+
+
+def test_palantir_has_no_debt_and_it_is_counted_as_zero():
+    # Palantir repaid its 200 m $ loan in 2021 (`LongTermDebtNoncurrent` = 0, no current-portion line); after that no debt name
+    # is reported, only a small fee on an unused credit line (interest expense 3.5 m $ in 2023, 0.2% of revenue)
+    f = facts("PLTR")
+    d = f.debt()
+    assert d["2021-12-31"].value == 0 and not d["2021-12-31"].assumed  # an explicit zero
+    for e in ("2022-12-31", "2023-12-31", "2024-12-31", f.ttm_end):
+        assert d[e].value == 0 and d[e].assumed
+    assert f.debt_assumed == ["2022-12-31", "2023-12-31", "2024-12-31", f.ttm_end]
+    assert not [m for m in f.misses if m["figure"] == "debt" and m["end"] > "2021"]
+
+
+def test_no_debt_is_not_assumed_when_a_balance_is_reported():
+    raw = sec_facts("PLTR")
+    raw["facts"]["us-gaap"]["NotesPayable"] = {"units": {"USD": [
+        {"end": "2024-06-30", "val": 5e7, "form": "10-Q", "filed": "2024-08-01", "accn": "x", "fy": 2024, "fp": "Q2"}]}}
+    f = Facts(raw, sec_submissions("PLTR"))
+    d = f.debt()
+    assert "2024-12-31" not in d and "2023-12-31" in d  # the 12 months up to 2024-12-31 hold a balance
+    assert [m["end"] for m in f.misses if m["figure"] == "debt" and m["end"] > "2021"] == ["2024-12-31"]
+
+
+def test_no_debt_is_not_assumed_when_interest_is_a_real_bill():
+    raw = sec_facts("PLTR")
+    rows = raw["facts"]["us-gaap"]["InterestExpense"]["units"]["USD"]
+    for r in rows:
+        if r["end"] == "2023-12-31" and r.get("form") == "10-K":
+            r["val"] = 3e7  # 1.6% of revenue
+    f = Facts(raw, sec_submissions("PLTR"))
+    assert "2023-12-31" not in f.debt()
+
+
+def test_no_debt_is_not_assumed_without_cash_or_revenue():
+    raw = sec_facts("PLTR")
+    for name in ("CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"):
+        raw["facts"]["us-gaap"].pop(name, None)
+    f = Facts(raw, sec_submissions("PLTR"))
+    assert not any(d.assumed for d in f.debt().values())
 
 
 def test_boeing_debt_group_needs_all_parts():

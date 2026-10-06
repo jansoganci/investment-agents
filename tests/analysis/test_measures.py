@@ -59,6 +59,23 @@ def test_nvidia_liquid_drop_is_a_data_check():
     assert any(f["flag"] == "data_check" and "liquid" in f["detail"] for f in run("NVDA").flags)
 
 
+def test_palantir_with_no_debt_is_not_asked_and_the_debt_measures_are_good():
+    # real data to 2026-06-30: no debt line since 2021, a fee on an unused 500 m $ credit line (roadmap: "A company with no debt")
+    r = run("PLTR", quarters=True)
+    assert r.measures["debt"]["mark"] == "good" and r.measures["debt_years"]["mark"] == "good"
+    assert not [f for f in r.flags if f["flag"] == "data_check"]
+    assert r.missing == []
+    assert any(n.startswith("debt_free:") and "TTM 2026-06-30" in n for n in r.notes)
+    assert (r.grade, r.lynch_type) == ("mid", "cyclical")  # cyclical: loss years 2020-2022 and profit years since (known limit)
+
+
+def test_nvidia_july_2026_liquid_assets_include_the_new_securities_name():
+    r = run("NVDA", quarters=True)
+    assert r.liquid[r.ends[-1]].value == pytest.approx(56.586e9, rel=1e-4)
+    assert not any(f["flag"] == "data_check" and "liquid" in f["detail"] for f in r.flags)
+    assert any("debt 8.5 → 33.4 bn" in f["detail"] for f in r.flags)  # the 25 bn $ bond of June 2026 is still flagged to check
+
+
 def test_nvidia_split_adjusted_only_when_yahoo_confirms():
     ok = run("NVDA").measures["share_count"]
     assert ok["value"] == pytest.approx(-0.023, abs=0.001) and "×10 adjusted" in ok["note"]
