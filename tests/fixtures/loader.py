@@ -60,7 +60,12 @@ class FixtureSources:
         return sec_submissions(self._ticker(cik))
 
     def filing_text(self, cik, accession, document):
-        return filing_text(self._ticker(cik))["text"]  # a saved 10-Q (NVDA only)
+        from shared.sec import SecError
+
+        try:
+            return filing_text(self._ticker(cik))["text"]  # a saved 10-Q (NVDA only)
+        except FileNotFoundError:
+            raise SecError(f"no saved filing text for {self._ticker(cik)}") from None
 
     def chart(self, symbol, range_, interval):
         from shared.prices.yahoo import YahooError

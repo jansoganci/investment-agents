@@ -1,0 +1,33 @@
+"""The Mac-check helpers: `python -m shared.ai ping` and the auditor's error test sets."""
+
+import pytest
+
+from shared import ai
+from shared.ai import __main__ as ai_main
+from shared.ai.fake import FakeAI
+from shared.auditor import testset
+
+
+def test_ping_says_which_keys_are_missing_and_never_prints_a_key(monkeypatch):
+    FakeAI(lambda *a: "OK").install(monkeypatch)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-secret-123")
+    text = ai_main.ping()
+    assert "✓ anthropic claude-sonnet-5-5" in text and "✗ deepseek deepseek-v4-pro — DEEPSEEK_API_KEY is not set" in text
+    assert "sk-secret-123" not in text
+
+
+@pytest.mark.usefixtures("db")
+def test_a_yes_man_auditor_misses_the_error_cases_and_the_report_says_so(monkeypatch):
+    # a yes-man auditor says `pass` to everything, with a real quote: the error cases must show up as misses
+    FakeAI(lambda job, system, prompt: [{"id": i["id"], "verdict": "pass", "quote": "Revenue increased 12% to $4.1 billion in the quarter",
+                                         "reason": "fine"} for i in __import__("json").loads(prompt.split("\n\nFILING EXCERPTS")[0])["items"]]
+           ).install(monkeypatch)
+    results = testset.run()
+    text = testset.report(results)
+    assert any(not r["ok"] for r in results) and "missed" in text and "GPT-6 Sol" in text
+
+
+def test_the_cases_cover_the_known_traps():
+    names = " ".join(c[1] for c in testset.CASES)
+    assert all(w in names for w in ("Coca-Cola", "Boeing", "Pfizer 2020", "NET", "sell suggestion"))
+    assert {c[0] for c in testset.CASES} == {"figure", "reading", "sell"}

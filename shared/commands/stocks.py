@@ -3,7 +3,7 @@
     /watch KO       candidate → watching (a stock SEC knows but we do not yet: added, "added by me")
     /archive KO     watching or candidate → archived: no new analysis or spend
     /unarchive KO   archived → watching
-    /analyze KO     agent 3 now (numbers only in phase 1; estimated cost $0.00)
+    /analyze KO     agent 3 now: the numbers + the AI parts, with the estimated cost first (`/analyze KO opus-5.5`: one-off model)
     /card KO · /green · /missing      information
     /data NKE 2026 interest 0.25bn    a missing figure I enter (source: user), with a plausibility check
 
@@ -175,12 +175,25 @@ for _name in ("watch", "archive", "unarchive"):
 # --- /analyze ---------------------------------------------------------------------------------------------------------
 
 def _analyze(conn, args):
-    ticker = _ticker(args, "/analyze KO")
+    from shared import ai
+
+    if len(args) > 2:
+        raise Refused("usage: /analyze KO [model]   (e.g. /analyze KO opus-5.5)")
+    ticker = _ticker(args, "/analyze KO [model]")
+    model = args[1] if len(args) > 1 else None
+    if model is not None:
+        try:
+            ai.chain("strong", conn, model)
+        except ai.AIError as exc:
+            raise Refused(str(exc)) from exc
     stock = _stock(conn, ticker)
     if stock and stock["status"] == "archived":
         raise Refused(f"{ticker} is archived: archived stocks are never analyzed (/unarchive {ticker} first).")
-    preview = [f"analyze {ticker} now: SEC figures → a new dated entry on its card",
-               "estimated cost $0.00 (numbers only; no AI in phase 1)"]
+    est = ai.estimate("strong", 36000, 6000, model, conn)
+    cost = (f"estimated cost about ${est:.2f} (the writing model; the auditor adds a few cents)" if est is not None
+            else "estimated cost unknown: this model has no price in settings.yaml")
+    preview = [f"analyze {ticker} now: SEC figures + the AI parts (why answers with quotes, thesis, audits) → a new dated "
+               "entry on its card" + (f" · model {model}" if model else ""), cost]
     if stock is None:  # ask SEC now, in the preview, not after `yes`
         from agents.analysis.run import Refused as AnalysisRefused
         from agents.analysis.run import identify
@@ -206,10 +219,10 @@ def _analyze(conn, args):
             from shared import notify, runlog
 
             try:
-                with runlog.run("analysis"):
+                with runlog.run("analysis") as r:
                     c = dbmod.connect()
                     try:
-                        return analysis.analyze(c, ticker, _sources()).text
+                        return analysis.analyze(c, ticker, _sources(), use_ai=True, run=r, model=model, ask_missing=True).text
                     finally:
                         c.close()
             except Exception as exc:  # noqa: BLE001 — the message must reach me
@@ -217,7 +230,7 @@ def _analyze(conn, args):
 
         return Applied(f"Analysis of {ticker} requested.", None, None, undoable=False, after=after)
 
-    return Plan(preview, ["analyze", ticker], apply, recheck=recheck)
+    return Plan(preview, ["analyze", ticker] + ([model] if model else []), apply, recheck=recheck)
 
 
 def _undo_analyze(conn, log):

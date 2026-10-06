@@ -52,6 +52,7 @@ class Command:
     phase: int = 0                  # the phase that builds it (docs/IMPLEMENTATION_PLAN.md)
     info: Callable[[sqlite3.Connection, list[str]], str] | None = None
     plan: Callable[[sqlite3.Connection, list[str]], Plan] | None = None
+    show_without_args: bool = False  # `/model` alone only shows; with arguments it changes (and asks first)
     built: bool = field(init=False, default=False)
 
     def __post_init__(self):
@@ -140,7 +141,7 @@ def run(argv: list[str]) -> tuple[int, str]:
     if not cmd.built:
         return 1, f"/{name} is not built yet (phase {cmd.phase})."
     try:
-        if cmd.changes:
+        if cmd.changes and not (cmd.show_without_args and not args):
             return _run_change(cmd, args, yes)
         conn = dbmod.connect_readonly()
         try:
@@ -153,4 +154,4 @@ def run(argv: list[str]) -> tuple[int, str]:
         return 1, str(exc)
 
 
-from shared.commands import builtin, stocks  # noqa: E402,F401 — registers the commands (phase 1 replaces placeholders)
+from shared.commands import builtin, aicmds, cards, stocks  # noqa: E402,F401 — registers the commands (each phase replaces placeholders)
