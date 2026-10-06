@@ -7,7 +7,7 @@ import pytest
 
 from agents.analysis import ai as parts
 from agents.analysis import sell
-from shared import ai
+from shared import ai, auditor
 from shared.ai.fake import FakeAI
 from tests.analysis.test_measures import run as analyse_run
 from tests.fixtures.loader import filing_text
@@ -265,3 +265,20 @@ def test_a_borderline_flag_gets_no_why_question():
     r.codes = [f"U{i}" for i in range(1, len(r.flags) + 1)]
     ids = [i["id"] for i in parts.why_items(r)]
     assert f"U{len(r.flags)}" not in ids and len(ids) == len(R.flags)
+
+
+def test_a_figure_claim_says_its_period_and_a_4_quarter_total_gives_its_parts():
+    # GE, 2026-10-06: a correct 4-quarter operating cash (9.8 bn) was failed against the 10-Q's 6-month row (5.0 bn)
+    items = {i["id"]: i for i in parts.figure_items(R)}  # NVDA with the last 4 quarters
+    v = R.figures["op_cash"][R.last]
+    assert f"period end {R.last} (TTM)" in items["op_cash"]["claim"]
+    note = items["op_cash"]["note"]
+    assert f"{v.ttm['annual']:,.0f} (in the 10-K, not in this filing)" in note and "never fail" in note
+    assert f"this year to date {v.ttm['ytd']:,.0f}" in note and f"a year before {v.ttm['ytd_previous_year']:,.0f}" in note
+    assert v.ttm["annual"] + v.ttm["ytd"] - v.ttm["ytd_previous_year"] == pytest.approx(v.value)
+    assert f"period end {R.last} (Q)" in items["shares"]["claim"]  # the latest quarter's average, not a sum
+    assert f"period end {R.last} (BS)" in items["debt"]["claim"]
+    annual = {i["id"]: i for i in parts.figure_items(analyse_run("NVDA"))}
+    assert "(FY)" in annual["op_cash"]["claim"] and "note" not in annual["op_cash"]
+    for code in ("`(FY)`", "`(Q)`", "`(BS)`", "`(TTM)`"):  # every code is explained to the auditor
+        assert code in auditor.card_text("figure")

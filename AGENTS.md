@@ -76,7 +76,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-06 (phases 0 and 1 merged and run for real on the Air; Hermes limits are next)
+- **Last update:** 2026-10-06 (GE + SBUX real check reviewed; three P1 fixes on a branch, not merged; Hermes limits still next)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -242,6 +242,16 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   `yfinance`** (rule 24; prices, splits, market value live: NVDA share count and price line now computed) · OpenRouter's dotted model names find
   their price. Open: the 10-K for multi-year "why?" (rule 25, later). **Rule for me: tests and trials run only in an isolated worktree on the Air or on the main
   Mac, never in `~/projects/investment-agents` (the Air's production copy stays on `main`).**
+- **GE + SBUX real check (Hermes, Air, isolated; 2026-10-06) and the three P1 fixes** on `claude/p1-fixes-ttm-stockid-debt`
+  (roadmap section 3, rules 28–31): the figure claim says its period and a last-4-quarters figure is audited by its two
+  year-to-date parts (GE's correct 9.8 bn operating cash was failed against a 6-month row) · a new stock gets its number before
+  its AI parts, so `ai_calls.stock_id` is never empty for it (GE's 5 calls were) · debt group
+  `LongTermDebtAndCapitalLeaseObligations` + `DebtCurrent` (GE 19.157 bn; changes no other sample company) — GE becomes `solid` on
+  2 of 3 decisive measures. **354 tests pass.** Still to do: `python -m shared.auditor testset` with the real auditor (rule card 1
+  changed; 2 new GE cases), then a GE rerun on the Air. Not fixed (P2, from the same review): `GE` sector override
+  (`settings.yaml` `sector_overrides`, old SIC 3600 → IT) · the missing-data message says "SEC's data does not have" when our
+  names did not find it · the first AI thesis escapes the reading audit when a card had an AI-less entry · rule card 1 on liquid
+  parts that have no balance-sheet line (GE's time deposits).
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
 - **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,

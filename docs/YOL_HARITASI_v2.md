@@ -580,6 +580,25 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
     asked again, because the row from an earlier run on older data stayed open). Each analysis now closes the open rows of that stock whose
     figure it found (status `tag_added`) and the rows of a last-4-quarters period a newer one has replaced.
 
+**After the GE + SBUX run on the Air (2026-10-06; the three P1 fixes, my request):**
+28. **A figure claim says its period** — `(FY)` fiscal year, `(Q)` the 10-Q's period, `(BS)` a balance-sheet date, `(TTM)` the last
+    4 quarters — and rule card 1 explains the codes. A `TTM` figure is a sum our code made and is in no filing: its note gives the
+    parts (the last annual report + this year to date − the same period a year before) and the auditor checks the two year-to-date
+    parts against the 10-Q; it never fails the total against a single column. (GE: a correct 9.8 bn of operating cash = 8.537 +
+    5.018 − 3.755 was failed against the 6-month row of 5.0 bn, and the card was marked `unverified` by mistake.) Two GE cases were
+    added to the auditor test set (a correct total → `pass`, a wrong year-to-date part → `fail`).
+29. **A new stock gets its number before its AI parts run** (`ai_calls` is append-only, so a call cannot be linked later). Only with
+    `--ai` and only for a stock we do not have yet; if a later step fails, it stays a `candidate` without a card and the next run
+    writes the card. The missing-data message keeps its stock when it is about one stock (`NULL` when it covers several). (GE's 5
+    calls had no stock.) Not changed: a renamed ticker (FB → META) still runs its AI parts before the rename, without a stock.
+30. **Debt group `LongTermDebtAndCapitalLeaseObligations` + `DebtCurrent`** (GE's 10-Qs: 17.157 + 2.000 = 19.157 bn, the filing's
+    borrowings), tried last, so it never replaces an earlier group. Tried on all 13 sample companies: it changes only GE (TTM 2026 and
+    2020–2022); where another group is also complete it agrees within 1% (Boeing every year, GE 2023–2024). With it GE's debt measure
+    is computed and its grade becomes `solid` on 2 of 3 decisive measures (capital return still not computed: GE reports no operating
+    profit under our names), with the `data_check` "the grade rests on 2 of 3" — the grade rule as approved.
+31. **Open (found while fixing 28):** the excerpts are cut at 12,000 characters by score, so a short table row (Nvidia's `Long-term debt
+    32,366 7,469`) can fall out when the claim's words change; the claim keeps its old words for now. To revisit with the 20-stock test.
+
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
 ### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)

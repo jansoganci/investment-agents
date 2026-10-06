@@ -20,6 +20,9 @@ NET = ("We may become subject to claims, lawsuits or regulatory proceedings that
        "Revenue increased 28% year over year, driven by new large customers and expansion of existing customers.")
 NVDA = ("Cash and cash equivalents $ 22,443 $ 10,605\nMarketable securities 34,143 31,238\nTotal cash, cash equivalents and marketable "
         "securities $ 56,586 $ 41,843\nLong-term debt 32,366 7,469")
+GE = ("Six months ended June 30 2026 2025\nNet cash provided by operating activities 5,018 3,755\n"
+      "Capital expenditures (742) (580)\n(In millions)")
+GE_TTM = ("the two year-to-date figures against this filing; never fail the total for differing from one column")
 REV = "Revenue increased 12% to $4.1 billion in the quarter, driven by higher volumes. Management expects growth to continue."
 
 CASES = [
@@ -42,6 +45,14 @@ CASES = [
      [{"id": "debt", "claim": "debt = Long-term debt 4,000 = 4,000, in millions", "terms": ["debt", "borrowings"]}], "fail"),
     ("figure", "debt: the right total", BOEING,
      [{"id": "debt", "claim": "debt = Current portion 8,460 + Long-term debt 45,388 = 53,848, in millions", "terms": ["debt"]}], "pass"),
+    ("figure", "GE: a correct 4-quarter total is not failed against the 6-month column", GE,
+     [{"id": "op_cash", "claim": "op_cash = 9,800 (NetCashProvidedByUsedInOperatingActivities), period end 2026-06-30 (TTM), in millions",
+       "note": "TTM = the last annual report's 8,537 (in the 10-K, not in this filing) + this year to date 5,018 − the same period a "
+       "year before 3,755. Check " + GE_TTM, "terms": ["operating activities"]}], "pass"),
+    ("figure", "GE: a 4-quarter total built on a wrong year-to-date part", GE,
+     [{"id": "op_cash", "claim": "op_cash = 10,800 (NetCashProvidedByUsedInOperatingActivities), period end 2026-06-30 (TTM), in millions",
+       "note": "TTM = the last annual report's 8,537 (in the 10-K, not in this filing) + this year to date 6,018 − the same period a "
+       "year before 3,755. Check " + GE_TTM, "terms": ["operating activities"]}], "fail"),
     ("reading", "NET: a general risk sentence taken as a real case", NET,
      [{"id": "U1", "claim": "The company faces an active lawsuit that is hurting its business.", "kind": "company_specific",
        "quote": "We may become subject to claims, lawsuits or regulatory proceedings that could be costly and harm our business.",

@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 
 from agents.analysis import sell
 from shared import ai, auditor, config
-from shared.sec import filing
+from shared.sec import FORMS_QUARTER, filing
 
 KINDS = ("company_specific", "general_risk")
 STATUSES = ("intact", "broken", "watch")
@@ -295,19 +295,39 @@ def figure_items(r) -> list[dict]:
     last, items = r.last, []
     for fig, terms in FIGURE_TERMS.items():
         v = (r.figures.get(fig) or {}).get(last)
-        if v is not None:
-            items.append({"id": fig, "claim": f"{fig} = {v.value:,.0f} ({v.tag}), period end {last}, in {r.currency}", "terms": terms})
+        if v is None:
+            continue
+        # the period is a short code the rule card explains: the words of a claim become the excerpts' search terms, and a
+        # longer text pushed balance-sheet rows out of them
+        item = {"id": fig, "claim": f"{fig} = {v.value:,.0f} ({v.tag}), period end {last} ({_period(v)}), in {r.currency}",
+                "terms": terms}
+        if v.ttm:  # a last-4-quarters total is in no filing: its two year-to-date parts are (GE, 2026-10-06)
+            item["note"] = (f"TTM = the last annual report's {v.ttm['annual']:,.0f} (in the 10-K, not in this filing) + this year to "
+                            f"date {v.ttm['ytd']:,.0f} − the same period a year before {v.ttm['ytd_previous_year']:,.0f}. Check the "
+                            "two year-to-date figures against this filing; never fail the total for differing from one column")
+        items.append(item)
     if last in r.liquid:
         v = r.liquid[last]
         items.append({"id": "liquid", "claim": "liquid assets = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())
-                      + f" = {v.value:,.0f}, period end {last}", "note": "by our rule only cash, short-term investments and marketable debt securities count; "
+                      + f" = {v.value:,.0f}, period end {last} (BS)", "note": "by our rule only cash, short-term investments and marketable debt securities count; "
                       "equity securities and stakes in other companies are left out on purpose", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
     if last in r.debt:
         v = r.debt[last]
         items.append({"id": "debt", "claim": "debt = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())
-                      + f" = {v.value:,.0f}, period end {last}" + (" (assumed 0: nothing reported)" if getattr(v, "assumed", False) else ""),
+                      + f" = {v.value:,.0f}, period end {last} (BS)" + (" (assumed 0: nothing reported)" if getattr(v, "assumed", False) else ""),
                       "terms": ["senior notes", "long-term debt", "short-term debt", "borrowings", "notes payable"]})
     return items
+
+
+def _period(v) -> str:
+    """The period code of a figure (rule card 1 explains them): a 4-quarter total compared with a 6-month row is a false fail."""
+    if v.form == "user":
+        return "given by me"
+    if v.ttm:
+        return "TTM"
+    if v.form in FORMS_QUARTER:
+        return "Q"
+    return "FY"
 
 
 def reading_items(why: list[Why]) -> list[dict]:

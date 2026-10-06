@@ -54,18 +54,20 @@ def _tokens(text: str) -> set[str]:
     return set(re.findall(r"/data \S+ \S+ \S+|\b[A-Z]{1,5}\b|\b20\d\d\b", text))
 
 
-def simplify(text: str, run=None) -> str:
-    """The cheap model makes the message plainer; its text is used only if every ticker, year and command is still there."""
+def simplify(text: str, run=None, stock_id=None) -> str:
+    """The cheap model makes the message plainer; its text is used only if every ticker, year and command is still there.
+    `stock_id`: the stock the message is about (None when it covers several stocks)."""
     try:
         reply = ai.call("cheap", "Rewrite this message in plainer words for a beginner. Keep every ticker, year, figure name and "
-                        "/data command exactly. Keep the same layout. Answer with the message only.\n\n" + text, run=run)
+                        "/data command exactly. Keep the same layout. Answer with the message only.\n\n" + text, run=run,
+                        stock_id=stock_id)
     except ai.AIError:
         return text
     return reply.text.strip() if _tokens(text) <= _tokens(reply.text) else text
 
 
 def pending(conn, ticker: str | None = None) -> list[dict]:
-    q = ("SELECT m.id, s.ticker, m.year, m.figure, m.asked_at, m.reminded_at FROM missing_data m JOIN stocks s ON s.id = m.stock_id "
+    q = ("SELECT m.id, s.ticker, m.year, m.figure, m.asked_at, m.reminded_at, m.stock_id FROM missing_data m JOIN stocks s ON s.id = m.stock_id "
          "WHERE m.status='open' AND NOT EXISTS (SELECT 1 FROM financials f WHERE f.stock_id=m.stock_id AND f.figure=m.figure "
          "AND f.period_end=m.year AND f.source='user' AND f.void=0)")
     args = []
@@ -73,7 +75,7 @@ def pending(conn, ticker: str | None = None) -> list[dict]:
         q += " AND upper(s.ticker) = ?"
         args.append(ticker.upper())
     q += " ORDER BY s.ticker, m.year, m.figure"
-    cols = ("id", "ticker", "year", "figure", "asked_at", "reminded_at")
+    cols = ("id", "ticker", "year", "figure", "asked_at", "reminded_at", "stock_id")
     return [dict(zip(cols, r)) for r in conn.execute(q, args).fetchall()]
 
 
@@ -88,7 +90,8 @@ def request(conn, ticker: str | None = None, run=None, plain: bool = True, today
     for rows, is_reminder in ((new, False), (remind, True)):
         if rows:
             text = template([(r["ticker"], r["year"], r["figure"]) for r in rows], reminder=is_reminder)
-            parts.append(simplify(text, run) if plain else text)
+            stocks = {r["stock_id"] for r in rows}
+            parts.append(simplify(text, run, stocks.pop() if len(stocks) == 1 else None) if plain else text)
     if not parts:
         return None
     now = clock.utc_iso()

@@ -58,3 +58,17 @@ def test_without_ai_the_message_is_the_plain_template_and_no_model_is_called(db,
     stock_with_missing(db, [("2026", "interest")])
     text = ask.request(db, plain=False, today="2026-10-06")
     assert "/data NKE 2026 interest" in text and fake.calls == []
+
+
+def test_the_cheap_call_keeps_its_stock_when_the_message_is_about_one(db, monkeypatch):
+    FakeAI(lambda *a: "x").install(monkeypatch)  # an unusable rewrite: the template is sent, the call is still logged
+    stock_with_missing(db, [("2026", "interest")])
+    ask.request(db, today="2026-10-06")
+    assert db.execute("SELECT stock_id FROM ai_calls").fetchall() == [(1,)]
+    db.execute("INSERT INTO stocks (cik, ticker, company, status, created_at) VALUES ('2', 'KO', 'Coca-Cola', 'watching', 'x')")
+    for sid in (1, 2):
+        db.execute("INSERT INTO missing_data (stock_id, year, figure, names_tried, status, created_at) "
+                   "VALUES (?, '2025', 'debt', '[]', 'open', 'x')", (sid,))
+    db.commit()
+    ask.request(db, today="2026-10-06")  # one message about two stocks: no single stock to keep
+    assert db.execute("SELECT stock_id FROM ai_calls ORDER BY id DESC LIMIT 1").fetchone() == (None,)

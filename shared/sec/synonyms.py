@@ -91,6 +91,10 @@ DEBT_GROUPS: dict[str, list[tuple[list[str], bool, bool]]] = {
         (["LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsCurrent"], False, True),
         (["ConvertibleDebtNoncurrent", "ConvertibleDebtCurrent", "ConvertibleNotesPayable", "LongTermNotesPayable"], False,
          False),
+        # GE's 10-Qs (2026): the long-term part under the lease-inclusive name, the short-term part as `DebtCurrent`
+        # (17.157 + 2.000 = 19.157 bn, the filing's total borrowings). Last, so it never replaces a group above; where one
+        # of them is also complete it agrees within 1% (Boeing every year, GE 2023–2024).
+        (["LongTermDebtAndCapitalLeaseObligations", "DebtCurrent"], True, True),
     ],
     "ifrs-full": [
         (["Borrowings"], True, True),

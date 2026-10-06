@@ -31,6 +31,8 @@ def test_the_first_ai_run_writes_the_thesis_the_answers_and_the_audits(db, env, 
     assert entry == ("intact", 0)
     assert sorted(x[0] for x in db.execute("SELECT audit FROM audits")) == ["figure", "reading"]  # a first card: cards 1 + 2
     assert db.execute("SELECT count(*) FROM ai_calls").fetchone()[0] == len(fake.calls) >= 4
+    # NVDA was new: its number did not exist while the AI ran; every call is linked to it once it is saved (GE, 2026-10-06)
+    assert db.execute("SELECT DISTINCT stock_id FROM ai_calls").fetchall() == [(out.stock_id,)]
     assert db.execute("SELECT cost_usd FROM runs WHERE job='analysis'").fetchone()[0] > 0  # the dollars are on the run row
     assert "answer" in body and NOTES in body  # a why answer and its quote sit on the warning
     assert "UNVERIFIED" not in out.text and out.grade == "solid"

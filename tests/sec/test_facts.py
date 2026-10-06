@@ -114,6 +114,26 @@ def test_pfizer_2020_debt_is_the_noncurrent_group_not_the_single_item():
     assert d.tags[:2] == ["LongTermDebtNoncurrent", "LongTermDebtCurrent"]
 
 
+def test_ge_debt_long_term_under_the_lease_name_plus_debt_current():
+    # GE's 10-Q (2026-06-30): 17.157 bn under `LongTermDebtAndCapitalLeaseObligations` + 2.000 bn `DebtCurrent` = the
+    # filing's 19.157 bn of borrowings; before, no group was complete and the debt was asked for
+    f = facts("GE")
+    d = f.debt()[f.ttm_end]
+    assert f.ttm_end == "2026-06-30" and d.value == pytest.approx(19.157 * BN, rel=1e-4)
+    assert d.tags == ["LongTermDebtAndCapitalLeaseObligations", "DebtCurrent"]  # short-term debt is in `DebtCurrent`
+    assert ("debt", "TTM 2026-06-30") not in {(m["figure"], m["year"]) for m in f.misses}
+    # where an older group is complete it still wins, and the new group agrees with it
+    d24 = f.debt()["2024-12-31"]
+    assert d24.tags[0] == "LongTermDebt" and not d24.disagree and d24.candidates[1] == pytest.approx(d24.candidates[0], rel=0.01)
+
+
+def test_the_new_debt_group_changes_no_other_company():
+    # Boeing has both names too: its `LongTermDebt` stays the total, the new group is only a check within 1%
+    for e, d in facts("BA").debt().items():
+        assert d.tags == ["LongTermDebt"] and not d.disagree
+        assert all(c == pytest.approx(d.candidates[0], rel=0.01) for c in d.candidates)
+
+
 def test_missing_is_none_and_the_names_tried_are_kept():
     f = facts("RIVN", quarters=False)
     assert f.annual("dividends") == {}

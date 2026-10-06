@@ -236,6 +236,15 @@ def _ai_part(conn, stock, ticker, company, cik, subs, source, r, src, run, model
     return ai_parts.run_ai(r, text, ctx), ctx
 
 
+def _insert_stock(conn, cik, ticker, company, subs, r, day, now) -> dict:
+    """A stock analysed by hand for the first time: a `candidate` (inside the caller's write lock)."""
+    conn.execute(
+        "INSERT INTO stocks (cik, ticker, company, exchange, country, sector, status, in_portfolio, added_by, "
+        "opened, created_at) VALUES (?, ?, ?, ?, ?, ?, 'candidate', 'no', 'user', ?, ?)",
+        (cik, ticker, company, (subs.get("exchanges") or [None])[0], _country(subs), r.sector, day, now))
+    return find_stock(conn, ticker)
+
+
 def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts: dict | None = None, *,
             use_ai: bool = False, run=None, model: str | None = None, rng=None, news: list | None = None,
             ask_missing: bool = False) -> Outcome:
@@ -261,6 +270,17 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
         old_path.read_text(encoding="utf-8") if old_path is not None and old_path.exists() else None, r.flags)
     part, ctx = (None, None)
     if use_ai and not r.out_of_scope:  # the AI calls are slow: they run before the write lock, like SEC and Yahoo
+        if stock is None and not (found and found.get("rename_from")):
+            # a new stock gets its number first, so every AI call is logged with it (`ai_calls` is append-only; GE,
+            # 2026-10-06). If anything below fails, the stock stays a `candidate` without a card; the next run writes it.
+            conn.commit()
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                stock = find_stock(conn, ticker) or _insert_stock(conn, cik, ticker, company, subs, r, day, now)
+                conn.commit()
+            except BaseException:
+                conn.rollback()
+                raise
         part, ctx = _ai_part(conn, stock, ticker, company, cik, subs, source, r, src, run, model, rng, news)
 
     conn.commit()
@@ -272,11 +292,7 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
         if stock and stock["status"] == "archived":
             raise Refused(f"{ticker} is archived: archived stocks are never analyzed (/unarchive {ticker} first).")
         if stock is None:
-            conn.execute(
-                "INSERT INTO stocks (cik, ticker, company, exchange, country, sector, status, in_portfolio, added_by, "
-                "opened, created_at) VALUES (?, ?, ?, ?, ?, ?, 'candidate', 'no', 'user', ?, ?)",
-                (cik, ticker, company, (subs.get("exchanges") or [None])[0], _country(subs), r.sector, day, now))
-            stock = find_stock(conn, ticker)
+            stock = _insert_stock(conn, cik, ticker, company, subs, r, day, now)
         sid = stock["id"]
         previous = conn.execute("SELECT grade, lynch_type FROM card_entries WHERE stock_id=? AND record='fundamental' "
                                 "ORDER BY id DESC LIMIT 1", (sid,)).fetchone()
