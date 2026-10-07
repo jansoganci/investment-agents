@@ -599,6 +599,17 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 31. **Open (found while fixing 28):** the excerpts are cut at 12,000 characters by score, so a short table row (Nvidia's `Long-term debt
     32,366 7,469`) can fall out when the claim's words change; the claim keeps its old words for now. To revisit with the 20-stock test.
 
+**Decisions after the second GE check (2026-10-06, mine; not built yet):**
+32. **Liquid assets count only separate balance-sheet lines** (option A). A part with no line of its own — GE's ~1.0 bn of time
+    deposits over 3 months inside "other current assets" — is not counted (SEC's data has no name for it). Rule card 1 must say it:
+    never fail liquid assets for leaving such a part out.
+33. **Restricted cash counts as liquid** (as the code does today through `CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents`;
+    GE, SBUX). Rule card 1 must say it, so the auditor does not fail it.
+34. **A sector change reaches an existing stock with a dated note on its card.** When `sector_overrides` (or the table) gives a
+    stock another sector, the next analysis updates `stocks.sector` and the card header and appends a dated note
+    ("Sector: Information Technology → Industrials (my correction)"). Today `sector=coalesce(sector, ?)` never updates it. To add:
+    `GE: Industrials`, `MMM: Industrials` (MMM's SIC to confirm first).
+
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
 ### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)

@@ -252,6 +252,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   (`settings.yaml` `sector_overrides`, old SIC 3600 → IT) · the missing-data message says "SEC's data does not have" when our
   names did not find it · the first AI thesis escapes the reading audit when a card had an AI-less entry · rule card 1 on liquid
   parts that have no balance-sheet line (GE's time deposits).
+- **Second GE check (2026-10-06), analysed, nothing built:** 5 findings. **My decisions** (roadmap rules 32–34): liquid = separate
+  balance-sheet lines only (option A) · restricted cash counts · a sector change goes to the card as a dated note. **Next (tomorrow):**
+  (1) on the Air, read GE's latest figure audit (`audits.detail`) to find why `op_cash` is `not_found` · (2) build rules 32–34 + the
+  thesis-check fix (tell the model NEW NUMBERS are current; show mark-only measures without `None`) · stuck `running` rows wait for
+  phase 6. Roles: Cursor builds from the handoff, Claude checks.
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
 - **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,
