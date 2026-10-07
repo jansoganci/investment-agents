@@ -22,6 +22,9 @@ NVDA = ("Cash and cash equivalents $ 22,443 $ 10,605\nMarketable securities 34,1
         "securities $ 56,586 $ 41,843\nLong-term debt 32,366 7,469")
 GE = ("Six months ended June 30 2026 2025\nNet cash provided by operating activities 5,018 3,755\n"
       "Capital expenditures (742) (580)\n(In millions)")
+GE_BS = ("Cash, cash equivalents and restricted cash $ 12,450\nInvestment securities 5,830\nCurrent receivables 9,620\n"
+         "Other current assets 2,914\nTotal current assets 41,200\n(In millions)\n"
+         "Other current assets include time deposits with original maturities of more than three months of $1,010 million.")
 GE_TTM = ("the two year-to-date figures against this filing; never fail the total for differing from one column")
 REV = "Revenue increased 12% to $4.1 billion in the quarter, driven by higher volumes. Management expects growth to continue."
 
@@ -53,6 +56,11 @@ CASES = [
      [{"id": "op_cash", "claim": "op_cash = 10,800 (NetCashProvidedByUsedInOperatingActivities), period end 2026-06-30 (TTM), in millions",
        "note": "TTM = the last annual report's 8,537 (in the 10-K, not in this filing) + this year to date 6,018 − the same period a "
        "year before 3,755. Check " + GE_TTM, "terms": ["operating activities"]}], "fail"),
+    ("figure", "GE liquid assets: time deposits inside other current assets are not counted", GE_BS,
+     [{"id": "liquid", "claim": "liquid assets = cash 12,450 + investment securities 5,830 = 18,280, period end 2026-06-30 (BS), in millions",
+       "note": "only parts with a balance-sheet line of their own count: a part with no line of its own (e.g. time deposits inside "
+       "other current assets) is not counted — never fail liquid assets for leaving it out",
+       "terms": ["cash and cash equivalents", "investment securities", "time deposits"]}], "pass"),
     ("reading", "NET: a general risk sentence taken as a real case", NET,
      [{"id": "U1", "claim": "The company faces an active lawsuit that is hurting its business.", "kind": "company_specific",
        "quote": "We may become subject to claims, lawsuits or regulatory proceedings that could be costly and harm our business.",

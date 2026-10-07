@@ -9,6 +9,7 @@ from agents.analysis import ai as parts
 from agents.analysis import sell
 from shared import ai, auditor
 from shared.ai.fake import FakeAI
+from shared.auditor import testset
 from tests.analysis.test_measures import run as analyse_run
 from tests.fixtures.loader import filing_text
 
@@ -282,3 +283,11 @@ def test_a_figure_claim_says_its_period_and_a_4_quarter_total_gives_its_parts():
     assert "(FY)" in annual["op_cash"]["claim"] and "note" not in annual["op_cash"]
     for code in ("`(FY)`", "`(Q)`", "`(BS)`", "`(TTM)`"):  # every code is explained to the auditor
         assert code in auditor.card_text("figure")
+
+
+def test_liquid_assets_without_a_line_of_their_own_are_never_failed():
+    # GE, 2026-10-06: ~1.0 bn of time deposits sit inside "other current assets"; liquid assets count separate lines only
+    note = {i["id"]: i for i in parts.figure_items(R)}["liquid"]["note"]
+    assert "no line of its own" in note and "time deposits inside other current assets" in note and "never fail" in note
+    assert "time deposits over 3 months" in auditor.card_text("figure")
+    assert any("time deposits" in c[1] and c[4] == "pass" for c in testset.CASES)
