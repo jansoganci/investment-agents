@@ -17,7 +17,7 @@ Names of fields, tables, grades, and folders follow `docs/GLOSSARY.md`.
 1. Agents only **suggest**. A broker or bank password never enters the system.
 2. Green list ≠ buy. A score is a ranking; every score has a required `reason` sentence next to it.
 3. `card.md` is append-only. Old entries are not deleted; every entry is dated.
-   One exception: the header shows the current state (`status`, `in_portfolio`, `lynch_type`, `grade`, `last_entry`) and only code updates it; every change is also appended as a dated note.
+   One exception: the header shows the current state (`status`, `in_portfolio`, `lynch_type`, `grade`, `last_entry`, `sector`) and only code updates it; every change is also appended as a dated note.
 4. Agents do not know each other; they communicate only through files / SQLite.
 5. A new feature is added only after the current step counts as "done".
 
@@ -76,7 +76,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-06 (GE + SBUX real check reviewed; three P1 fixes on a branch, not merged; Hermes limits still next)
+- **Last update:** 2026-10-07 (rules 32–34 built on `claude/decisions-liquid-sector`, not pushed; Hermes limits still next)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -257,6 +257,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   (1) on the Air, read GE's latest figure audit (`audits.detail`) to find why `op_cash` is `not_found` · (2) build rules 32–34 + the
   thesis-check fix (tell the model NEW NUMBERS are current; show mark-only measures without `None`) · stuck `running` rows wait for
   phase 6. Roles: Cursor builds from the handoff, Claude checks.
+- **Rules 32–34 built (2026-10-07, Cursor)** on `claude/decisions-liquid-sector`, one commit each, not pushed: rule card 1 + the liquid note + 2 GE test-set cases (no-line parts, restricted cash) · a sector change updates `stocks.sector`, the card header and adds one dated note (`card.change_sector`); `sector_overrides` GE and MMM (SIC 3841 → Health Care) → Industrials. 356 pass; `test_ask` reminder test fails by date (real clock vs fixed `today`), not fixed. Next: the real auditor `testset`, then GE on the Air.
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
 - **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,

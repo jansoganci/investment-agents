@@ -42,6 +42,32 @@ def test_second_run_appends_a_dated_entry_and_deletes_nothing(db, env, src):
     assert db.execute("SELECT count(*) FROM financials").fetchone()[0] == fin1  # same figures are not stored twice
 
 
+def test_a_sector_change_reaches_the_stock_and_the_card_with_one_dated_note(db, env, src, monkeypatch):
+    # roadmap rule 34: GE's SIC 3600 gives Information Technology; settings.yaml corrects it to Industrials
+    from shared import config
+
+    real = config.settings
+    without = real()
+    without["sector_overrides"] = {}
+    monkeypatch.setattr(config, "settings", lambda: without)
+    run.analyze(db, "GE", src, today="2026-10-05")
+    assert run.find_stock(db, "GE")["sector"] == "Information Technology"
+    path = drive.find_card("GE")
+    body1 = card.split(path.read_text())[1]
+
+    monkeypatch.setattr(config, "settings", real)
+    run.analyze(db, "GE", src, today="2026-10-12")
+    assert run.find_stock(db, "GE")["sector"] == "Industrials"
+    head, body2 = card.split(path.read_text())
+    assert head["sector"] == "Industrials" and body2.startswith(body1)  # earlier entries unchanged
+    note = "## 2026-10-12 · note · agent_3\nSector: Information Technology → Industrials (sector table / settings.yaml sector_overrides)"
+    assert body2.count("Sector: ") == 1 and note in body2
+
+    run.analyze(db, "GE", src, today="2026-10-19")
+    head, body3 = card.split(path.read_text())
+    assert head["sector"] == "Industrials" and body3.startswith(body2) and body3.count("Sector: ") == 1
+
+
 def test_missing_figures_go_to_the_ledger_once(db, env, src):
     run.analyze(db, "SNAP", src, today="2026-10-05")
     n = db.execute("SELECT count(*) FROM missing_data").fetchone()[0]

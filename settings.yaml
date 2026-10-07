@@ -24,7 +24,9 @@ hours:                             # Turkey time
 
 # Sector before the Eye exists: from the SEC industry code (shared/sectors.py). Correct a wrong one here, e.g.
 #   sector_overrides: {SNAP: Communication Services}
-sector_overrides: {}
+sector_overrides:
+  GE: Industrials                  # SIC 3600 (electrical equipment) → the table says Information Technology
+  MMM: Industrials                 # SIC 3841 (medical instruments) → the table says Health Care
 
 portfolio:
   goal_usd: 800000                 # total wealth goal (agent 4 rule 4)

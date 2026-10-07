@@ -1,7 +1,8 @@
 """The card (`card.md`): roadmap section 3, "Card format"; skeleton in BAGLAM.md section 7.
 
 - The header (YAML front matter) shows the current state. Only code changes it, and only these fields:
-  `status`, `in_portfolio`, `lynch_type`, `grade`, `last_entry`. `opened` never changes.
+  `status`, `in_portfolio`, `lynch_type`, `grade`, `last_entry` (and `ticker` / `sector` through `rename_ticker` /
+  `change_sector`, each with a dated note). `opened` never changes.
 - Entries are appended at the end and never edited: `## <date> · <record> · <who> [· <source>]`.
 - Figures live only in the YAML data block of an entry; prose sits under `### Summary` · `### Thesis` · `### What changed`.
 """
@@ -84,6 +85,16 @@ def rename_ticker(path: Path, old: str, new: str, day: str, note: str) -> Path:
         os.replace(folder, target)
     write(target / path.name, _header_text(head) + body)
     return target / path.name
+
+
+def change_sector(path: Path, old: str | None, new: str, day: str) -> None:
+    """A sector change from the sector table or `sector_overrides` (roadmap rule 34): the header's `sector` changes and a dated
+    note says so; nothing else changes."""
+    head, body = split(path.read_text(encoding="utf-8"))
+    head["sector"] = new
+    note = f"Sector: {old} → {new} (sector table / settings.yaml sector_overrides)"
+    body = body.rstrip("\n") + "\n\n" + note_entry(day, note, who="agent_3").rstrip("\n") + "\n"
+    write(path, _header_text(head) + body)
 
 
 def note_entry(day: str, text: str, who: str = "user") -> str:

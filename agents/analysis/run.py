@@ -297,10 +297,13 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
         previous = conn.execute("SELECT grade, lynch_type FROM card_entries WHERE stock_id=? AND record='fundamental' "
                                 "ORDER BY id DESC LIMIT 1", (sid,)).fetchone()
         previous = {"grade": previous[0], "lynch_type": previous[1]} if previous else None
+        old_sector = stock["sector"]
+        sector_moved = bool(old_sector) and r.sector not in (None, "other") and r.sector != old_sector
         conn.execute("UPDATE stocks SET cik=?, lynch_type=?, grade=?, last_entry=?, out_of_scope=?, "
-                     "opened=coalesce(opened, ?), sector=coalesce(sector, ?), country=coalesce(country, ?), "
+                     "opened=coalesce(opened, ?), sector=?, country=coalesce(country, ?), "
                      "exchange=coalesce(exchange, ?) WHERE id=?",
-                     (cik, r.lynch_type, r.grade, day, r.out_of_scope, day, r.sector, _country(subs),
+                     (cik, r.lynch_type, r.grade, day, r.out_of_scope, day,
+                      r.sector if sector_moved else (old_sector or r.sector), _country(subs),
                       (subs.get("exchanges") or [None])[0], sid))
         conn.execute("INSERT INTO card_entries (stock_id, date, record, who, source, grade, lynch_type, thesis_status, "
                      "unverified, filing, created_at) VALUES (?, ?, 'fundamental', 'agent_3', ?, ?, ?, ?, ?, ?, ?)",
@@ -318,6 +321,8 @@ def analyze(conn, ticker: str, sources=None, today: str | None = None, raw_facts
             head.update({"company": stock["company"] or company, "sector": stock["sector"] or r.sector,
                          "opened": stock["opened"] or day})
             card.write(path, card.new_card(head))
+        if sector_moved:
+            card.change_sector(path, old_sector, r.sector, day)
         card.append(path, card.fundamental_entry(r, source, day, previous, part,
                                                  ctx.previous_thesis_date if ctx else None),
                     {"lynch_type": r.lynch_type or "unclear", "grade": r.grade, "last_entry": day})
