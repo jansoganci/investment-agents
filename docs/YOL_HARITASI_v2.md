@@ -599,7 +599,7 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 31. **Open (found while fixing 28):** the excerpts are cut at 12,000 characters by score, so a short table row (Nvidia's `Long-term debt
     32,366 7,469`) can fall out when the claim's words change; the claim keeps its old words for now. To revisit with the 20-stock test.
 
-**Decisions after the second GE check (2026-10-06, mine; not built yet):**
+**Decisions after the second GE check (2026-10-06, mine; built 2026-10-07 in `main`, `ae02ac4`):**
 32. **Liquid assets count only separate balance-sheet lines** (option A). A part with no line of its own — GE's ~1.0 bn of time
     deposits over 3 months inside "other current assets" — is not counted (SEC's data has no name for it). Rule card 1 must say it:
     never fail liquid assets for leaving such a part out.
@@ -607,8 +607,35 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
     GE, SBUX). Rule card 1 must say it, so the auditor does not fail it.
 34. **A sector change reaches an existing stock with a dated note on its card.** When `sector_overrides` (or the table) gives a
     stock another sector, the next analysis updates `stocks.sector` and the card header and appends a dated note
-    ("Sector: Information Technology → Industrials (my correction)"). Today `sector=coalesce(sector, ?)` never updates it. To add:
-    `GE: Industrials`, `MMM: Industrials` (MMM's SIC to confirm first).
+    ("Sector: Information Technology → Industrials (sector table / settings.yaml sector_overrides)"), written by `agent_3` so it is
+    not read as my note in the thesis check (`card.change_sector`; never to `other`). `sector_overrides`: `GE: Industrials` (SIC 3600),
+    `MMM: Industrials` (SIC 3841 → Health Care in the table). The header field `sector` joined fixed rule 3's code-updated fields.
+
+**Found in the third GE look (2026-10-07, Hermes, read only; open, not built):**
+35. **The figure audit cannot see GE's operating cash row.** GE labels it "Cash from (used for) operating activities" (5,018 / 3,755
+    for the six months); our search term is only "net cash provided by operating activities", which GE's 10-Q never uses. So the
+    row is not in the excerpts and the auditor answers `not_found` ("No operating cash flow amounts are provided in the excerpts").
+    Fix to build: add GE's wording to the `op_cash` search terms (it helps every company that uses it), then check that the
+    Nvidia debt-row test still passes (rule 31). The auditor test set does not catch this: its GE text uses our wording.
+    Wider than one row (Hermes, 2026-10-07): in that audit (id 5) 6 of GE's 7 figures were `not_found`
+    — revenue, net, op_cash, capex, shares, debt — so the figure audit confirms nothing for GE. Suspected
+    (not proven): the 12,000-character excerpt picks the wrong paragraphs for GE's 10-Q (its labels
+    differ; rule 31). To find the fix: try the excerpt choice on GE's real 10-Q text, not on the test set.
+36. **A stale sentence in the thesis check.** GE's first thesis (written when debt could not be computed) says "Debt and interest
+    cover could not be computed here"; the next check repeated it although debt is now computed (19.157 bn). Causes seen: the old
+    thesis goes into the check as it is, and the NEW NUMBERS list shows `debt: not_computed (good, decisive)` (a measure with a mark
+    but no single value). Half of the sentence is still true: interest cover is not computed. Fix to build: tell the model NEW
+    NUMBERS are current where the thesis states an older figure; show a mark-only measure without `not_computed`. The thesis text
+    on the card is never edited.
+37. **Why GE's latest entry is `unverified` (answered, 2026-10-07):** the only `fail` was liquid assets — the auditor counted
+    GE's 1.0 bn of time deposits inside 'other current assets' (the filing's 'sources of liquidity' 10.3 bn). Our 9.345 bn is
+    right by our rule; the auditor was right by the old rule card. Rules 32–33 (ae02ac4) close it; the test-set case passes. The
+    old entry keeps its mark (append-only); a new GE analysis should come out clean.
+38. **A test fails by date:** `test_ask` (asked once, reminded a week later) writes "asked at" from the real clock but checks with a
+    fixed day; it passed on 2026-10-06 and fails from 2026-10-07. A test fix only (no behaviour change).
+39. **The reading audit was stricter than wanted once** (test set at ae02ac4, 13 of 14): a claim naming one of the two causes the
+    quote gives was failed. Not a model change; if a real analysis shows the same, rule card 2 gets 'a shorter claim the quote
+    does not contradict passes'.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
