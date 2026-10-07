@@ -76,7 +76,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-07 (rules 32–34 built on `claude/decisions-liquid-sector`, not pushed; Hermes limits still next)
+- **Last update:** 2026-10-07 (`fix/ge-audit-excerpts`, not pushed: GE excerpts measured and stopped, thesis-check numbers, the date test; Hermes limits still next)
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
@@ -257,7 +257,8 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   (1) on the Air, read GE's latest figure audit (`audits.detail`) to find why `op_cash` is `not_found` · (2) build rules 32–34 + the
   thesis-check fix (tell the model NEW NUMBERS are current; show mark-only measures without `None`) · stuck `running` rows wait for
   phase 6. Roles: Cursor builds from the handoff, Claude checks.
-- **Rules 32–34 built (2026-10-07, Cursor)** on `claude/decisions-liquid-sector`, one commit each, not pushed: rule card 1 + the liquid note + 2 GE test-set cases (no-line parts, restricted cash) · a sector change updates `stocks.sector`, the card header and adds one dated note (`card.change_sector`); `sector_overrides` GE and MMM (SIC 3841 → Health Care) → Industrials. 356 pass; `test_ask` reminder test fails by date (real clock vs fixed `today`), not fixed. Next: the real auditor `testset`, then GE on the Air.
+- **Rules 32–34 built (2026-10-07, Cursor)** on `claude/decisions-liquid-sector`, one commit each, not pushed: rule card 1 + the liquid note + 2 GE test-set cases (no-line parts, restricted cash) · a sector change updates `stocks.sector`, the card header and adds one dated note (`card.change_sector`); `sector_overrides` GE and MMM (SIC 3841 → Health Care) → Industrials. 356 pass. The reminder test's date failure is fixed on `fix/ge-audit-excerpts` (below). Next: the real auditor `testset`, then GE on the Air.
+- **GE excerpts measured (2026-10-07, Cursor)** on `fix/ge-audit-excerpts`, not pushed: GE's real 10-Q is saved; all 8 statement rows miss the 12,000-character excerpts and GE's labels do not fix it (rule 40, chooser unchanged) · the thesis check is told NEW NUMBERS are current and a mark with no value shows as `debt: good, decisive` · the reminder test freezes the clock.
 - **Merged (2026-10-05, my decision, before the Mac check):** PR #3 (phase 0) and PR #5 (phase 1) are in `main`, as merge
   commits. The Mac check of both is still owed, on `main`.
 - **Air real check and the no-debt rule (2026-10-06):** Hermes ran the phase 0 + 1 check on the Air in isolation — 216 tests,
