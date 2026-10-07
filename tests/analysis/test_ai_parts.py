@@ -2,6 +2,7 @@
 
 import json
 import random
+import re
 
 import pytest
 
@@ -237,6 +238,37 @@ def test_the_hold_reason_names_a_disagreement_a_missing_audit_and_an_error():
     assert parts.hold_reason({"sell": ok("sell")}) == ("not_run", "the figure audit did not run")
     assert parts.hold_reason({"figure": ok("figure", "not_found", error="no model answered"), "sell": ok("sell")})[0] == "not_run"
     assert parts.hold_reason({"figure": ok("figure"), "sell": ok("sell"), "reading": ok("reading", "not_found", items=[{"verdict": "not_found"}])})[0] == "unconfirmed"
+
+
+# GE's own statement rows (10-Q to 2026-06-30). Measured with the current search terms: none of them
+# reach the 12,000-character excerpts (roadmap rule 40). A longer label list did not fix that.
+GE_ROWS = {
+    "revenue": "Total revenue $ 13,349 $ 11,023 $ 25,741 $ 20,957",
+    "net income": "Net income (loss) 2,357 2,021 4,276 3,993",
+    "Cash from (used for) operating activities": "Cash from (used for) operating activities 5,018 3,755",
+    "capex": "Add: gross additions to property, plant and equipment and internal-use software (666) (535)",
+    "diluted shares": "1,047 1,040 1,071 1,063",
+    "short-term borrowings": "Short-term borrowings (Note 10) $ 2,000 $ 1,686",
+    "long-term borrowings": "Long-term borrowings (Note 10) 17,157 18,808",
+    "cash": "Cash, cash equivalents and restricted cash $ 9,345 $ 12,392",
+}
+
+
+def test_ge_statement_rows_miss_the_figure_excerpts():
+    from shared import config
+    from shared.sec import filing
+
+    text = filing_text("GE")["text"]
+    assert filing_text("GE")["accession"] == "0000040545-26-000049"
+    for row in GE_ROWS.values():
+        assert row in text
+    items = parts.figure_items(analyse_run("GE", quarters=True))
+    terms = {t for i in items for t in i.get("terms", [])}
+    terms |= {w for i in items for w in re.findall(r"[A-Za-z][A-Za-z\-]{3,}", i.get("claim", ""))}
+    limit = (config.settings().get("ai") or {}).get("excerpt_chars", 12000)
+    blob = "\n".join(filing.excerpts(text, sorted(terms)[:60], limit))
+    report = {name: row in blob for name, row in GE_ROWS.items()}
+    assert report == {name: False for name in GE_ROWS}, report
 
 
 def test_the_figure_audit_sees_the_balance_sheet_row_of_debt(monkeypatch):

@@ -636,6 +636,18 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
 39. **The reading audit was stricter than wanted once** (test set at ae02ac4, 13 of 14): a claim naming one of the two causes the
     quote gives was failed. Not a model change; if a real analysis shows the same, rule card 2 gets 'a shorter claim the quote
     does not contradict passes'.
+40. **GE's statement rows still miss the excerpts (measured 2026-10-07, then stopped).** On GE's real 10-Q
+    (accession 0000040545-26-000049, saved as `tests/fixtures/filings/GE_10Q.json.gz`, text from `html_to_text`),
+    `figure_items()` for the last 4 quarters and the same excerpt choice as the figure audit (the search terms plus
+    the claim's words, 12,000 characters) leave all eight rows out: total revenue $13,349, net income 4,276,
+    "Cash from (used for) operating activities" 5,018, gross additions to property (666), the diluted share count
+    1,047, short-term borrowings 2,000, long-term borrowings 17,157, and cash 9,345. Paragraphs scoring 3 or more
+    fill the 12,000 characters (lowest score kept: 3); these rows score 2, and the share-count line scores 0.
+    Adding GE's labels ("cash from (used for) operating activities", "short-term borrowings", "long-term borrowings",
+    "additions to property, plant and equipment", "cash, cash equivalents and restricted cash") brought in only the
+    cash row. The share count `1,047 1,040 1,071 1,063` is a line with no words, so no search term can select it,
+    and its label "Total average equivalent shares" is 31 characters with no digit, which this choice drops.
+    Nothing changed in the term list or in how excerpts are chosen.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
