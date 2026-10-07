@@ -312,7 +312,8 @@ def figure_items(r) -> list[dict]:
                       + f" = {v.value:,.0f}, period end {last} (BS)", "note": "by our rule only cash, short-term investments and marketable debt securities count; "
                       "equity securities and stakes in other companies are left out on purpose; only parts with a balance-sheet line "
                       "of their own count: a part with no line of its own (e.g. time deposits inside other current assets) is not "
-                      "counted — never fail liquid assets for leaving it out", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
+                      "counted — never fail liquid assets for leaving it out; restricted cash counts when the filing reports cash "
+                      "and restricted cash as one line — never fail for that", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
     if last in r.debt:
         v = r.debt[last]
         items.append({"id": "debt", "claim": "debt = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())

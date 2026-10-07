@@ -18,7 +18,8 @@ CHECKLIST, for each figure:
    our figure, or a part counted that should not be? Marketable EQUITY securities and stakes in other companies are left out on
    purpose (our rule): never fail a figure for leaving them out. Only parts with a balance-sheet line of their own count: a
    part with no line of its own (e.g. GE's time deposits over 3 months inside "other current assets") is not counted (our
-   rule) — never fail liquid assets for leaving it out.
+   rule) — never fail liquid assets for leaving it out. Restricted cash counts when the filing reports cash and restricted
+   cash as one line (`CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents`; GE, SBUX) — never fail for that.
 4. Debt = long-term debt + its current portion + short-term borrowings. Is any part missing or counted twice?
 5. Share count: diluted weighted average, after splits?
 

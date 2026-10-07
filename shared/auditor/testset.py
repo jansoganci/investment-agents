@@ -61,6 +61,11 @@ CASES = [
        "note": "only parts with a balance-sheet line of their own count: a part with no line of its own (e.g. time deposits inside "
        "other current assets) is not counted — never fail liquid assets for leaving it out",
        "terms": ["cash and cash equivalents", "investment securities", "time deposits"]}], "pass"),
+    ("figure", "GE liquid assets: cash including restricted cash as one line counts", GE_BS,
+     [{"id": "liquid", "claim": "liquid assets = CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents 12,450 = 12,450, "
+       "period end 2026-06-30 (BS), in millions",
+       "note": "restricted cash counts when the filing reports cash and restricted cash as one line — never fail for that",
+       "terms": ["cash, cash equivalents and restricted cash"]}], "pass"),
     ("reading", "NET: a general risk sentence taken as a real case", NET,
      [{"id": "U1", "claim": "The company faces an active lawsuit that is hurting its business.", "kind": "company_specific",
        "quote": "We may become subject to claims, lawsuits or regulatory proceedings that could be costly and harm our business.",

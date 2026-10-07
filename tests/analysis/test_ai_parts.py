@@ -291,3 +291,12 @@ def test_liquid_assets_without_a_line_of_their_own_are_never_failed():
     assert "no line of its own" in note and "time deposits inside other current assets" in note and "never fail" in note
     assert "time deposits over 3 months" in auditor.card_text("figure")
     assert any("time deposits" in c[1] and c[4] == "pass" for c in testset.CASES)
+
+
+def test_restricted_cash_in_one_line_with_cash_is_never_failed():
+    # GE, SBUX: the code takes CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents; restricted cash counts as liquid
+    note = {i["id"]: i for i in parts.figure_items(R)}["liquid"]["note"]
+    assert "restricted cash counts" in note and "as one line" in note
+    card = auditor.card_text("figure")
+    assert "Restricted cash counts" in card and "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents" in card
+    assert any("restricted cash" in c[1] and c[4] == "pass" for c in testset.CASES)
