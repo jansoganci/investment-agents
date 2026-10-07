@@ -57,7 +57,8 @@ CHECK_SYSTEM = """You check whether a company's thesis is still true after its n
 is owned and 3 things that would break it), my later notes, the new numbers, and excerpts. Answer with JSON only:
 {"status": "intact" | "broken" | "watch", "point": <1, 2 or 3: the break that happened, or null>, "reason": "one or two
 sentences", "quote": "the sentence from the excerpts that shows it, word for word, or empty"}
-`broken` only when one of the 3 things really happened and you can quote it. When unsure, answer "watch"."""
+`broken` only when one of the 3 things really happened and you can quote it. When unsure, answer "watch".
+NEW NUMBERS are current: where the thesis states an older figure or says a figure could not be computed, use NEW NUMBERS."""
 
 DROP_SYSTEM = """A stock I follow fell sharply. Using the thesis and the excerpts of its latest filing (and news, if any is given),
 say whether the thesis is still true. Answer with JSON only:
@@ -158,9 +159,17 @@ def ask_json(job: str, system: str, prompt: str, check, ctx: Context):
 
 
 def _facts_block(r) -> str:
+    """One line per measure. A mark with no single value is the mark itself (`debt: good, decisive`);
+    a measure with neither a value nor a mark stays `not_computed`."""
     rows = []
     for name, m in r.measures.items():
-        rows.append(f"{name}: {m['value']} ({m['mark'] or 'not_computed'}{', decisive' if m['decisive'] else ''})")
+        decisive = ", decisive" if m["decisive"] else ""
+        if m["value"] is None and m["mark"]:
+            rows.append(f"{name}: {m['mark']}{decisive}")
+        elif m["value"] is None:
+            rows.append(f"{name}: not_computed")
+        else:
+            rows.append(f"{name}: {m['value']} ({m['mark'] or 'not_computed'}{decisive})")
     return "\n".join(rows)
 
 

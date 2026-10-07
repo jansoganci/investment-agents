@@ -254,6 +254,14 @@ GE_ROWS = {
 }
 
 
+def test_a_mark_without_a_value_is_not_shown_as_not_computed():
+    # GE: debt is good and decisive but has no single value; interest cover has neither
+    block = parts._facts_block(analyse_run("GE", quarters=True))
+    assert "debt: good, decisive" in block and "debt: None" not in block
+    assert "interest_cover: not_computed" in block
+    assert "NEW NUMBERS are current: where the thesis states an older figure or says a figure could not be computed, use NEW NUMBERS." in parts.CHECK_SYSTEM
+
+
 def test_ge_statement_rows_miss_the_figure_excerpts():
     from shared import config
     from shared.sec import filing
