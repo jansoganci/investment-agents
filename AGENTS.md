@@ -80,7 +80,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-09 (phase 3 (Portfolio) built and merged into `main` locally; next: its audit in a separate session, then my Mac check; Hermes limits still next)
+- **Last update:** 2026-10-09 (phase 3 (Portfolio) built, merged into `main` and audited — nothing to fix; next: my Mac check; Hermes limits still next)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
@@ -89,8 +89,14 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   "How phase 3 builds it"):** new money = 3 conditions counted (below the high · thesis `intact` · price line not `expensive`),
   tie → the bigger fall; a shadow may go below zero; a drop alert once per fall (again only after a new 52-week high). The
   hand-checked ledger (two buys, a sale, a dividend, a split) is `tests/portfolio/test_ledger.py`. **396 tests pass.** Next: the
-  phase 3 audit (separate session) → fixes → my Mac check (`uv run python -m shared.commands bought 10 KO 85.65` ·
+  my Mac check (`uv run python -m shared.commands bought 10 KO 85.65` ·
   `uv run python -m agents.portfolio`) → on the Air `git pull` + `uv run python -m shared.db upgrade` (version 4 → 5).
+  **Audit of phase 3 (Hermes on the Air, `~/check-repo`, 2026-10-09):** 396 pass; rules 1–9 have code and tests; the hand
+  ledger recomputed ✓. Its one blocker was wrong: it said Yahoo's `Close` (with `auto_adjust=False`) is never split-adjusted —
+  checked live: NVDA 2024-06-07 comes as 120.89 $ (the real close was ~1,209 $), so stored history is already adjusted and
+  `marketdata` is right. Not done (my decision): an UPDATE trigger on `holdings` (code only sets `void` / `voided_by`). Known
+  small item: if the 03:00 price job misses a split night and is run by hand after the US open that day, the day before the
+  split could be divided twice (rare; not fixed).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
