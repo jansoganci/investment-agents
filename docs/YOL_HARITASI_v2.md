@@ -708,6 +708,11 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     figures; rule card 2 says the item's `what` holds our figures (checked by the figure audit), and repeating them or simple
     arithmetic on them is not a reason to fail — the reason given is what must be in the quote. Two test-set cases added (a pass and
     a fail). **To check:** the real auditor test set, then the 20 stocks again in a fresh folder.
+48. **The thesis prompts say what each measure means (2026-10-09).** Reading the round 2 cards, the writer took `capital_return`
+    for cash paid to shareholders (NVDA "a large share of earnings is returned to owners", KO). `_facts_block` now puts a short
+    meaning next to each measure (`capital_return` — return on the capital invested in the business, not cash paid to
+    shareholders; growth = per year; share count = total over 5 years). Rerun on the Air (fresh `~/uat4-data`): NVDA and KO now say
+    "return on invested capital" and "share count down about 3% over 5 years".
 
 **When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
 cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the
@@ -728,8 +733,8 @@ them, rightly).
 **Round 2 result (2026-10-09, the Air, `~/uat3-data`, 20 stocks, 1.44 $): passed.** (1) the 10 trial-set grades as expected;
 (2) no liquid / debt figure off by more than 5% (McDonald's debt now 39.9 bn, Intel's liquid 29.7 bn, Rivian's debt 4.4 bn);
 (3) 4 cards `unverified` (NKE, DOW, RIVN, COST), each because the writer added a figure its quote lacks — the auditor is right;
-(4) JPM `bank`, no AI call. A Sonnet audit takes ~30 s a stock (round 1: 1–5 min). Left before agent 3 is closed: I read 3 cards
-in `~/uat3-drive` (plan, phase 2).
+(4) JPM `bank`, no AI call. A Sonnet audit takes ~30 s a stock (round 1: 1–5 min). 3 cards read (NVDA, KO, COST): clear; one
+meaning error fixed (rule 48).
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
