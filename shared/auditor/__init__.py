@@ -70,9 +70,16 @@ def audit(kind: str, items: list[dict], text: str, *, run=None, stock_id=None, m
     cfg = config.settings().get("ai") or {}
     terms = {t for i in items for t in i.get("terms", [])}
     terms |= {w for i in items for w in re.findall(r"[A-Za-z][A-Za-z\-]{3,}", i.get("claim", ""))}
-    excerpts = filing.excerpts(text, sorted(terms)[:60], cfg.get("excerpt_chars", 12000))
-    prompt = json.dumps({"items": [{k: v for k, v in i.items() if k != "terms"} for i in items]}, ensure_ascii=False,
-                        indent=1) + "\n\nFILING EXCERPTS:\n" + "\n---\n".join(excerpts)
+    limit = cfg.get("excerpt_chars", 12000)
+    # the rows that print our figures come first, found by value (roadmap rule 41: GE's statement rows never reached the
+    # excerpts by their words); the paragraphs chosen by words fill what is left
+    rows = filing.rows_with(text, [x for i in items for x in i.get("values", [])], cfg.get("row_chars", 4000))
+    excerpts = filing.excerpts(text, sorted(terms)[:60], limit - sum(len(r) + 5 for r in rows))
+    prompt = json.dumps({"items": [{k: v for k, v in i.items() if k not in ("terms", "values")} for i in items]},
+                        ensure_ascii=False, indent=1)
+    if rows:
+        prompt += "\n\nFILING ROWS THAT PRINT OUR FIGURES:\n" + "\n---\n".join(rows)
+    prompt += "\n\nFILING EXCERPTS:\n" + "\n---\n".join(excerpts)
     try:
         reply = ai.call("auditor", prompt, system=ENGINE + card_text(kind), run=run, stock_id=stock_id, model=model,
                         exclude_families=exclude_families)

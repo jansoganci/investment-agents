@@ -2,7 +2,6 @@
 
 import json
 import random
-import re
 
 import pytest
 
@@ -31,7 +30,7 @@ def ctx(**kw):
 
 def items_in(prompt):
     """The ITEMS list (strong calls) or {"items": [...]} (auditor calls) the code put in the prompt."""
-    head = prompt.split("\n\nFILING EXCERPTS")[0]
+    head = prompt.split("\n\nFILING ")[0]  # the items come before the filing rows and excerpts
     if '"items"' in head.split("\n")[0] + head[:20]:
         return json.loads(head[head.index("{"):])["items"]
     return json.loads(head[head.index("ITEMS:\n") + 7:])
@@ -240,11 +239,12 @@ def test_the_hold_reason_names_a_disagreement_a_missing_audit_and_an_error():
     assert parts.hold_reason({"figure": ok("figure"), "sell": ok("sell"), "reading": ok("reading", "not_found", items=[{"verdict": "not_found"}])})[0] == "unconfirmed"
 
 
-# GE's own statement rows (10-Q to 2026-06-30). Measured with the current search terms: none of them
-# reach the 12,000-character excerpts (roadmap rule 40). A longer label list did not fix that.
+# GE's own statement rows (10-Q to 2026-06-30). By their words none reached the 12,000-character excerpts (roadmap
+# rule 40); found by our figures' values, all of them do (rule 41). Net income is the Company's share (`NetIncomeLoss`,
+# 4,273), not the total with noncontrolling interests (4,276).
 GE_ROWS = {
     "revenue": "Total revenue $ 13,349 $ 11,023 $ 25,741 $ 20,957",
-    "net income": "Net income (loss) 2,357 2,021 4,276 3,993",
+    "net income": "Net income (loss) attributable to the Company 2,370 2,028 4,273 4,006",
     "Cash from (used for) operating activities": "Cash from (used for) operating activities 5,018 3,755",
     "capex": "Add: gross additions to property, plant and equipment and internal-use software (666) (535)",
     "diluted shares": "1,047 1,040 1,071 1,063",
@@ -262,27 +262,44 @@ def test_a_mark_without_a_value_is_not_shown_as_not_computed():
     assert "NEW NUMBERS are current: where the thesis states an older figure or says a figure could not be computed, use NEW NUMBERS." in parts.CHECK_SYSTEM
 
 
-def test_ge_statement_rows_miss_the_figure_excerpts():
-    from shared import config
-    from shared.sec import filing
+def _figure_prompt(ticker, monkeypatch):
+    """The prompt the figure audit sends for this company's real 10-Q (a fake auditor that answers nothing)."""
+    fake = FakeAI(lambda *a: []).install(monkeypatch)
+    items = parts.figure_items(analyse_run(ticker, quarters=True))
+    auditor.audit("figure", items, filing_text(ticker)["text"])
+    return items, fake.calls[0][2]
 
+
+def test_ge_statement_rows_reach_the_figure_audit(monkeypatch):
+    # rule 40 measured that GE's rows never reached the excerpts by their words; rule 41 finds them by value
     text = filing_text("GE")["text"]
     assert filing_text("GE")["accession"] == "0000040545-26-000049"
-    for row in GE_ROWS.values():
-        assert row in text
-    items = parts.figure_items(analyse_run("GE", quarters=True))
-    terms = {t for i in items for t in i.get("terms", [])}
-    terms |= {w for i in items for w in re.findall(r"[A-Za-z][A-Za-z\-]{3,}", i.get("claim", ""))}
-    limit = (config.settings().get("ai") or {}).get("excerpt_chars", 12000)
-    blob = "\n".join(filing.excerpts(text, sorted(terms)[:60], limit))
-    report = {name: row in blob for name, row in GE_ROWS.items()}
-    assert report == {name: False for name in GE_ROWS}, report
+    assert all(row in text for row in GE_ROWS.values())
+    items, prompt = _figure_prompt("GE", monkeypatch)
+    rows = prompt.split("FILING ROWS THAT PRINT OUR FIGURES:\n")[1].split("\n\nFILING EXCERPTS:")[0]
+    # short-term borrowings: the balance sheet's row or the borrowings note's total — the same 2,000 on the same date
+    found = {name: row in rows for name, row in GE_ROWS.items()}
+    found["short-term borrowings"] |= "Total short-term borrowings $ 2,000 $ 1,686" in rows
+    assert found == {name: True for name in GE_ROWS}
+    assert "Six months ended June 30" in rows and "June 30, 2026 December 31, 2025" in rows  # the columns are named
+    assert len(prompt.split("\n\nFILING ROWS")[1]) <= 12000 + 200  # rows and excerpts share the old limit
+    op_cash = next(i for i in items if i["id"] == "op_cash")
+    assert op_cash["values"] == [5_018_000_000, 3_755_000_000]  # a 4-quarter total is looked up by its two parts
+    assert '"values"' not in prompt.split("\n\nFILING ")[0]  # the numbers we search by are not sent as items
+
+
+def test_nvidia_statement_rows_reach_the_figure_audit(monkeypatch):
+    _, prompt = _figure_prompt("NVDA", monkeypatch)
+    rows = prompt.split("FILING ROWS THAT PRINT OUR FIGURES:\n")[1].split("\n\nFILING EXCERPTS:")[0]
+    for row in ("Net cash provided by operating activities 74,421 42,779", "Long-term debt 32,366 7,469",
+                "Short-term debt 1,000 999", "Marketable debt securities 34,143 39,065", "Diluted 24,285 24,532 24,338 24,571"):
+        assert row in rows
 
 
 def test_the_figure_audit_sees_the_balance_sheet_row_of_debt(monkeypatch):
     fake = FakeAI(handler()).install(monkeypatch)
     parts.run_ai(R, TEXT, ctx())
-    figure_prompt = next(p for job, s, p in fake.calls if job == "auditor" and "\"id\": \"debt\"" in p.split("FILING EXCERPTS")[0])
+    figure_prompt = next(p for job, s, p in fake.calls if job == "auditor" and "\"id\": \"debt\"" in p.split("\n\nFILING ")[0])
     assert "Long-term debt 32,366 7,469" in figure_prompt  # a 27-character table row used to be dropped
 
 

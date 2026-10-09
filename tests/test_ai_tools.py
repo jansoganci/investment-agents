@@ -21,7 +21,7 @@ def test_ping_says_which_keys_are_missing_and_never_prints_a_key(db, monkeypatch
 def test_a_yes_man_auditor_misses_the_error_cases_and_the_report_says_so(monkeypatch):
     # a yes-man auditor says `pass` to everything, with a real quote: the error cases must show up as misses
     FakeAI(lambda job, system, prompt: [{"id": i["id"], "verdict": "pass", "quote": "Revenue increased 12% to $4.1 billion in the quarter",
-                                         "reason": "fine"} for i in __import__("json").loads(prompt.split("\n\nFILING EXCERPTS")[0])["items"]]
+                                         "reason": "fine"} for i in __import__("json").loads(prompt.split("\n\nFILING ")[0])["items"]]
            ).install(monkeypatch)
     results = testset.run()
     text = testset.report(results)

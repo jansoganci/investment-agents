@@ -647,7 +647,25 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
     "additions to property, plant and equipment", "cash, cash equivalents and restricted cash") brought in only the
     cash row. The share count `1,047 1,040 1,071 1,063` is a line with no words, so no search term can select it,
     and its label "Total average equivalent shares" is 31 characters with no digit, which this choice drops.
-    Nothing changed in the term list or in how excerpts are chosen.
+    Nothing changed in the term list or in how excerpts are chosen. (Answered by rule 41.)
+41. **The figure audit finds the statement rows by our figures' values (decision 2026-10-09, option A "by value").** Searching
+    for the words of a label cannot work for every company (rule 40); our numbers are already known, so code looks for them.
+    `shared.sec.filing.rows_with` finds the lines that print a figure — in millions, else in thousands, whole numbers only,
+    never inside another number (2,000 is not 12,000 or 2,000.5), at least 3 digits. Table rows (at most 200 characters, two
+    or more numbers) come before sentences, and a row where the figure is the first number (the current column) first; a
+    sentence is used only when no table row holds the figure, cut around it. Each row brings its nearest period or date
+    header (and the "Six Months Ended" line above a line of dates) and, for a row of bare numbers, its label line above.
+    What is searched: the figure itself; for a last-4-quarters figure its two year-to-date parts (the total is printed
+    nowhere); for liquid assets and debt the total and its parts; nothing for a figure I gave with `/data` or an assumed zero
+    debt. The rows (at most `ai.row_chars` = 4,000 characters) come first in the prompt ("FILING ROWS THAT PRINT OUR
+    FIGURES"); the paragraphs chosen by words fill the rest of the same 12,000. Rule card 1 says a row found by its number
+    must still have the right label, column and unit. The reading and sell audits do not change.
+    **Measured on the real 10-Qs:** GE 8 of 8 rows (was 0 of 8), about 2,400 characters; Nvidia every row with the right
+    date headers, about 2,000. Net income is the Company's share (`NetIncomeLoss`, 4,273), so the right row is found, not the
+    total with noncontrolling interests (4,276). GE's short-term borrowings come from the borrowings note ("Total short-term
+    borrowings $ 2,000") rather than the balance sheet — the same figure and date. **Limit:** a figure that is wrong and
+    printed nowhere is now `not_found` rather than `fail`; a wrong row taken (Boeing's current part only) is still seen by
+    its label. **To check on the Air:** the test set, then GE again (most figure items should `pass`).
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 

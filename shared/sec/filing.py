@@ -86,6 +86,87 @@ def excerpts(text: str, terms: list[str], max_chars: int = 12000, per_paragraph:
     return [p for _, p in sorted(picked)]
 
 
+_NUMBER = re.compile(r"\(?\$?\s?\d[\d,]*(?:\.\d+)?\)?")
+_PERIOD = re.compile(r"(three|six|nine|twelve) months ended|year ended|weeks ended|quarter ended|in (millions|thousands)"
+                     r"|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.? \d{1,2}, \d{4}", re.I)
+ROW_MAX = 200  # a table row or a header is short; a longer line is prose
+_MONTHS = re.compile(r"(three|six|nine|twelve) months ended|year ended|weeks ended|quarter ended", re.I)
+_YEARS_ONLY = re.compile(r"^(?:(?:19|20)\d\d\s*)+$")
+
+
+def _shown(value: float) -> list[str]:
+    """How a figure can be printed in a statement: in millions, then in thousands (only where it is a whole number)."""
+    out = []
+    for unit in (1e6, 1e3):
+        x = abs(value) / unit
+        if abs(x - round(x)) < 1e-6 and round(x) >= 100:  # under 3 digits a number is everywhere (a note number, a day)
+            out.append(f"{round(x):,}")
+    return out
+
+
+def _first_number(line: str, pattern: re.Pattern) -> bool:
+    first = _NUMBER.search(line)
+    return bool(first) and bool(pattern.search(line[first.start():first.end() + 2]))
+
+
+def _around(line: str, pattern: re.Pattern, reach: int = 150) -> str:
+    """A sentence that holds the figure (no table row does): the part around it, cut at word boundaries."""
+    m = pattern.search(line)
+    a, b = max(0, m.start() - reach), min(len(line), m.end() + reach)
+    a = line.rfind(" ", 0, a) + 1 if a else 0
+    b = line.find(" ", b) if b < len(line) and line.find(" ", b) != -1 else len(line)
+    return line[a:b]
+
+
+def _header(lines: list[str], i: int, reach: int = 60) -> list[str]:
+    """The nearest line above row `i` that names the period or the unit (and the years line under it), so the auditor sees
+    which column is which."""
+    for k in range(i - 1, max(-1, i - reach), -1):
+        if len(lines[k]) <= ROW_MAX and _PERIOD.search(lines[k]):
+            out = [lines[k]]
+            if k + 1 < i and _YEARS_ONLY.match(lines[k + 1]):
+                out.append(lines[k + 1])
+            if not _MONTHS.search(lines[k]):  # a line of dates only: the "Six Months Ended" line above says which is which
+                above = next((lines[j] for j in range(k - 1, max(-1, k - 4), -1)
+                              if len(lines[j]) <= ROW_MAX and _MONTHS.search(lines[j])), None)
+                if above:
+                    out.insert(0, above)
+            return out
+    return []
+
+
+def rows_with(text: str, values: list[float], max_chars: int = 4000, per_value: int = 2) -> list[str]:
+    """The filing rows that print our figures (roadmap rule 41): each row with its period header and, for a row of bare
+    numbers, the label line above it. Table rows (two or more numbers) come before sentences. Found by value, so the
+    auditor sees the statement rows even where the labels differ from our search terms (GE). In document order."""
+    lines = text.split("\n")
+    picked: dict[int, list[str]] = {}
+    used = 0
+    for value in values:
+        for shown in _shown(value):
+            pattern = re.compile(r"(?<![\d.,])" + re.escape(shown) + r"(?![\d]|[.,]\d)")
+            hits = [i for i, line in enumerate(lines) if pattern.search(line)]
+            if not hits:
+                continue
+            table = [i for i in hits if len(lines[i]) <= ROW_MAX and len(_NUMBER.findall(lines[i])) >= 2]
+            if table:  # a table row beats a sentence; a row where it is the first number (the current column) comes first
+                hits = sorted(table, key=lambda i: (not _first_number(lines[i], pattern), i))
+            for i in hits[:per_value]:
+                if i in picked:
+                    continue
+                block = _header(lines, i)
+                if i > 0 and not re.search(r"[A-Za-z]", lines[i]) and lines[i - 1] not in block:
+                    block.append(lines[i - 1])  # a row of bare numbers: its label is the line above
+                block.append(lines[i] if i in table else _around(lines[i], pattern))
+                size = sum(len(b) + 1 for b in block)
+                if used + size > max_chars:
+                    continue
+                picked[i] = block
+                used += size
+            break  # found in this unit: the other unit is not tried
+    return ["\n".join(picked[i]) for i in sorted(picked)]
+
+
 def quote_ok(text: str, quote: str, min_chars: int = MIN_QUOTE, min_part: int = 12) -> bool:
     """A quote, or several rows separated by ` | ` (a figure spread over rows): every part appears in the filing word for word."""
     parts = [p.strip() for p in re.split(r"\s\|\s", quote) if p.strip()]
