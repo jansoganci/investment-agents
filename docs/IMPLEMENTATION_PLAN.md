@@ -395,7 +395,7 @@ left stuck on purpose shows in `/status`.
 |---|---|---|---|---|---|---|---|---|
 | 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 (merged 2026-10-05) | merged before the Mac check (my decision, 2026-10-05): the Mac check runs on `main`, a fix comes as a small PR · Air setup started 2026-10-05 (`AIR_SETUP.md`) |
 | 1 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-1-analysis-numbers-arj800` · PR #4 → PR #5 (merged 2026-10-05) | built and audited 2026-10-05 (exception, section 1) · PR #4 went into the phase 0 branch, PR #5 brought it to `main` · Mac check together with phase 0's, on `main` (incl. the real Yahoo answers, section 8) · on the Air: `git pull` + `uv run python -m shared.db upgrade` (version 2 → 3) |
-| 2 | ✅ | ⏳ | — | ⏳ | — | — | `claude/phase-2-agent3-ai-arj800` | built 2026-10-06 with a fake AI; real-model runs (ping, auditor test set, strong-model test, 20 stocks) on the Mac **before 2026-10-19** |
+| 2 | ✅ | ✅ | ✅ | Air | ✅ | ✅ | `claude/phase-2-agent3-ai-arj800` + fixes | real-model runs and the 20-stock acceptance test on the Air (isolated); round 2 passed 2026-10-09 (roadmap, after rule 47); I still read 3 cards |
 | 3 | — | — | — | — | — | — | — | |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
 | 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |

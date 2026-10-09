@@ -721,9 +721,15 @@ time. Then agent 3 is closed and phase 3 (Portfolio, code only) starts.
 **Known small items (do not hold agent 3):** Novo's 20-F statements are in an exhibit (figure audit `not_found`) · Boeing's
 debt 45,596 against the balance sheet's 45,900 (0.7%) · Coca-Cola's short-term borrowings 332 against our commercial paper 250 ·
 Visa's share count (classes) · an assumed zero debt sent to the figure audit (PLTR `not_found`) · Caterpillar's own debt names
-(asked through `missing_data`) · Microsoft's figure items mostly `not_found` (round 1) · Starbucks' liquid quote not found word
-for word (round 2) · the writer still adds a figure its quote lacks now and then (NKE, DOW, RIVN in round 2: the auditor fails
+(asked through `missing_data`; round 2: the current debt still missing) · Microsoft's figure items mostly `not_found` (rounds 1 and 2) · Starbucks' liquid quote not found word
+for word (round 2) · the writer still adds a figure its quote lacks now and then (NKE, DOW, RIVN, COST in round 2: the auditor fails
 them, rightly).
+
+**Round 2 result (2026-10-09, the Air, `~/uat3-data`, 20 stocks, 1.44 $): passed.** (1) the 10 trial-set grades as expected;
+(2) no liquid / debt figure off by more than 5% (McDonald's debt now 39.9 bn, Intel's liquid 29.7 bn, Rivian's debt 4.4 bn);
+(3) 4 cards `unverified` (NKE, DOW, RIVN, COST), each because the writer added a figure its quote lacks — the auditor is right;
+(4) JPM `bank`, no AI call. A Sonnet audit takes ~30 s a stock (round 1: 1–5 min). Left before agent 3 is closed: I read 3 cards
+in `~/uat3-drive` (plan, phase 2).
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
