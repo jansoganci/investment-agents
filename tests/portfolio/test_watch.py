@@ -94,6 +94,19 @@ def test_valuation_watch_4_weeks_in_a_row_then_back_of_the_queue(db, env, monkey
     assert rows[0] == (weeks[0], 2.8, 0) and rows[1] == (weeks[1], 3.08, 1)
 
 
+def test_a_card_figure_not_computed_does_not_stop_the_weekly_run(db, env, monkeypatch):
+    """Phase 3 Mac check (2026-10-09): Visa's card had `peg: not_computed` and the weekly run stopped with a TypeError."""
+    weeks = fridays("2026-04-03", 1)
+    v, k = stock(db, "V"), stock(db, "K")
+    make_card("V", "Visa Inc", fundamental("2026-03-30", 300.0, peg=None, fcf_yield=0.03))
+    make_card("K", "K Inc", fundamental("2026-03-30", "not_computed"))
+    prices(db, "V", [(weeks[0], 300.0)])
+    prices(db, "K", [(weeks[0], 50.0)])
+    weekly(db, monkeypatch, weeks[0])
+    rows = db.execute("SELECT stock_id, peg, fcf_yield, expensive FROM valuations ORDER BY stock_id").fetchall()
+    assert rows == [(v, None, 0.03, 0), (k, None, None, 0)]
+
+
 def thesis(db, sid, status):
     db.execute("INSERT INTO card_entries (stock_id, date, record, who, thesis_status, created_at) VALUES "
                "(?, '2026-03-30', 'fundamental', 'agent_3', ?, '2026-03-30T00:00:00Z')", (sid, status))

@@ -79,7 +79,15 @@ def _card_price(ticker: str) -> tuple[str, dict] | None:
     if path is None:
         return None
     got = card.last_fundamental(path.read_text(encoding="utf-8"))
-    return (got[0], got[1].get("price") or {}) if got else None
+    if not got:
+        return None
+    block = got[1].get("price") or {}
+    return got[0], {k: _number(block.get(k)) for k in ("price", "peg", "fcf_yield")}
+
+
+def _number(x) -> float | None:
+    """A figure from the card's YAML: `not_computed` (or anything that is not a number) is None, never 0."""
+    return float(x) if isinstance(x, (int, float)) and not isinstance(x, bool) else None
 
 
 def _streak(conn, stock_id: int, week_end: str) -> int:
@@ -104,8 +112,8 @@ def valuations(conn, stocks: list[dict], week_end: str) -> dict[int, dict]:
         if got and cp and cp[1].get("price"):
             then = cp[1]["price"] / series.day_factor(card_date)  # the card's price in today's shares
             move = got[1] / then
-            peg = cp[1]["peg"] * move if cp[1].get("peg") is not None else None
-            fcf = cp[1]["fcf_yield"] / move if cp[1].get("fcf_yield") is not None else None
+            peg = cp[1]["peg"] * move if cp[1]["peg"] is not None else None
+            fcf = cp[1]["fcf_yield"] / move if cp[1]["fcf_yield"] is not None else None
         expensive = int((peg is not None and peg > PEG_MAX) or (fcf is not None and fcf < FCF_YIELD_MIN))
         conn.execute("INSERT OR IGNORE INTO valuations (stock_id, week_end, close, peg, fcf_yield, expensive, card_date, "
                      "created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",

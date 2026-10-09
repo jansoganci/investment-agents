@@ -52,5 +52,5 @@ def make_card(ticker, company, entries=""):
 
 def fundamental(day, price, peg=None, fcf_yield=None):
     return (f"\n## {day} · fundamental · agent_3 · 2025 annual (10-K)\n### Summary\nTest.\n```yaml\n"
-            f"price:\n  price: {price}\n  peg: {'null' if peg is None else peg}\n"
-            f"  fcf_yield: {'null' if fcf_yield is None else fcf_yield}\n```\n")
+            f"price:\n  price: {price}\n  peg: {'not_computed' if peg is None else peg}\n"   # as the real card writes it
+            f"  fcf_yield: {'not_computed' if fcf_yield is None else fcf_yield}\n```\n")

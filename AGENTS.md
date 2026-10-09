@@ -80,7 +80,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-09 (phase 3 (Portfolio) built, merged into `main` and audited — nothing to fix; next: my Mac check; Hermes limits still next)
+- **Last update:** 2026-10-09 (phase 3 (Portfolio) built, audited; real check by Hermes found one crash, fixed; next: the real check again; Hermes limits still next)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
@@ -97,6 +97,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   `marketdata` is right. Not done (my decision): an UPDATE trigger on `holdings` (code only sets `void` / `voided_by`). Known
   small item: if the 03:00 price job misses a split night and is run by hand after the US open that day, the day before the
   split could be divided twice (rare; not fixed).
+  **Real check (Hermes on the Air, `~/check-repo`, throwaway data, live Yahoo + SEC, 2026-10-09):** KO + V ledger, gold,
+  BES, the refusals and `/portfolio` all right (figures checked by hand: put in $2,009, got back $348, KO 6 left, a real KO
+  dividend $4.24 added by code). **Found:** the weekly run stopped with a TypeError — Visa's card has `peg: not_computed` and
+  the valuation watch multiplied the text. Fixed on `fix/phase-3-not-computed` (a card figure that is not a number is None;
+  the test cards now write `not_computed` as the real card does; one test). **397 pass.** Next: Hermes runs the same check again.
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
