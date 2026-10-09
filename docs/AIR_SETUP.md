@@ -20,7 +20,8 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
 - [x] **The user account:** the system runs in my main account `jans.` (decision 2026-10-05). A separate `agents` user
       would be a second wall (Hermes could not see my files) — not chosen for now; instead iCloud is off on the Air and my
       personal notes and photos are not on it. The limits on Hermes (phase 5) are the wall. Examples below say `/Users/agents`;
-      on the Air it is `/Users/jans.` and the repo is `~/projects/investment-agents`.
+      on the Air it is `/Users/jans.` and the repo is `~/Downloads/investment-agents` (corrected 2026-10-09; macOS asks once
+      for Downloads access — a scheduled job may ask again).
 - [ ] **FileVault on** (disk encryption). Side effect: after a power cut the Mac does nothing until I enter the password —
       enter it at the Air after an outage (remote access is off).
 - [ ] Firewall on (System Settings → Network → Firewall).
