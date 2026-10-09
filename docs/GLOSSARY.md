@@ -410,3 +410,23 @@ Satmayı düşün tetikleri: `thesis_broken` · `grade_weak` · `mid_after_solid
 (fiyatı olmayan model için temkinli fiyat), `ai.excerpt_chars`, `ai.min_quote_chars`, `ai.audit_sample`, `ai.max_tokens`, `ai.timeout_s` ·
 denetçi ve yazar **farklı model ailesinden** olur (`shared.ai.family`) · satış önerisi durumları: `sent` / `held` (nedenleri: denetçi karşı
 çıktı · teyit edilemedi · denetim çalışamadı).
+
+## Kod ve veritabanı adları (faz 3, 2026-10-09)
+
+**Modüller (`agents/portfolio`):** `ledger` (defter: alım / satış satırları, kodun eklediği temettü ve bölünme, pozisyon ve ortalama
+maliyet) · `marketdata` (`prices` satırları bugünün hisse sayısına göre; SPY'nin temettüyle yeniden yatırım endeksi; gram altın;
+USD/TRY) · `value` (değer, ağırlık, kâr / zarar, gölgeler, getiri, toplam servet) · `watch` (düşüş alarmı, pahalılık takibi, yeni
+para sıralaması) · `block` (portföy bloğu) · `run` (haftalık çalışma ve `/portfolio`). Komutlar: `shared/commands/portfolio.py`.
+`python -m agents.portfolio` (haftalık) · `python -m agents.portfolio --show` (son kapanışlarla blok).
+
+**Veritabanı (sürüm 5):** `valuations` (pahalılık takibinin haftalık rakamları: `week_end`, `close`, `peg`, `fcf_yield`,
+`expensive` (0 / 1), `card_date` — rakamların geldiği kart kaydı).
+
+| Ne | Ad |
+|---|---|
+| 4. ajan (kart notunda) | `agent_4` (`## <tarih> · note · agent_4`; yalnızca pahalılık uyarısı) |
+| haftanın cuma günü (haftalık çalışmanın kapanışı) | `week_end` |
+| hissenin şimdiki hisse sayısına göre fiyat | bugünün tabanı (today's basis) |
+| SPY'nin temettüsü yeniden yatırılmış endeksi | toplam getiri endeksi (total-return index) |
+| yeni para sıralamasının 3 şartı | `below_high` · `thesis_intact` · `price_fair` |
+| `signals.detail` (yeni para) | `rank` · `would_rank` · `score` · `conditions` · `drop` · `weight` · `expensive_4_weeks` |

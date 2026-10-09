@@ -175,6 +175,14 @@ def closed_warnings(text: str) -> set[str]:
 THESIS_NONE = ("Not written", "Unchanged")
 
 
+def last_fundamental(text: str) -> tuple[str, dict] | None:
+    """(date, YAML data) of the newest fundamental entry; None when the card has none."""
+    for e in reversed(entries(text)):
+        if e["record"] == "fundamental":
+            return e["date"], _yaml_of(e["body"])
+    return None
+
+
 def entries(text: str) -> list[dict]:
     """[{date, record, who, body}] in order; the body is everything under the heading."""
     out = []
