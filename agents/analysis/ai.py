@@ -57,7 +57,8 @@ CHECK_SYSTEM = """You check whether a company's thesis is still true after its n
 is owned and 3 things that would break it), my later notes, the new numbers, and excerpts. Answer with JSON only:
 {"status": "intact" | "broken" | "watch", "point": <1, 2 or 3: the break that happened, or null>, "reason": "one or two
 sentences", "quote": "the sentence from the excerpts that shows it, word for word, or empty"}
-`broken` only when one of the 3 things really happened and you can quote it. When unsure, answer "watch"."""
+`broken` only when one of the 3 things really happened and you can quote it. When unsure, answer "watch".
+NEW NUMBERS are current: where the thesis states an older figure or says a figure could not be computed, use NEW NUMBERS."""
 
 DROP_SYSTEM = """A stock I follow fell sharply. Using the thesis and the excerpts of its latest filing (and news, if any is given),
 say whether the thesis is still true. Answer with JSON only:
@@ -158,9 +159,17 @@ def ask_json(job: str, system: str, prompt: str, check, ctx: Context):
 
 
 def _facts_block(r) -> str:
+    """One line per measure. A mark with no single value is the mark itself (`debt: good, decisive`);
+    a measure with neither a value nor a mark stays `not_computed`."""
     rows = []
     for name, m in r.measures.items():
-        rows.append(f"{name}: {m['value']} ({m['mark'] or 'not_computed'}{', decisive' if m['decisive'] else ''})")
+        decisive = ", decisive" if m["decisive"] else ""
+        if m["value"] is None and m["mark"]:
+            rows.append(f"{name}: {m['mark']}{decisive}")
+        elif m["value"] is None:
+            rows.append(f"{name}: not_computed")
+        else:
+            rows.append(f"{name}: {m['value']} ({m['mark'] or 'not_computed'}{decisive})")
     return "\n".join(rows)
 
 
@@ -300,8 +309,9 @@ def figure_items(r) -> list[dict]:
         # the period is a short code the rule card explains: the words of a claim become the excerpts' search terms, and a
         # longer text pushed balance-sheet rows out of them
         item = {"id": fig, "claim": f"{fig} = {v.value:,.0f} ({v.tag}), period end {last} ({_period(v)}), in {r.currency}",
-                "terms": terms}
+                "terms": terms, "values": [] if v.form == "user" else [v.value]}
         if v.ttm:  # a last-4-quarters total is in no filing: its two year-to-date parts are (GE, 2026-10-06)
+            item["values"] = [v.ttm["ytd"], v.ttm["ytd_previous_year"]]  # the 4-quarter total itself is printed nowhere
             item["note"] = (f"TTM = the last annual report's {v.ttm['annual']:,.0f} (in the 10-K, not in this filing) + this year to "
                             f"date {v.ttm['ytd']:,.0f} − the same period a year before {v.ttm['ytd_previous_year']:,.0f}. Check the "
                             "two year-to-date figures against this filing; never fail the total for differing from one column")
@@ -313,12 +323,14 @@ def figure_items(r) -> list[dict]:
                       "equity securities and stakes in other companies are left out on purpose; only parts with a balance-sheet line "
                       "of their own count: a part with no line of its own (e.g. time deposits inside other current assets) is not "
                       "counted — never fail liquid assets for leaving it out; restricted cash counts when the filing reports cash "
-                      "and restricted cash as one line — never fail for that", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"]})
+                      "and restricted cash as one line — never fail for that", "terms": ["cash and cash equivalents", "marketable securities", "short-term investments"],
+                      "values": [v.value, *v.parts.values()]})
     if last in r.debt:
         v = r.debt[last]
         items.append({"id": "debt", "claim": "debt = " + " + ".join(f"{k} {x:,.0f}" for k, x in v.parts.items())
                       + f" = {v.value:,.0f}, period end {last} (BS)" + (" (assumed 0: nothing reported)" if getattr(v, "assumed", False) else ""),
-                      "terms": ["senior notes", "long-term debt", "short-term debt", "borrowings", "notes payable"]})
+                      "terms": ["senior notes", "long-term debt", "short-term debt", "borrowings", "notes payable"],
+                      "values": [] if getattr(v, "assumed", False) else [v.value, *v.parts.values()]})
     return items
 
 

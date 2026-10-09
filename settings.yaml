@@ -61,6 +61,7 @@ models:
 # AI client (phase 2, roadmap "Agent 3's AI parts — how phase 2 builds them")
 ai:
   excerpt_chars: 12000             # at most this much of a filing goes to a model per call
+  row_chars: 4000                  # of that, the figure audit's rows found by our figures' values (roadmap rule 41)
   min_quote_chars: 20              # a shorter quote proves nothing and is not accepted
   max_tokens: 16000                # one answer (the model's thinking counts too)
   timeout_s: 180

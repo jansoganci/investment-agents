@@ -23,7 +23,8 @@ def sec_submissions(ticker: str) -> dict:
 
 
 def filing_text(ticker: str) -> dict:
-    """{"accession", "text"}: a real 10-Q as plain text (trimmed). NVDA, quarter to 2026-07-26."""
+    """{"accession", "text"}: a real 10-Q as plain text (`html_to_text`). NVDA, quarter to 2026-07-26;
+    GE, quarter to 2026-06-30 (accession 0000040545-26-000049)."""
     return load("filings", f"{ticker}_10Q.json.gz")
 
 
@@ -63,7 +64,7 @@ class FixtureSources:
         from shared.sec import SecError
 
         try:
-            return filing_text(self._ticker(cik))["text"]  # a saved 10-Q (NVDA only)
+            return filing_text(self._ticker(cik))["text"]  # a saved 10-Q (NVDA, GE)
         except FileNotFoundError:
             raise SecError(f"no saved filing text for {self._ticker(cik)}") from None
 

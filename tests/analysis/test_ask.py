@@ -23,8 +23,14 @@ def test_the_template_says_why_where_and_how_to_answer():
 
 
 def test_a_figure_is_asked_once_then_reminded_once_a_week_later(db, monkeypatch):
+    from datetime import datetime, timezone
+
+    from shared import clock
+
     fake = FakeAI(lambda *a: "x").install(monkeypatch)
     fake.fail = {"deepseek", "openrouter", "openai"}  # the cheap model is down: the template is used as it is
+    # "asked at" is the real clock; the checks use a fixed day. Freeze the clock on that day.
+    monkeypatch.setattr(clock, "now_utc", lambda: datetime(2026, 10, 6, 12, 0, tzinfo=timezone.utc))
     stock_with_missing(db, [("2026", "interest")])
     first = ask.request(db, today="2026-10-06")
     assert first.startswith("MISSING FIGURES") and "/data NKE 2026 interest" in first

@@ -57,3 +57,46 @@ def test_a_short_table_row_with_a_number_is_kept_and_short_prose_is_not():
     assert "Long-term debt 32,366 7,469" in parts and "See the notes." not in parts and "Debt" not in parts
     real = filing.excerpts(filing_text("NVDA")["text"], ["long-term debt"], max_chars=3000)
     assert "Long-term debt 32,366 7,469" in real
+
+
+# --- rows found by our figures' values (roadmap rule 41) -------------------------------------------------------------
+
+STATEMENT = "\n".join([
+    "The Company paid down 2,000 of debt during the period, which management discussed at length with the board.",
+    "STATEMENT OF FINANCIAL POSITION (UNAUDITED)",
+    "(In millions) June 30, 2026 December 31, 2025",
+    "Cash and cash equivalents $ 9,345 $ 12,392",
+    "Other current assets 12,000 11,500",
+    "Accrued interest 1,686 2,000",
+    "Short-term borrowings $ 2,000 $ 1,686",
+    "Total average equivalent shares",
+    "1,047 1,040",
+    "Interest rate swaps 2,000.5 1.2",
+])
+
+
+def test_a_row_is_found_by_its_figure_with_its_header_and_whole_numbers_only():
+    rows = filing.rows_with(STATEMENT, [9_345_000_000])
+    assert rows == ["(In millions) June 30, 2026 December 31, 2025\nCash and cash equivalents $ 9,345 $ 12,392"]
+    # 2,000 is not 12,000 nor 2,000.5; a table row beats the sentence; the row where it is the first number comes first
+    rows = filing.rows_with(STATEMENT, [2_000_000_000], per_value=1)
+    assert rows == ["(In millions) June 30, 2026 December 31, 2025\nShort-term borrowings $ 2,000 $ 1,686"]
+    assert not any("12,000" in r or "2,000.5" in r or "paid down" in r for r in filing.rows_with(STATEMENT, [2_000_000_000]))
+
+
+def test_a_row_of_bare_numbers_brings_its_label_and_a_sentence_only_when_no_row_has_it():
+    rows = filing.rows_with(STATEMENT, [1_047_000_000])
+    assert rows[0].endswith("Total average equivalent shares\n1,047 1,040")
+    text = "Revenue grew because the company shipped 4,321 more units than a year before, mostly to large data center customers."
+    assert filing.rows_with(text, [4_321_000_000]) == [text]  # no table row holds it: the sentence (short) is kept
+
+
+def test_thousands_small_numbers_and_the_limit():
+    assert filing.rows_with("Cash $ 9,345,123 $ 8,000,000\n(In thousands)", [9_345_123_000]) == ["Cash $ 9,345,123 $ 8,000,000"]
+    assert filing.rows_with("Note 12 Item 5 Total 12 5", [12_000_000]) == []  # under 3 digits a number is everywhere
+    assert sum(map(len, filing.rows_with(STATEMENT, [9_345_000_000, 2_000_000_000, 1_047_000_000], max_chars=120))) <= 120
+
+
+def test_a_dates_only_header_brings_the_months_line_above_it():
+    text = "Three Months Ended Six Months Ended\nJul 26, 2026 Jul 27, 2025 Jul 26, 2026 Jul 27, 2025\nRevenue $ 96,221 $ 46,743 $ 177,837 $ 90,805"
+    assert filing.rows_with(text, [177_837_000_000]) == [text]
