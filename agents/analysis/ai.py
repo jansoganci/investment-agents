@@ -159,18 +159,38 @@ def ask_json(job: str, system: str, prompt: str, check, ctx: Context):
     raise AIFormatError(problem or "unusable answer")
 
 
+# What each measure means, next to its name in the prompt: the model read `capital_return` as cash paid to shareholders
+# (NVDA, KO in the acceptance test) — it is the return on the money invested in the business (roadmap section 3).
+MEANING = {
+    "revenue_growth_3y": "average yearly revenue growth over 3 years (0.10 = 10% a year)",
+    "margin_stability": "latest gross margin against earlier years, in percentage points (the worse of two comparisons)",
+    "operating_margin": "operating profit ÷ revenue (0.30 = 30%)",
+    "capital_return": "return on the capital invested in the business (operating profit after tax ÷ capital used); "
+                      "NOT cash paid to shareholders",
+    "cash_conversion": "free cash ÷ net profit, over 3 years",
+    "interest_cover": "operating profit ÷ interest expense",
+    "debt_years": "net debt ÷ free cash (3-year average): years to pay the debt",
+    "share_count": "total change in the share count over 5 years (-0.03 = 3% fewer shares in all)",
+    "gross_profit_growth": "average yearly gross-profit growth over 3 years",
+    "cash_runway": "liquid assets ÷ yearly cash burn: years the cash lasts",
+    "dividend_cover": "free cash against dividends paid, over 5 years",
+    "debt": "debt overall (interest cover and debt years together)",
+}
+
+
 def _facts_block(r) -> str:
-    """One line per measure. A mark with no single value is the mark itself (`debt: good, decisive`);
+    """One line per measure, with what it means. A mark with no single value is the mark itself (`debt: good, decisive`);
     a measure with neither a value nor a mark stays `not_computed`."""
     rows = []
     for name, m in r.measures.items():
         decisive = ", decisive" if m["decisive"] else ""
+        meaning = f" — {MEANING[name]}" if name in MEANING else ""
         if m["value"] is None and m["mark"]:
-            rows.append(f"{name}: {m['mark']}{decisive}")
+            rows.append(f"{name}: {m['mark']}{decisive}{meaning}")
         elif m["value"] is None:
-            rows.append(f"{name}: not_computed")
+            rows.append(f"{name}: not_computed{meaning}")
         else:
-            rows.append(f"{name}: {m['value']} ({m['mark'] or 'not_computed'}{decisive})")
+            rows.append(f"{name}: {m['value']} ({m['mark'] or 'not_computed'}{decisive}){meaning}")
     return "\n".join(rows)
 
 

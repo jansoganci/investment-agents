@@ -259,6 +259,9 @@ def test_a_mark_without_a_value_is_not_shown_as_not_computed():
     block = parts._facts_block(analyse_run("GE", quarters=True))
     assert "debt: good, decisive" in block and "debt: None" not in block
     assert "interest_cover: not_computed" in block
+    # each measure says what it means: the model read capital_return as cash paid to shareholders (acceptance test, NVDA / KO)
+    assert "NOT cash paid to shareholders" in next(l for l in block.splitlines() if l.startswith("capital_return:"))
+    assert all(" — " in l for l in block.splitlines())
     assert "NEW NUMBERS are current: where the thesis states an older figure or says a figure could not be computed, use NEW NUMBERS." in parts.CHECK_SYSTEM
 
 
