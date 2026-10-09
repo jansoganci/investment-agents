@@ -402,7 +402,7 @@ left stuck on purpose shows in `/status`.
 | 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 (merged 2026-10-05) | merged before the Mac check (my decision, 2026-10-05): the Mac check runs on `main`, a fix comes as a small PR · Air setup started 2026-10-05 (`AIR_SETUP.md`) |
 | 1 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-1-analysis-numbers-arj800` · PR #4 → PR #5 (merged 2026-10-05) | built and audited 2026-10-05 (exception, section 1) · PR #4 went into the phase 0 branch, PR #5 brought it to `main` · Mac check together with phase 0's, on `main` (incl. the real Yahoo answers, section 8) · on the Air: `git pull` + `uv run python -m shared.db upgrade` (version 2 → 3) |
 | 2 | ✅ | ✅ | ✅ | Air | ✅ | ✅ | `claude/phase-2-agent3-ai-arj800` + fixes | real-model runs and the 20-stock acceptance test on the Air (isolated); round 2 passed 2026-10-09 (roadmap, after rule 47); 3 cards read, rule 48 |
-| 3 | ✅ | ⏳ | — | ⏳ | ✅ | ⏳ | `feat/phase-3-portfolio` (merged locally 2026-10-09) | merged under the standing permission (AGENTS.md); the audit is a separate session; Mac check: my ledger against my spreadsheet |
+| 3 | ✅ | ✅ no blocker | ✅ | ✅ (Hermes on the Air, isolated) | ✅ | ⏳ | `feat/phase-3-portfolio` (merged locally 2026-10-09) · `fix/phase-3-not-computed` | the real check found one crash (`peg: not_computed`), fixed; second run passed 2026-10-09 |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
 | 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
 | 6 | — | — | — | — | — | — | — | runs on the Air |
