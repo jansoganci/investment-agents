@@ -69,6 +69,10 @@ def openai_style_backend(provider: str):
         kwargs["max_completion_tokens" if provider == "openai" else "max_tokens"] = max_tokens
         if provider == "openrouter":
             kwargs["extra_body"] = {"usage": {"include": True}}  # OpenRouter then reports its own cost
+            if entry.get("effort"):
+                kwargs["extra_body"]["reasoning"] = {"effort": entry["effort"]}
+        elif provider == "openai" and entry.get("effort"):
+            kwargs["reasoning_effort"] = entry["effort"]
         try:
             resp = client.chat.completions.create(**kwargs)
         except openai.APIStatusError as exc:

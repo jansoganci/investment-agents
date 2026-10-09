@@ -984,7 +984,7 @@ English — checked in the model test. (My working conversations about the proje
 | Job | Model | Effort | Fallback |
 |---|---|---|---|
 | **Cheap** — agent 1's one sentence, new-tag classification, making Telegram messages plain | **DeepSeek V4 Flash** | — | Gemini Flash-Lite or GPT-6 Luna if the test is poor |
-| **Strong** — agent 2 (tone, news flow, score reasons), agent 3 ("why?" answers with quotes, first thesis, thesis check, drop-alert check) | **Claude Sonnet 5.5** | **high** | **GPT-6 Sol** |
+| **Strong** — agent 2 (tone, news flow, score reasons), agent 3 ("why?" answers with quotes, first thesis, thesis check, drop-alert check) | **Claude Sonnet 5.5** | **high** | **DeepSeek V4 Pro**, then **GPT-6 Sol** (high) — changed 2026-10-09 |
 | **Hermes chat** (Telegram) | my ChatGPT / Codex subscription, if Hermes can log in with it (checked in step 0) | — | **DeepSeek V4 Pro** (cheap, strong for its price) |
 | **Auditor** (agents 2 and 3; section 3, "AI auditor") | **DeepSeek V4 Pro** — a different family from the writer | — | **GPT-6 Sol** |
 
@@ -998,9 +998,17 @@ order; on an error, exhausted credit or quota it moves to the next one; every ca
 
 ```yaml
 cheap:  [deepseek: deepseek-v4-flash,          openrouter: deepseek/deepseek-v4-flash]
-strong: [anthropic: claude-sonnet-5.5 (high),  openrouter: anthropic/claude-sonnet-5.5,  openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
+strong: [anthropic: claude-sonnet-5.5 (high),  deepseek: deepseek-v4-pro,  openai: gpt-6-sol (high),
+         openrouter: anthropic/claude-sonnet-5.5 (high),  openrouter: deepseek/deepseek-v4-pro,  openrouter: openai/gpt-6-sol (high)]
 auditor: [deepseek: deepseek-v4-pro,         openrouter: deepseek/deepseek-v4-pro,   openai: gpt-6-sol,  openrouter: openai/gpt-6-sol]
 ```
+
+**Strong order changed (my decision, 2026-10-09):** Claude Sonnet 5.5 high is always first; then DeepSeek V4 Pro, then GPT-6 Sol
+high; my credits first, then the same three through OpenRouter. When the writer falls back to DeepSeek, the auditor skips DeepSeek on
+its own and uses GPT-6 Sol. `effort: high` now also reaches OpenAI (`reasoning_effort`) and OpenRouter (`reasoning.effort`); before
+it reached only Anthropic. Prices checked on the providers' pages the same day: DeepSeek raised them — V4 Pro 1.32 / 3.96 $ and V4
+Flash (served by V4.1 Flash) 0.30 / 1.20 $ per million tokens at peak hours (off-peak is half; `settings.yaml` keeps the peak price,
+the cautious count); Sonnet 5.5 and GPT-6 Sol 2 / 10 $. (OpenAI points to a newer GPT-6.1 Sol at the same price; not used.)
 
 **My credits (2026-10-04):** Anthropic API 90 $ (expires 2026-10-19), DeepSeek 10 $, OpenAI API 5 $. The system will not be live
 before 10-19, so the Anthropic credit is for development: the model test, agent 3's AI parts, the 20-stock acceptance test (≈ 4–5 $
