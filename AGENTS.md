@@ -80,7 +80,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-09 (phase 3 (Portfolio) built, audited; real check by Hermes found one crash, fixed; next: the real check again; Hermes limits still next)
+- **Last update:** 2026-10-09 (phase 3 (Portfolio) built, audited and real-checked — done once I approve how the block reads; next: on the Air `git pull` + `shared.db upgrade` (4 → 5); Hermes limits still next)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
@@ -101,7 +101,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   BES, the refusals and `/portfolio` all right (figures checked by hand: put in $2,009, got back $348, KO 6 left, a real KO
   dividend $4.24 added by code). **Found:** the weekly run stopped with a TypeError — Visa's card has `peg: not_computed` and
   the valuation watch multiplied the text. Fixed on `fix/phase-3-not-computed` (a card figure that is not a number is None;
-  the test cards now write `not_computed` as the real card does; one test). **397 pass.** Next: Hermes runs the same check again.
+  the test cards now write `not_computed` as the real card does; one test). **397 pass.** **Second run (6d869e4) passed:** the
+  weekly run finished twice (the second "already recorded"); week 2026-10-02: value $1,596, return −3.3%, SPY $1,691, KO
+  dividend $4.24 — checked by hand. Gold and BES entered on 10-09 are not in the 10-02 snapshot (right). Left: my yes on how the
+  block reads, then the Air (`git pull` + `uv run python -m shared.db upgrade`, version 4 → 5).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
