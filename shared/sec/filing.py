@@ -95,12 +95,15 @@ _YEARS_ONLY = re.compile(r"^(?:(?:19|20)\d\d\s*)+$")
 
 
 def _shown(value: float) -> list[str]:
-    """How a figure can be printed in a statement: in millions, then in thousands (only where it is a whole number)."""
+    """How a figure can be printed in a statement: in millions, then in thousands — whole, or with the one decimal a filing
+    in millions prints (Starbucks `3,449.8`, roadmap rule 46)."""
     out = []
     for unit in (1e6, 1e3):
         x = abs(value) / unit
         if abs(x - round(x)) < 1e-6 and round(x) >= 100:  # under 3 digits a number is everywhere (a note number, a day)
             out.append(f"{round(x):,}")
+        elif unit == 1e6 and abs(x * 10 - round(x * 10)) < 1e-6 and x >= 100:
+            out.append(f"{x:,.1f}")
     return out
 
 

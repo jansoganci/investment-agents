@@ -111,3 +111,10 @@ def test_a_row_quoted_with_its_header_on_separate_lines_passes_row_by_row():
     assert filing.quote_ok(text, "Cash from (used for) operating activities 5,018 3,755\n2026 2025")  # bare numbers may be short
     assert not filing.quote_ok(text, "2026 2025\n2026 2025")  # but one part must be a full quote
     assert not filing.quote_ok(text, "Cash from (used for) operating activities 5,018 3,755\nGE")  # a short word is not a row
+
+
+def test_a_figure_printed_with_one_decimal_in_millions_is_found():
+    text = "CONSOLIDATED BALANCE SHEETS\n(in millions) Jun 28, 2026 Sep 28, 2025\nCash and cash equivalents $ 3,449.8 $ 3,219.8"
+    rows = filing.rows_with(text, [3_449_800_000])  # Starbucks, acceptance test 2026-10-09 (roadmap rule 46)
+    assert rows and rows[0].endswith("Cash and cash equivalents $ 3,449.8 $ 3,219.8")
+    assert not filing.rows_with("Cash 3,449.85 2,000", [3_449_800_000])  # never inside a longer number

@@ -80,6 +80,7 @@ class Facts:
         # the last 4 quarters take the place of the last annual report they overlap (decision 2026-10-05): sums, averages
         # and "previous year" never count the same months twice
         self.ends = (self.annual_ends[:-1] + [self.ttm_end]) if self.ttm_end else list(self.annual_ends)
+        self.newer_filing = self._newer_filing(submissions)
 
     # --- basics -----------------------------------------------------------------------------------------------------
 
@@ -100,6 +101,19 @@ class Facts:
 
     def _rows(self, tag: str, unit: str) -> list[dict]:
         return self.raw.get(tag, {}).get("units", {}).get(unit, [])
+
+    def _newer_filing(self, submissions: dict | None) -> dict | None:
+        """The newest 10-K / 10-Q / 20-F in the filing list when its figures are not in SEC's data yet (roadmap rule 43:
+        Coca-Cola, Dow and Visa, 2026-10-09 — their July 10-Qs were filed, the data still ended in March / April)."""
+        recent = ((submissions or {}).get("filings") or {}).get("recent") or {}
+        last_end = self.ends[-1] if self.ends else None
+        for form, accn, report, filed in zip(recent.get("form", []), recent.get("accessionNumber", []),
+                                             recent.get("reportDate", []), recent.get("filingDate", [])):
+            if form in FORMS_ANNUAL | FORMS_QUARTER:
+                if accn != self.latest_accn and last_end and report and report > last_end:
+                    return {"form": form, "accn": accn, "report_date": report, "filed": filed}
+                return None
+        return None
 
     def _annual_ends(self) -> list[str]:
         raw = set()
@@ -245,7 +259,11 @@ class Facts:
             for src in (sti, ms):
                 if e in src:
                     parts[src[e].tag] = src[e].value
-            if e not in sti and e not in ms and e in partial:
+            if e not in sti and e in partial and (e not in ms or ms[e].tag == "MarketableSecurities"):
+                # the current debt securities stand in for the missing short-term investments line; a plain
+                # `MarketableSecurities` next to them is not that line (Intel 2026: 250 m of equity, the 16.9 bn short-term
+                # investments only as `AvailableForSaleSecuritiesDebtSecuritiesCurrent`; roadmap rule 44)
+                parts.pop("MarketableSecurities", None)
                 parts[partial[e].tag] = partial[e].value
             if i:
                 prev = self.ends[i - 1]

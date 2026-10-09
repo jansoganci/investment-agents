@@ -461,6 +461,10 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
     if assumed:
         notes.append("debt_free: no borrowings reported, debt counted as 0 (assumed) for " + ", ".join(facts.year_label(e) for e in assumed)
                      + " — an unused credit line is not debt")
+    newer = getattr(facts, "newer_filing", None)
+    if newer:  # roadmap rule 43: the figures are older than the newest filing
+        flags.append({"flag": "stale_data", "detail": f"figures end {facts.ends[-1]}; the {newer['form']} to "
+                                                      f"{newer['report_date']} (filed {newer['filed']}) is not in SEC's data yet"})
     if acq.get(last) and acq[last] >= 0.05e9:
         notes.append(f"acquisitive: {acq[last]/1e9:.1f} bn spent on acquisitions in the latest year")
 

@@ -40,8 +40,11 @@ FLAG_TERMS = {
 }
 
 WHY_SYSTEM = """You help a long-term stock investor understand one company's numbers. You are given items (a weak measure or a
-flag) and excerpts of the company's own filing. For each item answer in at most two plain sentences WHY, using only the
-excerpts, and copy the sentence from the excerpts that supports your answer as `quote`, word for word.
+flag, with our own figures in `what`) and excerpts of the company's own filing. For each item answer in at most two plain
+sentences WHY, using only the excerpts, and copy the sentence from the excerpts that supports your answer as `quote`, word for
+word; if one sentence is not enough, copy at most two, separated by " | ".
+Say only what your quote says: every cause, event, figure and date in `answer` must be in the quote, except the item's own
+figures from `what`, which you may repeat. Leave out anything the quote does not show.
 If the excerpts do not explain the item, say so in `answer` and leave `quote` empty.
 `kind`: "company_specific" if the quote describes a real event or fact of THIS company; "general_risk" if it is a general
 risk sentence any company could write.
@@ -187,7 +190,7 @@ def why_items(r) -> list[dict]:
             items.append({"id": f"M:{name}", "what": f"measure {name} is weak (value {m['value']}; {m.get('note') or 'no note'})",
                           "terms": MEASURE_TERMS.get(name, [])})
     for code, f in open_flags(r):
-        if f["flag"] == "borderline":  # "within 10% of a threshold": nothing to explain (roadmap, "After the first real-model run")
+        if f["flag"] in ("borderline", "stale_data"):  # nothing in the filing explains these (roadmap, rule 23 and rule 43)
             continue
         items.append({"id": code, "what": f"flag {f['flag']}: {f['detail']}", "terms": FLAG_TERMS.get(f["flag"], [])})
     return items[:MAX_ITEMS]
@@ -219,7 +222,7 @@ def ask_why(r, text: str, ctx: Context) -> list[Why]:
     for i in items:
         a = answers.get(i["id"], {})
         quote, kind = (a.get("quote") or "").strip(), a.get("kind")
-        verified = bool(quote) and filing.quote_in(text, quote, min_chars)
+        verified = bool(quote) and filing.quote_ok(text, quote, min_chars)  # up to two sentences, " | " (roadmap rule 47)
         out.append(Why(i["id"], i["what"], (a.get("answer") or "").strip() if verified else "no verified quote — not shown as a fact",
                        quote if verified else "", kind if verified and kind in KINDS else None, verified))
     return out
