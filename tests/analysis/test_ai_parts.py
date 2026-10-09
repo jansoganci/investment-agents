@@ -305,13 +305,14 @@ def test_the_figure_audit_sees_the_balance_sheet_row_of_debt(monkeypatch):
 
 def test_the_auditor_is_never_of_the_writers_family(monkeypatch):
     fake = FakeAI(handler(check=BROKEN)).install(monkeypatch)
-    fake.fail = {"anthropic", "openrouter"}  # the writer falls back to GPT-6 Sol (openai)
+    fake.fail = {"anthropic"}  # the writer falls back to DeepSeek V4 Pro
     part = parts.run_ai(R, TEXT, held_ctx())
-    writers = {m for m in fake.models if m.startswith("openai")}
+    writers = {m for (job, _s, _p), m in zip(fake.calls, fake.models) if job != "auditor"}
     auditors = [m for (job, _s, _p), m in zip(fake.calls, fake.models) if job == "auditor"]
-    assert writers and auditors and all(m.startswith("deepseek") for m in auditors)  # never openai, the writer's maker
+    assert writers == {"deepseek:deepseek-v4-pro"}
+    assert auditors and all(m.startswith("openai") for m in auditors)  # never deepseek, the writer's maker
     assert part.sell["status"] == "sent"
-    fake.fail = {"anthropic", "openrouter", "deepseek"}  # only the writer's maker is left for the auditor
+    fake.fail = {"anthropic", "openrouter", "openai"}  # only the writer's maker is left for the auditor
     part = parts.run_ai(R, TEXT, held_ctx())
     assert part.sell["status"] == "held" and "audit could not run" in part.sell["text"]
 

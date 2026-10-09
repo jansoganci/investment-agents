@@ -45,10 +45,14 @@ models:
     - {provider: deepseek,   model: deepseek-v4-flash}
     - {provider: openrouter, model: deepseek/deepseek-v4-flash}
   strong:       # agent 2 (tone, news flow, score reasons), agent 3 (why answers, thesis, drop-alert check)
+    # Order (my decision, 2026-10-09): Claude Sonnet 5.5 high always first, then DeepSeek V4 Pro, then GPT-6 Sol high;
+    # my API credits first, then the same three through OpenRouter. The auditor skips the writer's family on its own.
     - {provider: anthropic,  model: claude-sonnet-5-5, effort: high}
-    - {provider: openrouter, model: anthropic/claude-sonnet-5.5}
-    - {provider: openai,     model: gpt-6-sol}
-    - {provider: openrouter, model: openai/gpt-6-sol}
+    - {provider: deepseek,   model: deepseek-v4-pro}
+    - {provider: openai,     model: gpt-6-sol, effort: high}
+    - {provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: high}
+    - {provider: openrouter, model: deepseek/deepseek-v4-pro}
+    - {provider: openrouter, model: openai/gpt-6-sol, effort: high}
   auditor:      # agents 2 and 3; a different family from the writer
     - {provider: deepseek,   model: deepseek-v4-pro}
     - {provider: openrouter, model: deepseek/deepseek-v4-pro}
@@ -72,15 +76,15 @@ ai:
 pricing:
   claude-sonnet-5-5:   {input: 2.00,  output: 10.00}
   claude-opus-5-5:     {input: 4.00,  output: 20.00}
-  deepseek-v4-flash:   {input: 0.14,  output: 0.28}     # given by me, 2026-10-06
-  deepseek-v4-pro:     {input: 0.435, output: 0.87}
-  gpt-6-sol:           {input: 2.00,  output: 10.00}
+  deepseek-v4-flash:   {input: 0.30,  output: 1.20}     # DeepSeek's page, 2026-10-09: peak price (off-peak is half); served by V4.1 Flash
+  deepseek-v4-pro:     {input: 1.32,  output: 3.96}     # DeepSeek's page, 2026-10-09: peak price (off-peak is half)
+  gpt-6-sol:           {input: 2.00,  output: 10.00}    # OpenAI's page, 2026-10-09
   default:             {input: 5.00,  output: 25.00}    # cautious: above every model above
 
 # Short names for /analyze KO opus-5.5 and /model strong gpt-6-sol (a one-off or stored override).
 model_aliases:
   opus-5.5:   {provider: anthropic, model: claude-opus-5-5, effort: high}
   sonnet-5.5: {provider: anthropic, model: claude-sonnet-5-5, effort: high}
-  gpt-6-sol:  {provider: openai, model: gpt-6-sol}
+  gpt-6-sol:  {provider: openai, model: gpt-6-sol, effort: high}
   deepseek-v4-pro:   {provider: deepseek, model: deepseek-v4-pro}
   deepseek-v4-flash: {provider: deepseek, model: deepseek-v4-flash}

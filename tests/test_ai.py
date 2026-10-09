@@ -11,8 +11,9 @@ from shared.ai.fake import FakeAI
 
 
 def test_default_chain_is_my_credits_then_openrouter(db):
-    assert [(e["provider"], e["model"]) for e in ai.chain("strong", db)][:2] == [
-        ("anthropic", "claude-sonnet-5-5"), ("openrouter", "anthropic/claude-sonnet-5.5")]
+    assert [(e["provider"], e["model"]) for e in ai.chain("strong", db)] == [
+        ("anthropic", "claude-sonnet-5-5"), ("deepseek", "deepseek-v4-pro"), ("openai", "gpt-6-sol"),
+        ("openrouter", "anthropic/claude-sonnet-5.5"), ("openrouter", "deepseek/deepseek-v4-pro"), ("openrouter", "openai/gpt-6-sol")]
     assert ai.chain("auditor", db)[0]["provider"] == "deepseek"  # a different family from the writer
 
 
@@ -52,8 +53,8 @@ def test_the_cost_goes_to_the_runs_row(db, monkeypatch):
 
 
 def test_the_prices_are_the_ones_i_gave(db):
-    assert ai.price_of("deepseek-v4-flash") == (0.14, 0.28, False)
-    assert ai.price_of("deepseek-v4-pro") == (0.435, 0.87, False)
+    assert ai.price_of("deepseek-v4-flash") == (0.30, 1.20, False)
+    assert ai.price_of("deepseek-v4-pro") == (1.32, 3.96, False)
     assert ai.price_of("gpt-6-sol") == (2.0, 10.0, False)
     assert ai.price_of("openai/gpt-6-sol")[2] is False  # an OpenRouter name finds its model's price
     assert ai.price_of("anthropic/claude-sonnet-5.5") == (2.0, 10.0, False)  # OpenRouter's dotted version name too
@@ -90,12 +91,12 @@ def test_one_providers_error_moves_to_the_next(db, monkeypatch):
     fake = FakeAI(lambda *a: "ok").install(monkeypatch)
     fake.fail = {"anthropic"}
     reply = ai.call("strong", "p", conn=db)
-    assert reply.provider == "openrouter" and fake.models == ["openrouter:anthropic/claude-sonnet-5.5"]
+    assert reply.provider == "deepseek" and fake.models == ["deepseek:deepseek-v4-pro"]
 
 
 def test_all_providers_failing_says_why_without_secrets(db, monkeypatch):
     fake = FakeAI(lambda *a: "ok").install(monkeypatch)
-    fake.fail = {"anthropic", "openrouter", "openai"}
+    fake.fail = {"anthropic", "deepseek", "openrouter", "openai"}
     with pytest.raises(AIError) as exc:
         ai.call("strong", "p", conn=db)
     assert "anthropic claude-sonnet-5-5: fake failure" in str(exc.value) and "sk-" not in str(exc.value)
@@ -122,7 +123,7 @@ def test_ai_calls_is_append_only(db, monkeypatch):
 
 def test_estimate(db):
     assert ai.estimate("strong", 40000, 1500, conn=db) == pytest.approx(10000 * 2e-6 + 1500 * 10e-6)
-    assert ai.estimate("auditor", 40000, conn=db) == pytest.approx(10000 * 0.435e-6 + 1500 * 0.87e-6)
+    assert ai.estimate("auditor", 40000, conn=db) == pytest.approx(10000 * 1.32e-6 + 1500 * 3.96e-6)
 
 
 # --- the real backends, against stand-in SDK clients ----------------------------------------------------------------------
@@ -188,6 +189,27 @@ def test_openai_style_backends(monkeypatch, provider, url, limit):
     assert stub.seen["messages"][0] == {"role": "system", "content": "sys"}
     assert (reply.text, reply.input_tokens, reply.output_tokens) == ("ok", 200, 50)
     assert reply.cost_usd == (0.0123 if provider == "openrouter" else None)  # OpenRouter's own figure is used
+
+
+def test_effort_reaches_openai_and_openrouter_and_not_deepseek(monkeypatch):
+    for provider in ("openai", "openrouter", "deepseek"):
+        stub = _OpenAI()
+        monkeypatch.setattr(backends, "make_openai", lambda *a, s=stub: s)
+        monkeypatch.setenv(backends.KEYS[provider], "key")
+        backends.openai_style_backend(provider)({"model": "m", "effort": "high"}, "", "p", 10)
+        if provider == "openai":
+            assert stub.seen["reasoning_effort"] == "high"
+        elif provider == "openrouter":
+            assert stub.seen["extra_body"]["reasoning"] == {"effort": "high"}
+        else:
+            assert "reasoning_effort" not in stub.seen and "extra_body" not in stub.seen
+
+
+def test_the_strong_order_is_sonnet_then_deepseek_then_gpt():
+    from shared import config
+    strong = [(e["provider"], e["model"], e.get("effort")) for e in config.settings()["models"]["strong"]]
+    assert strong[:3] == [("anthropic", "claude-sonnet-5-5", "high"), ("deepseek", "deepseek-v4-pro", None),
+                          ("openai", "gpt-6-sol", "high")]
 
 
 def test_a_content_filter_is_a_provider_error(monkeypatch):
