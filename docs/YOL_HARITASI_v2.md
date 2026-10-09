@@ -734,7 +734,7 @@ them, rightly).
 (2) no liquid / debt figure off by more than 5% (McDonald's debt now 39.9 bn, Intel's liquid 29.7 bn, Rivian's debt 4.4 bn);
 (3) 4 cards `unverified` (NKE, DOW, RIVN, COST), each because the writer added a figure its quote lacks — the auditor is right;
 (4) JPM `bank`, no AI call. A Sonnet audit takes ~30 s a stock (round 1: 1–5 min). 3 cards read (NVDA, KO, COST): clear; one
-meaning error fixed (rule 48).
+meaning error fixed (rule 48). **Agent 3 closed (my decision, 2026-10-09); phase 3 (Portfolio) next.**
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
