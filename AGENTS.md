@@ -32,6 +32,9 @@ Names of fields, tables, grades, and folders follow `docs/GLOSSARY.md`.
 - Each agent is its own module. Code used by more than one agent goes under `shared/`.
 - The code does not know Hermes. Each agent must also run by hand. Planned command: `python -m agents.<agent>`. New code lives under `agents/` and `shared/`; `ajanlar/` keeps only the archived prototype and backtests.
 - At the end of the session, update the **Current status** section.
+- **Merging (my standing permission, 2026-10-09):** when a change is finished and all tests pass, push the branch, merge it into
+  `main` locally with `--no-ff`, run the tests again and push `main` — without asking. (`gh` is not installed, so no PR.) A phase
+  still gets its separate audit session before it counts as done.
 
 ## Project map
 
