@@ -666,6 +666,12 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
     borrowings $ 2,000") rather than the balance sheet — the same figure and date. **Limit:** a figure that is wrong and
     printed nowhere is now `not_found` rather than `fail`; a wrong row taken (Boeing's current part only) is still seen by
     its label. **To check on the Air:** the test set, then GE again (most figure items should `pass`).
+42. **A quote may span lines (decision 2026-10-09).** GE on the Air (rule 41 check): the auditor found and read all 7 rows right,
+    but 5 came back "no verified quote" — it copied a rows-by-value block as given (header lines and the row, one under the
+    other), and those lines are not next to each other in the filing, so the whole quote was not found. Now `filing.quote_ok`
+    splits a quote at line breaks as well as at ` | `: every line must still appear word for word; a line of bare numbers
+    (`2026 2025`, `(666) (535)`) may be short; one line must be a full quote (20 characters). A quote that is whole in the filing
+    passes as before. **To check on the Air:** GE again — the figure items should `pass`.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 

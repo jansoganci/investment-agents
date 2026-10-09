@@ -100,3 +100,14 @@ def test_thousands_small_numbers_and_the_limit():
 def test_a_dates_only_header_brings_the_months_line_above_it():
     text = "Three Months Ended Six Months Ended\nJul 26, 2026 Jul 27, 2025 Jul 26, 2026 Jul 27, 2025\nRevenue $ 96,221 $ 46,743 $ 177,837 $ 90,805"
     assert filing.rows_with(text, [177_837_000_000]) == [text]
+
+
+def test_a_row_quoted_with_its_header_on_separate_lines_passes_row_by_row():
+    text = filing_text("GE")["text"]  # Hermes's GE run (2026-10-09): the auditor copied a rows-by-value block as it was given
+    block = ("STATEMENT OF CASH FLOWS (UNAUDITED) Six months ended June 30\n(In millions) 2026 2025\n"
+             "Cash from (used for) operating activities 5,018 3,755")
+    assert filing.quote_ok(text, block)
+    assert not filing.quote_ok(text, block.replace("5,018", "5,019"))  # one invented row still spoils it
+    assert filing.quote_ok(text, "Cash from (used for) operating activities 5,018 3,755\n2026 2025")  # bare numbers may be short
+    assert not filing.quote_ok(text, "2026 2025\n2026 2025")  # but one part must be a full quote
+    assert not filing.quote_ok(text, "Cash from (used for) operating activities 5,018 3,755\nGE")  # a short word is not a row

@@ -167,9 +167,16 @@ def rows_with(text: str, values: list[float], max_chars: int = 4000, per_value: 
     return ["\n".join(picked[i]) for i in sorted(picked)]
 
 
+def _part_ok(text: str, part: str, min_part: int) -> bool:
+    if not re.search(r"[A-Za-z]", part) and len(_NUMBER.findall(part)) >= 2:
+        return quote_in(text, part, 1)  # a row of bare numbers (`(666) (535)`, `2026 2025`): short, but still word for word
+    return quote_in(text, part, min_part)
+
+
 def quote_ok(text: str, quote: str, min_chars: int = MIN_QUOTE, min_part: int = 12) -> bool:
-    """A quote, or several rows separated by ` | ` (a figure spread over rows): every part appears in the filing word for word."""
-    parts = [p.strip() for p in re.split(r"\s\|\s", quote) if p.strip()]
-    if len(parts) <= 1:
+    """A quote, or several rows separated by ` | ` or by line breaks (a figure spread over rows, or a row copied with its
+    header from the rows by value, rule 42): every part appears in the filing word for word, and one part is a full quote."""
+    parts = [p.strip() for p in re.split(r"\s\|\s|\n", quote) if p.strip()]
+    if len(parts) <= 1 or quote_in(text, quote, min_chars):
         return quote_in(text, quote, min_chars)
-    return all(quote_in(text, p, min_part) for p in parts)
+    return any(len(normalize(p)) >= min_chars for p in parts) and all(_part_ok(text, p, min_part) for p in parts)
