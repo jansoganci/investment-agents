@@ -709,6 +709,22 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     arithmetic on them is not a reason to fail — the reason given is what must be in the quote. Two test-set cases added (a pass and
     a fail). **To check:** the real auditor test set, then the 20 stocks again in a fresh folder.
 
+**When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
+cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the
+auditor Sonnet 5.5) passes when all four hold:
+1. The 10 trial-set grades are as expected (`solid` KO, NVDA · `mid` NKE, SBUX · `weak` PFE, INTC, BA, SNAP, DOW, RIVN).
+2. No liquid-assets or debt figure is off by more than 5% from the balance sheet.
+3. Every card marked `unverified` is marked for a real reason (the auditor is right), not a false alarm.
+4. The out-of-scope path works (JPM: `bank`, no AI call).
+Everything else found goes to the "known small items" list below and does not hold agent 3: it is done later, when there is
+time. Then agent 3 is closed and phase 3 (Portfolio, code only) starts.
+**Known small items (do not hold agent 3):** Novo's 20-F statements are in an exhibit (figure audit `not_found`) · Boeing's
+debt 45,596 against the balance sheet's 45,900 (0.7%) · Coca-Cola's short-term borrowings 332 against our commercial paper 250 ·
+Visa's share count (classes) · an assumed zero debt sent to the figure audit (PLTR `not_found`) · Caterpillar's own debt names
+(asked through `missing_data`) · Microsoft's figure items mostly `not_found` (round 1) · Starbucks' liquid quote not found word
+for word (round 2) · the writer still adds a figure its quote lacks now and then (NKE, DOW, RIVN in round 2: the auditor fails
+them, rightly).
+
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 
 ### Agent 4 (Portfolio) rules (decision: 2026-10-04; renamed from "Technical" the same day)
