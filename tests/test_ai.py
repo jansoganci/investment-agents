@@ -14,7 +14,8 @@ def test_default_chain_is_my_credits_then_openrouter(db):
     assert [(e["provider"], e["model"]) for e in ai.chain("strong", db)] == [
         ("anthropic", "claude-sonnet-5-5"), ("deepseek", "deepseek-v4-pro"), ("openai", "gpt-6-sol"),
         ("openrouter", "anthropic/claude-sonnet-5.5"), ("openrouter", "deepseek/deepseek-v4-pro"), ("openrouter", "openai/gpt-6-sol")]
-    assert ai.chain("auditor", db)[0]["provider"] == "deepseek"  # a different family from the writer
+    assert [(e["provider"], e["model"]) for e in ai.chain("auditor", db)][:3] == [  # the writer's order (2026-10-09)
+        ("anthropic", "claude-sonnet-5-5"), ("deepseek", "deepseek-v4-pro"), ("openai", "gpt-6-sol")]
 
 
 def test_a_stored_override_goes_first_and_default_clears_it(db):
@@ -123,7 +124,7 @@ def test_ai_calls_is_append_only(db, monkeypatch):
 
 def test_estimate(db):
     assert ai.estimate("strong", 40000, 1500, conn=db) == pytest.approx(10000 * 2e-6 + 1500 * 10e-6)
-    assert ai.estimate("auditor", 40000, conn=db) == pytest.approx(10000 * 1.32e-6 + 1500 * 3.96e-6)
+    assert ai.estimate("auditor", 40000, conn=db) == pytest.approx(10000 * 2e-6 + 1500 * 10e-6)  # Sonnet too
 
 
 # --- the real backends, against stand-in SDK clients ----------------------------------------------------------------------
@@ -237,12 +238,12 @@ def test_a_model_belongs_to_its_maker_even_through_openrouter(provider, model, m
 
 def test_call_skips_the_models_of_an_excluded_family(db, monkeypatch):
     fake = FakeAI(lambda *a: "x").install(monkeypatch)
-    fake.fail = {"deepseek", "openrouter"}  # the auditor's own family is down: the next maker is used
-    reply = ai.call("auditor", "p", conn=db, exclude_families={"anthropic"})
+    fake.fail = {"deepseek", "openrouter"}  # (the option is kept in `ai.call`; agent 3 no longer uses it, 2026-10-09)
+    reply = ai.call("strong", "p", conn=db, exclude_families={"anthropic"})
     assert (reply.provider, reply.model) == ("openai", "gpt-6-sol")
     fake.fail = set()
     with pytest.raises(AIError, match="writer's family"):
-        ai.call("auditor", "p", conn=db, exclude_families={"deepseek", "openai"})  # nothing independent is left
+        ai.call("strong", "p", conn=db, exclude_families={"anthropic", "deepseek", "openai"})
 
 
 def test_only_first_does_not_fall_back(db, monkeypatch):

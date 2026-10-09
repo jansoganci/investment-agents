@@ -53,11 +53,14 @@ models:
     - {provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: high}
     - {provider: openrouter, model: deepseek/deepseek-v4-pro}
     - {provider: openrouter, model: openai/gpt-6-sol, effort: high}
-  auditor:      # agents 2 and 3; a different family from the writer
+  auditor:      # agents 2 and 3. My decision (2026-10-09): the same order as the writer, Sonnet 5.5 high first — the
+                # "different family from the writer" rule is dropped (roadmap 10.1)
+    - {provider: anthropic,  model: claude-sonnet-5-5, effort: high}
     - {provider: deepseek,   model: deepseek-v4-pro}
+    - {provider: openai,     model: gpt-6-sol, effort: high}
+    - {provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: high}
     - {provider: openrouter, model: deepseek/deepseek-v4-pro}
-    - {provider: openai,     model: gpt-6-sol}
-    - {provider: openrouter, model: openai/gpt-6-sol}
+    - {provider: openrouter, model: openai/gpt-6-sol, effort: high}
   hermes_chat:  # set in Hermes itself, listed here for reference
     - {provider: openai-codex, model: chatgpt-subscription}
     - {provider: deepseek,     model: deepseek-v4-pro}

@@ -186,8 +186,8 @@ def test_a_failed_audit_holds_the_sell_suggestion_back(monkeypatch):
 
 def test_a_sell_suggestion_whose_audit_cannot_run_is_held(monkeypatch):
     broken = {"status": "broken", "point": 1, "reason": "growth turned", "quote": NOTES}
-    fake = FakeAI(handler(check=broken)).install(monkeypatch)
-    fake.fail = {"deepseek", "openrouter", "openai"}  # the auditor job has no working provider; the writer (anthropic) does
+    h = handler(check=broken)
+    FakeAI(lambda job, s, p: "I cannot help with that" if job == "auditor" else h(job, s, p)).install(monkeypatch)  # no verdict
     part = parts.run_ai(R, TEXT, ctx(first=False, in_portfolio=True, grades=["solid"], previous_thesis=parts.thesis_text(THESIS)))
     assert part.sell["status"] == "held" and "could not run" in part.sell["text"]
 
@@ -303,18 +303,16 @@ def test_the_figure_audit_sees_the_balance_sheet_row_of_debt(monkeypatch):
     assert "Long-term debt 32,366 7,469" in figure_prompt  # a 27-character table row used to be dropped
 
 
-def test_the_auditor_is_never_of_the_writers_family(monkeypatch):
+def test_the_auditor_runs_sonnet_first_like_the_writer(monkeypatch):
+    # my decision (2026-10-09): every AI part, the auditor included, is Sonnet 5.5 high first; the family rule is dropped
     fake = FakeAI(handler(check=BROKEN)).install(monkeypatch)
-    fake.fail = {"anthropic"}  # the writer falls back to DeepSeek V4 Pro
     part = parts.run_ai(R, TEXT, held_ctx())
-    writers = {m for (job, _s, _p), m in zip(fake.calls, fake.models) if job != "auditor"}
-    auditors = [m for (job, _s, _p), m in zip(fake.calls, fake.models) if job == "auditor"]
-    assert writers == {"deepseek:deepseek-v4-pro"}
-    assert auditors and all(m.startswith("openai") for m in auditors)  # never deepseek, the writer's maker
-    assert part.sell["status"] == "sent"
-    fake.fail = {"anthropic", "openrouter", "openai"}  # only the writer's maker is left for the auditor
+    auditors = {m for (job, _s, _p), m in zip(fake.calls, fake.models) if job == "auditor"}
+    assert auditors == {"anthropic:claude-sonnet-5-5"} and part.sell["status"] == "sent"
+    fake.fail = {"anthropic"}  # Sonnet down: writer and auditor both fall back to DeepSeek V4 Pro, and that is allowed
+    fake.calls.clear(), fake.models.clear()
     part = parts.run_ai(R, TEXT, held_ctx())
-    assert part.sell["status"] == "held" and "audit could not run" in part.sell["text"]
+    assert set(fake.models) == {"deepseek:deepseek-v4-pro"} and part.sell["status"] == "sent"
 
 
 def test_a_borderline_flag_gets_no_why_question():

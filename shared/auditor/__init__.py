@@ -1,7 +1,7 @@
 """The AI auditor (roadmap section 3, "AI auditor"): one engine, one rule card per place (`shared/auditor/cards/`).
 
 It checks and never produces figures. Code checks come first: every quote an item gives must appear in the filing word for
-word, or the item is `not_found`. A different model family from the writer (`auditor` job in `settings.yaml`).
+word, or the item is `not_found`. The `auditor` job in `settings.yaml` (Sonnet 5.5 high first, like the writer: my decision 2026-10-09).
 
     result = auditor.audit("figure", items, text, run=run)      # AuditResult
     auditor.save(conn, stock_id, result)                        # a row in `audits`

@@ -99,7 +99,6 @@ class Context:
     rng: random.Random = field(default_factory=random.Random)
     model: str | None = None                # a one-off model for the strong job (/analyze KO opus-5.5)
     news: list | None = None
-    families: set = field(default_factory=set)   # makers of the models that wrote this analysis
     models: list = field(default_factory=list)   # provider:model that really answered, in order
     no_fallback: bool = False               # the strong-model test: no other model may answer instead
 
@@ -150,7 +149,6 @@ def ask_json(job: str, system: str, prompt: str, check, ctx: Context):
         text = prompt if problem is None else prompt + f"\n\nYour previous answer could not be used ({problem}). Answer again, JSON only."
         reply = ai.call(job, text, system=system, run=ctx.run, stock_id=ctx.stock_id, model=ctx.model if job == "strong" else None,
                         only_first=ctx.no_fallback)
-        ctx.families.add(ai.family(reply.provider, reply.model))
         ctx.models.append(f"{reply.provider}:{reply.model}")
         try:
             data = parse_json(reply.text)
@@ -397,8 +395,7 @@ def run_ai(r, text: str, ctx: Context) -> AIPart:
     def audit(kind, items):
         if kind in done or not items:
             return done.get(kind)
-        writer = ctx.families or {ai.entry_family(ai.chain("strong", None, ctx.model)[0])}
-        res = auditor.audit(kind, items, text, run=ctx.run, stock_id=ctx.stock_id, exclude_families=writer)
+        res = auditor.audit(kind, items, text, run=ctx.run, stock_id=ctx.stock_id)  # any family (my decision, 2026-10-09)
         part.audits.append(res)
         done[kind] = res
         return res

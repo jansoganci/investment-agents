@@ -3,7 +3,7 @@ really met, with the verdict the auditor must give. Run against the real auditor
 
     uv run python -m shared.auditor testset
 
-It is also the test of "is DeepSeek V4 Pro enough?" — if it misses a case, switch the job to GPT-6 Sol (`/model auditor gpt-6-sol`).
+It is also the test of "is the auditor model enough?" — if it misses a case, try another (`/model auditor gpt-6-sol`).
 The texts are short stand-ins written for the traps, not real filings."""
 
 from __future__ import annotations
