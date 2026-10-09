@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from shared.sec import FORMS_ANNUAL, FORMS_QUARTER
-from shared.sec.synonyms import DEBT_GROUPS, INSTANT, SHORT_TERM_DEBT, SYNONYMS, UNIT_KIND, debt_balance_names
+from shared.sec.synonyms import DEBT_GROUPS, DEBT_LAST_RESORT, INSTANT, SHORT_TERM_DEBT, SYNONYMS, UNIT_KIND, debt_balance_names
 
 SAME_DAY = 10  # fiscal-year ends less than 10 days apart are the same year (52/53-week years)
 
@@ -284,14 +284,17 @@ class Facts:
         for e in self.ends:
             forms = FORMS_QUARTER if e == self.ttm_end else FORMS_ANNUAL
             cands = []
-            for names, short_in, need_all in DEBT_GROUPS[self.taxonomy]:
-                found = {}
-                for n in names:
-                    v = self._best(n, self.currency, e, forms)
-                    if v is not None:
-                        found[n] = v
-                if found and (len(found) == len(names) or not need_all):
-                    cands.append((found, short_in))
+            for groups in (DEBT_GROUPS[self.taxonomy], DEBT_LAST_RESORT[self.taxonomy]):
+                if cands:
+                    break  # the last resort only when no group is complete
+                for names, short_in, need_all in groups:
+                    found = {}
+                    for n in names:
+                        v = self._best(n, self.currency, e, forms)
+                        if v is not None:
+                            found[n] = v
+                    if found and (len(found) == len(names) or not need_all):
+                        cands.append((found, short_in))
             if not cands:
                 if ("debt", self.year_label(e)) in self.user_values:
                     v = float(self.user_values[("debt", self.year_label(e))])

@@ -95,9 +95,6 @@ DEBT_GROUPS: dict[str, list[tuple[list[str], bool, bool]]] = {
         # (17.157 + 2.000 = 19.157 bn, the filing's total borrowings). Last, so it never replaces a group above; where one
         # of them is also complete it agrees within 1% (Boeing every year, GE 2023–2024).
         (["LongTermDebtAndCapitalLeaseObligations", "DebtCurrent"], True, True),
-        # Rivian and McDonald's (2026): only the long-term line on the balance sheet, no current portion reported; the
-        # first group would be complete if one were (roadmap rule 45). Short-term borrowings are still added.
-        (["LongTermDebtNoncurrent"], False, True),
     ],
     "ifrs-full": [
         (["Borrowings"], True, True),
@@ -105,6 +102,14 @@ DEBT_GROUPS: dict[str, list[tuple[list[str], bool, bool]]] = {
         (["NoncurrentPortionOfNoncurrentBorrowings", "CurrentPortionOfNoncurrentBorrowings", "CurrentBorrowings"], True,
          False),
     ],
+}
+
+# Tried only when no group above is complete — never a candidate next to one (it is a part of the first group; Nike 2026 got a
+# false "candidates disagree" when it was): Rivian and McDonald's (2026) report only the long-term line, no current portion
+# (roadmap rule 45). Short-term borrowings are still added.
+DEBT_LAST_RESORT: dict[str, list[tuple[list[str], bool, bool]]] = {
+    "us-gaap": [(["LongTermDebtNoncurrent"], False, True)],
+    "ifrs-full": [],
 }
 
 # Added only when the group does not already include short-term debt; only the first one found
@@ -132,6 +137,6 @@ CHECK_NAMES = {"us-gaap": {"MarketableSecuritiesNoncurrent"}, "ifrs-full": set()
 
 def all_names(taxonomy: str) -> set[str]:
     names = {n for names in SYNONYMS[taxonomy].values() for n in names} | CHECK_NAMES[taxonomy]
-    names |= {n for group, _, _ in DEBT_GROUPS[taxonomy] for n in group}
+    names |= {n for group, _, _ in DEBT_GROUPS[taxonomy] + DEBT_LAST_RESORT[taxonomy] for n in group}
     names |= set(SHORT_TERM_DEBT[taxonomy]) | set(DEBT_BALANCE_EXTRA[taxonomy])
     return names

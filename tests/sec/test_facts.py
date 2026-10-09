@@ -212,3 +212,6 @@ def test_the_long_term_debt_line_alone_when_no_current_portion_is_reported():
     assert d.parts == {"LongTermDebtNoncurrent": 4_444e6}
     n = facts("NVDA")  # a current portion reported: the full group as before
     assert set(n.debt()[n.ends[-1]].parts) == {"LongTermDebtNoncurrent", "LongTermDebtCurrent"}
+    k = facts("NKE")  # and the long-term line alone is never a candidate beside it (no false "candidates disagree")
+    d = k.debt()[k.ends[-1]]
+    assert d.value == 7_893e6 and not d.disagree and d.candidates == [7_893e6]
