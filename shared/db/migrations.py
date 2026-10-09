@@ -369,12 +369,34 @@ ALTER TABLE missing_data ADD COLUMN reminded_at TEXT;
 ALTER TABLE card_entries ADD COLUMN unverified INTEGER NOT NULL DEFAULT 0 CHECK (unverified IN (0, 1));
 """
 
+STEP_5 = """
+-- Phase 3 (2026-10-09). The valuation watch's weekly figures (agent 4 rule 7: they live in the database, not in the card):
+-- the price line of the latest card entry moved with the Friday close. `expensive` = PEG > 3 or FCF yield < 1%;
+-- 4 weeks in a row → an `expensive` signal and a dated card note.
+CREATE TABLE valuations (
+    id            INTEGER PRIMARY KEY,
+    stock_id      INTEGER NOT NULL REFERENCES stocks (id),
+    week_end      TEXT NOT NULL,                -- the Friday
+    close         REAL,
+    peg           REAL,
+    fcf_yield     REAL,
+    expensive     INTEGER NOT NULL CHECK (expensive IN (0, 1)),
+    card_date     TEXT,                         -- the card entry the figures come from
+    created_at    TEXT NOT NULL,
+    UNIQUE (stock_id, week_end)
+);
+
+CREATE INDEX signals_week ON signals (kind, date);
+CREATE INDEX holdings_stock ON holdings (stock_id, date);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
     (2, STEP_2),
     (3, STEP_3),
     (4, STEP_4),
+    (5, STEP_5),
 ]
 
 

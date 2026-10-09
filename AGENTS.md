@@ -49,7 +49,9 @@ docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, BAGLAM.md
                            telegram_setcommands.txt; reviews/ (external reviews)
 shared/                    phase 0: config, clock, db (tables + upgrade steps), backup, runlog, notify, drive, commands, ask
                            phase 1: sec (client, facts, synonyms), sectors, prices (job + yahoo), commands/stocks.py
+                           phase 3: commands/portfolio.py (/bought /sold /gold /bes /portfolio)
 agents/analysis/           phase 1: agent 3's numbers — measures, card, run; python -m agents.analysis KO | --weekly
+agents/portfolio/          phase 3: agent 4 — ledger, marketdata, value, watch, block, run; python -m agents.portfolio [--show]
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 pyproject.toml, uv.lock, settings.yaml, .env.example
 
@@ -57,7 +59,6 @@ Planned (not created yet):
 agents/eye/         1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
 agents/counter/     1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
 agents/research/    2. Research — reading + web search + score; opens the card (weekly, Sunday)
-agents/portfolio/   4. Portfolio — my money: ledger, benchmark, total wealth, new money
 shared/             still to come: AI, the auditor, the Sunday summary
 ```
 
@@ -79,7 +80,17 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-09 (agent 3 closed; next phase 3 (Portfolio); acceptance test round 2 passed on the Air: 10/10 grades, liquid / debt within 5%, every `unverified` for a real reason, the bank path works; 3 cards read, rule 48 (measure meanings in the thesis prompt); next phase 3; Hermes limits still next)
+- **Last update:** 2026-10-09 (phase 3 (Portfolio) built and merged into `main` locally; next: its audit in a separate session, then my Mac check; Hermes limits still next)
+- **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
+  owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
+  SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
+  drop alert · valuation watch with the weekly `valuations` table · new-money ranking with the 25% line · the block) and
+  `/bought` `/sold` `/gold` `/bes` `/portfolio` with their `/undo`. Database version 5. **My decisions (2026-10-09; roadmap,
+  "How phase 3 builds it"):** new money = 3 conditions counted (below the high · thesis `intact` · price line not `expensive`),
+  tie → the bigger fall; a shadow may go below zero; a drop alert once per fall (again only after a new 52-week high). The
+  hand-checked ledger (two buys, a sale, a dividend, a split) is `tests/portfolio/test_ledger.py`. **396 tests pass.** Next: the
+  phase 3 audit (separate session) → fixes → my Mac check (`uv run python -m shared.commands bought 10 KO 85.65` ·
+  `uv run python -m agents.portfolio`) → on the Air `git pull` + `uv run python -m shared.db upgrade` (version 4 → 5).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.

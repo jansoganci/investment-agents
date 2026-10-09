@@ -284,6 +284,12 @@ of a wrong buy, with the right one added after my `yes`.
 
 **Not in this phase:** any sell suggestion (never from agent 4).
 
+**Result (2026-10-09):** built on `feat/phase-3-portfolio`; the build choices and my three decisions (new-money order, a shadow may
+go below zero, a drop alert once per fall) are in roadmap section 3 ("How phase 3 builds it"). Database version 5 (`valuations`).
+New: `agents/portfolio` (ledger, marketdata, value, watch, block, run) and `shared/commands/portfolio.py` (`/bought`, `/sold`,
+`/gold`, `/bes`, `/portfolio` and their `/undo`). The hand-checked ledger is `tests/portfolio/test_ledger.py` (the spreadsheet is
+in its docstring). 396 tests pass.
+
 ## Phase 4 — Agent 1: Eye
 
 **Purpose:** both sites read three times a day, slowly, with one neutral English sentence per post and tags mapped to stocks,
@@ -396,7 +402,7 @@ left stuck on purpose shows in `/status`.
 | 0 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-0-foundation-arj800` · PR #3 (merged 2026-10-05) | merged before the Mac check (my decision, 2026-10-05): the Mac check runs on `main`, a fix comes as a small PR · Air setup started 2026-10-05 (`AIR_SETUP.md`) |
 | 1 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-1-analysis-numbers-arj800` · PR #4 → PR #5 (merged 2026-10-05) | built and audited 2026-10-05 (exception, section 1) · PR #4 went into the phase 0 branch, PR #5 brought it to `main` · Mac check together with phase 0's, on `main` (incl. the real Yahoo answers, section 8) · on the Air: `git pull` + `uv run python -m shared.db upgrade` (version 2 → 3) |
 | 2 | ✅ | ✅ | ✅ | Air | ✅ | ✅ | `claude/phase-2-agent3-ai-arj800` + fixes | real-model runs and the 20-stock acceptance test on the Air (isolated); round 2 passed 2026-10-09 (roadmap, after rule 47); 3 cards read, rule 48 |
-| 3 | — | — | — | — | — | — | — | |
+| 3 | ✅ | ⏳ | — | ⏳ | ✅ | ⏳ | `feat/phase-3-portfolio` (merged locally 2026-10-09) | merged under the standing permission (AGENTS.md); the audit is a separate session; Mac check: my ledger against my spreadsheet |
 | 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
 | 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
 | 6 | — | — | — | — | — | — | — | runs on the Air |
@@ -432,7 +438,7 @@ off this list is my decision.
 | `absent` for a figure a company never reports (the ledger asks again each quarter) | phase 2 asks once and reminds once, then stops; a command to mark `absent` is not built | my decision, later |
 | The 2-sentence "story" line at the top of a card | not in phase 2's list; agent 2 opens cards in phase 5 | 5 |
 | News in the drop-alert check | the web search comes with agent 2; until then the check reads the filing only and says so | 5 |
-| Agent 4's `drop_alert` signals (the consumer is built: `--drop-alerts`) | agent 4 does not exist yet | 3 |
+| ~~Agent 4's `drop_alert` signals (the consumer is built: `--drop-alerts`)~~ | **done in phase 3** (2026-10-09) | — |
 | A guard that the Mac never writes into the real `Investing/` | today only `.env` keeps them apart (optional idea) | later |
 | Small UAT items: info line for debt held for sale, a flag for a margin outside 0–100%, Coca-Cola's short-term borrowings name | each under 1%; checked in the 20-stock acceptance test | phase 2 |
 

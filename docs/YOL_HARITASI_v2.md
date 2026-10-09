@@ -832,6 +832,23 @@ Total wealth: stocks $14.8k + gold 52 g $6.8k + BES $5.3k = $26.9k · 3.4% of $8
 **Test:** a hand-checked ledger (two buys, a sale, a dividend, a split) gives the same value, weights, shadow values and return
 as a spreadsheet.
 
+**How phase 3 builds it (2026-10-09; my decisions marked):**
+- **New-money order (my decision):** 3 conditions are counted — below the 52-week high (weekly closes) · the latest thesis
+  `intact` · the price line not `expensive` (PEG and FCF yield moved with the Friday close; at least one computed). More
+  conditions first; on a tie the bigger fall from the high first; a stock expensive 4 weeks in a row last.
+- **A shadow may go below zero (my decision):** a sale that takes out more than the shadow holds makes it negative — same money,
+  same days; the block says why.
+- **Drop alert once per fall (my decision):** no new alert for a stock until it makes a new 52-week high.
+- Build choices: the weekly run uses the Friday before the run day (Sunday → that Friday; a run on Friday uses the Friday before) ·
+  a week already recorded writes nothing again (snapshots are frozen) · dividends: shares held before the ex-date; the ex-date is
+  the ledger date · the code's dividend and split rows are worked out again each week, a stale one is marked `void` and the right
+  one added (e.g. after a back-dated or cancelled buy) · splits: a stored close from before a split is turned into today's shares
+  when it was stored on or before the split day (Yahoo adjusts later fetches itself) · the SPY shadow uses a total-return index
+  from each stored day's close and dividend (the stored adjusted close mixes bases from different nights) · the valuation watch
+  moves the latest card entry's PEG and FCF yield with the price (weekly rows in `valuations`) · gold sales cannot exceed my grams;
+  BES is valued at the rate of its entry day · "are you sure?" is a ⚠ line in the preview; nothing changes until my `yes` · a buy
+  of a stock not in `stocks` is refused (`/watch` first) · `/undo` of a buy a later sale needs is refused (undo the sale first).
+
 ### AI auditor (decision: 2026-10-04)
 
 **What it prevents** — the errors we actually met: a wrong figure (Coca-Cola's short-term investments, Boeing's debt), a wrong
@@ -967,7 +984,7 @@ Every night a **backup copy** of SQLite is sent to Drive (`Investing/Backup/`).
 - **Structure changes:** the database carries a version number; each change to the tables is a small numbered upgrade step that
   the code applies on start. **Data is never lost when the structure changes** (my condition).
 
-Tables: `stocks` (with `out_of_scope` since 2026-10-05), `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included).
+Tables: `stocks` (with `out_of_scope` since 2026-10-05), `articles` (full text included), `tags` (mapping: kind, maps_to, exchange, country, sector, subsector), `commodity_links`, `scores`, `missing_data` (the ledger), `financials`, `prices`, `signals` (with a status: `pending` → `done`, e.g. a drop alert handed to agent 3), `holdings` (the ledger: buys / sells via Hermes; dividends and splits added by code), `other_assets` (my gold / BES entries), `snapshots` (agent 4's weekly row), `runs` (dollars spent included). Added in phase 3 (2026-10-09): `valuations` (the valuation watch's weekly figures, agent 4 rule 7).
 Added on 2026-10-04 (decided features had no place for their records): `card_entries` (one row per card entry: date, record, `grade`, `lynch_type`, `thesis_status` — the history behind the sell triggers and the archive reminder), `audits` (the auditor's results and error rate), `command_log` (every change I make: number, command, time; `/undo` uses the number), `settings` (my overrides from Telegram, e.g. `/model`), `subsectors` (the approved subsector list).
 
 ```text
