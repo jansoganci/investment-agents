@@ -27,6 +27,8 @@ GE_BS = ("Cash, cash equivalents and restricted cash $ 12,450\nInvestment securi
          "Other current assets include time deposits with original maturities of more than three months of $1,010 million.")
 GE_TTM = ("the two year-to-date figures against this filing; never fail the total for differing from one column")
 REV = "Revenue increased 12% to $4.1 billion in the quarter, driven by higher volumes. Management expects growth to continue."
+NOTES = ("In June 2026 we issued $25.0 billion of senior notes to fund general corporate purposes.\n"
+         "As of July 26, 2026, we had $33.5 billion aggregate principal amount of senior notes outstanding.")
 
 CASES = [
     # (card, name, text, items, the verdict required for the item)
@@ -74,6 +76,16 @@ CASES = [
      [{"id": "U2", "claim": "Revenue grew 28% on new large customers.", "kind": "company_specific",
        "quote": "Revenue increased 28% year over year, driven by new large customers and expansion of existing customers.",
        "terms": ["revenue"]}], "pass"),
+    ("reading", "Nvidia: our own figures repeated from `what` are not a reason to fail (acceptance test 2026-10-09)", NOTES,
+     [{"id": "U1", "what": "flag data_check: debt 8.5 → 33.4 bn (2026)", "kind": "company_specific",
+       "claim": "Debt rose from 8.5 to 33.4 bn, about 24.9 bn more, because the company issued senior notes in June 2026.",
+       "quote": "In June 2026 we issued $25.0 billion of senior notes to fund general corporate purposes.",
+       "terms": ["senior notes"]}], "pass"),
+    ("reading", "a cause in neither the quote nor `what` (Coca-Cola's Nigeria sale, acceptance test 2026-10-09)", NOTES,
+     [{"id": "U1", "what": "flag data_check: debt 8.5 → 33.4 bn (2026)", "kind": "company_specific",
+       "claim": "Debt rose from 8.5 to 33.4 bn because the company borrowed to pay for the acquisition of a chip designer.",
+       "quote": "In June 2026 we issued $25.0 billion of senior notes to fund general corporate purposes.",
+       "terms": ["senior notes"]}], "fail"),
     ("sell", "a sell suggestion whose evidence says the opposite", REV,
      [{"id": "sell", "claim": "the thesis broke — revenue fell 30% — \"Revenue increased 12% to $4.1 billion in the quarter\"",
        "terms": ["revenue"]}], "fail"),

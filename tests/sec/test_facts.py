@@ -184,3 +184,31 @@ def test_annual_only_view_stops_at_the_last_annual_report():
 
 def test_first_year_for_the_ipo_rule():
     assert facts("RIVN").first_fy == 2021
+
+
+# --- acceptance test, round 1 (2026-10-09; roadmap rules 43–45) -------------------------------------------------------------
+
+def test_a_newer_filing_missing_from_secs_data_is_named():
+    ko = facts("KO")  # the July 10-Q was filed 2026-07-29; SEC's data still ends 2026-04-03
+    assert ko.newer_filing == {"form": "10-Q", "accn": "0001628280-26-050503", "report_date": "2026-07-03",
+                               "filed": "2026-07-29"}
+    assert facts("NVDA").newer_filing is None
+    from agents.analysis.measures import analyse
+    assert [f for f in analyse(ko, "KO").flags if f["flag"] == "stale_data"] == [{"flag": "stale_data", "detail":
+            "figures end 2026-04-03; the 10-Q to 2026-07-03 (filed 2026-07-29) is not in SEC's data yet"}]
+
+
+def test_intels_short_term_investments_count_and_its_marketable_equity_does_not():
+    f = facts("INTC")
+    v = f.liquid()[f.ends[-1]]
+    assert v.parts == {"CashAndCashEquivalentsAtCarryingValue": 12_874e6, "AvailableForSaleSecuritiesDebtSecuritiesCurrent": 16_853e6}
+    k = facts("KO")  # a short-term investments line of its own: Coca-Cola's marketable securities still count
+    assert "MarketableSecurities" in k.liquid()[k.ends[-1]].parts
+
+
+def test_the_long_term_debt_line_alone_when_no_current_portion_is_reported():
+    f = facts("RIVN")
+    d = f.debt()[f.ends[-1]]
+    assert d.parts == {"LongTermDebtNoncurrent": 4_444e6}
+    n = facts("NVDA")  # a current portion reported: the full group as before
+    assert set(n.debt()[n.ends[-1]].parts) == {"LongTermDebtNoncurrent", "LongTermDebtCurrent"}

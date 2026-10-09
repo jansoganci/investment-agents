@@ -671,7 +671,41 @@ IFRS / 20-F works (Novo Nordisk). Details: `BAGLAM.md` section 9.
     other), and those lines are not next to each other in the filing, so the whole quote was not found. Now `filing.quote_ok`
     splits a quote at line breaks as well as at ` | `: every line must still appear word for word; a line of bare numbers
     (`2026 2025`, `(666) (535)`) may be short; one line must be a full quote (20 characters). A quote that is whole in the filing
-    passes as before. **To check on the Air:** GE again — the figure items should `pass`.
+    passes as before. **To check on the Air:** GE again — the figure items should `pass`. **Checked (2026-10-09):** 7 of 7 `pass`.
+
+**The 20-stock acceptance test, round 1 (Air, Hermes, fresh `~/uat-data`, 2026-10-09; 1.59 $):** KO NVDA NKE SBUX PFE · INTC BA
+SNAP DOW RIVN · GE PLTR NVO JPM V · MSFT COST MCD CAT TMO. The 10 trial-set grades all as expected; JPM out of scope (no AI call);
+the auditor caught a real 16.9 bn error (Intel). Not passed yet — rules 43–47 fix what it found (my decision: 1–5 first); still
+open: Novo's 20-F (its statements are in an exhibit, the primary document has none: 8 of 8 `not_found`), Boeing's debt 45,596
+against the balance sheet's 45,900 (the `LongTermDebt` tag leaves 304 m out), Visa's share count (classes), an assumed zero debt
+sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not looked at yet), Caterpillar's own debt names
+(asked through `missing_data`, accepted as a limit), Coca-Cola's short-term borrowings (332 against our commercial paper 250).
+43. **Figures older than the newest filing get a warning (`stale_data`).** Coca-Cola's, Dow's and Visa's July 10-Qs were filed
+    (2026-07-24 to 07-29) but none of their figures were in SEC's data by 2026-10-09, so all three were analysed on March / April
+    figures without a word. Now `Facts.newer_filing` compares the newest 10-K / 10-Q / 20-F in the filing list with the data: when
+    it is a different filing for a later period, the card gets `stale_data` ("figures end …; the 10-Q to … (filed …) is not in
+    SEC's data yet"). It changes no grade; it is not asked "why?" (nothing in a filing explains it). The weekly check already
+    waits for the figures of a new filing (`--weekly`), so this is for `/analyze` and the first card.
+44. **Intel's short-term investments.** Intel reports its 16.9 bn short-term investments only as
+    `AvailableForSaleSecuritiesDebtSecuritiesCurrent`; its `MarketableSecurities` (250 m) are marketable equity inside "Equity
+    investments". With no short-term investments line, the current debt securities now count even when a plain
+    `MarketableSecurities` is there, and that `MarketableSecurities` is then left out: Intel 13.1 → 29.7 bn (= the balance sheet's
+    12,874 + 16,853). Every other sample company unchanged.
+45. **Debt from the long-term line alone when no current portion is reported.** Rivian and McDonald's (2026) report only
+    `LongTermDebtNoncurrent`; every group needed its current part too, so debt was "not found". A last group
+    `LongTermDebtNoncurrent` alone is tried after all the others (if a current portion were reported, the first group would be
+    complete and win); short-term borrowings are still added. Rivian 4.44 bn (the balance sheet's long-term debt).
+46. **Rows by value also look for one decimal in millions.** Starbucks prints `3,449.8`, so rule 41 found none of its rows (7 of 8
+    `not_found`); Nike's, Boeing's, Dow's and McDonald's share counts likely the same. `filing._shown` now also tries the
+    one-decimal form in millions (never inside a longer number).
+47. **The "why?" answer says only what its quote says, and the reading auditor knows our figures (decision 2026-10-09, option
+    A).** The reading audit failed on all 15 stocks that had one: the writer was asked for two sentences with one quote and filled them
+    with our figures (Nvidia: "8.5 → 33.4 bn, about 24.9 bn of new debt") and with facts from elsewhere in the filing (Coca-Cola's
+    Nigeria sale); the auditor rightly failed what the quote did not show. Now the writer may give two sentences as the quote
+    (` | `, each checked word for word by `quote_ok`) and must leave out anything the quote does not show, except the item's own
+    figures; rule card 2 says the item's `what` holds our figures (checked by the figure audit), and repeating them or simple
+    arithmetic on them is not a reason to fail — the reason given is what must be in the quote. Two test-set cases added (a pass and
+    a fail). **To check:** the real auditor test set, then the 20 stocks again in a fresh folder.
 
 **Open (agent 3):** a third external review is still running. (The AI auditor is decided — below, "AI auditor".)
 

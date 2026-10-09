@@ -358,3 +358,22 @@ def test_restricted_cash_in_one_line_with_cash_is_never_failed():
     card = auditor.card_text("figure")
     assert "Restricted cash counts" in card and "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents" in card
     assert any("restricted cash" in c[1] and c[4] == "pass" for c in testset.CASES)
+
+
+def test_a_stale_data_warning_is_not_asked_about():
+    import copy
+    r = copy.copy(R)
+    r.flags = R.flags + [{"flag": "stale_data", "detail": "figures end 2026-04-03; the 10-Q to 2026-07-03 is not in SEC's data yet"}]
+    r.codes = [f"U{i}" for i in range(1, len(r.flags) + 1)]
+    assert f"U{len(r.flags)}" not in [i["id"] for i in parts.why_items(r)]
+
+
+def test_a_why_answer_may_quote_two_sentences_and_the_writer_and_auditor_know_our_figures_are_given(monkeypatch):
+    two = NOTES + " | Long-term debt 32,366 7,469"  # roadmap rule 47 (acceptance test 2026-10-09)
+    FakeAI(handler(why_quote=two)).install(monkeypatch)
+    assert all(w.verified for w in parts.ask_why(R, TEXT, ctx()))
+    FakeAI(handler(why_quote=NOTES + " | Long-term debt 99,999 1,111")).install(monkeypatch)
+    assert not any(w.verified for w in parts.ask_why(R, TEXT, ctx()))  # one invented sentence spoils it
+    assert "which you may repeat" in parts.WHY_SYSTEM
+    from shared import auditor
+    assert "they are checked elsewhere" in auditor.card_text("reading")

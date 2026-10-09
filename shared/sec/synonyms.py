@@ -95,6 +95,9 @@ DEBT_GROUPS: dict[str, list[tuple[list[str], bool, bool]]] = {
         # (17.157 + 2.000 = 19.157 bn, the filing's total borrowings). Last, so it never replaces a group above; where one
         # of them is also complete it agrees within 1% (Boeing every year, GE 2023–2024).
         (["LongTermDebtAndCapitalLeaseObligations", "DebtCurrent"], True, True),
+        # Rivian and McDonald's (2026): only the long-term line on the balance sheet, no current portion reported; the
+        # first group would be complete if one were (roadmap rule 45). Short-term borrowings are still added.
+        (["LongTermDebtNoncurrent"], False, True),
     ],
     "ifrs-full": [
         (["Borrowings"], True, True),

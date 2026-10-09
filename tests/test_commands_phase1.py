@@ -100,6 +100,7 @@ def test_analyze_refuses_an_archived_stock(db):
 def test_card_green_and_missing(db, env):
     run.analyze(db, "NVDA", FixtureSources(), today="2026-10-05")
     run.analyze(db, "RIVN", FixtureSources(), today="2026-10-05")
+    run.analyze(db, "GE", FixtureSources(), today="2026-10-05")
     db.execute("UPDATE stocks SET status='watching'")
     db.commit()
     code, text = commands.run(["card", "NVDA"])
@@ -107,7 +108,7 @@ def test_card_green_and_missing(db, env):
     code, text = commands.run(["green"])
     assert "NVDA" in text and "RIVN" not in text
     code, text = commands.run(["missing"])
-    assert "RIVN · debt · 2024" in text and "/data RIVN 2024 debt" in text
+    assert "GE · operating · 2024" in text and "/data GE 2024 operating" in text
 
 
 def test_data_enters_a_figure_with_a_plausibility_check(db, env):
