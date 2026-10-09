@@ -59,7 +59,7 @@ def test_when_the_auditor_cannot_answer_there_is_no_verdict_and_no_crash(monkeyp
     res = auditor.audit("reading", ITEMS, TEXT)
     assert res.result == "not_found" and "no JSON list" in res.error
     fake2 = FakeAI(lambda *a: "x").install(monkeypatch)
-    fake2.fail = {"deepseek", "openrouter", "openai"}
+    fake2.fail = {"anthropic", "deepseek", "openrouter", "openai"}
     assert "no model answered" in auditor.audit("sell", ITEMS, TEXT).error
 
 
@@ -69,7 +69,7 @@ def test_save_writes_an_audits_row(db, monkeypatch):
     db.execute("INSERT INTO stocks (cik, ticker, company, status, created_at) VALUES ('1', 'NVDA', 'Nvidia', 'candidate', 'x')")
     auditor.save(db, 1, res, "0001045810-26-000075")
     row = db.execute("SELECT stock_id, audit, result, filing, model FROM audits").fetchone()
-    assert row[:4] == (1, "figure", "fail", "0001045810-26-000075") and row[4] == "deepseek-v4-pro"
+    assert row[:4] == (1, "figure", "fail", "0001045810-26-000075") and row[4] == "claude-sonnet-5-5"
     assert json.loads(db.execute("SELECT detail FROM audits").fetchone()[0])["items"][0]["id"] == "debt"
 
 

@@ -29,7 +29,7 @@ def nvda_with_card(db, monkeypatch, ai_on=False):
 
 def test_model_alone_only_shows_and_with_arguments_asks_first(db):
     code, text = commands.run(["model"])
-    assert code == 0 and "strong: claude-sonnet-5-5 (anthropic)" in text and "auditor: deepseek-v4-pro" in text
+    assert code == 0 and "strong: claude-sonnet-5-5 (anthropic)" in text and "auditor: claude-sonnet-5-5" in text
     code, text = commands.run(["model", "strong", "gpt-6-sol"])
     assert text.startswith("CONFIRM") and "claude-sonnet-5-5 (anthropic) → gpt-6-sol" in text
     assert ai.chain("strong", db)[0]["provider"] == "anthropic"  # nothing changed yet
@@ -58,7 +58,7 @@ def test_spend_adds_up_by_provider_and_shows_what_is_left(db, monkeypatch):
     ai.call("strong", "p", conn=db)
     ai.call("auditor", "p", conn=db)
     text = commands.run(["spend"])[1]
-    assert "- anthropic: $0.01 · 1 calls" in text and "- deepseek: $0.00 · 1 calls" in text
+    assert "- anthropic: $0.01 · 2 calls" in text  # writer and auditor are both Sonnet
     assert "of $30" in text and "$29.99 left" in text
     db.execute("INSERT INTO ai_calls (job, provider, model, cost_usd, estimated, outcome, created_at) "
                "VALUES ('strong', 'openai', 'gpt-9', 0.5, 1, 'cut', ?)", (ai.month_start() + "T01:00:00Z",))
@@ -105,9 +105,7 @@ def test_notes_need_a_card(db, monkeypatch):
     assert "has no card yet" in commands.run(["note", "ABC", "hello"])[1]
 
 
-def test_model_refuses_a_choice_that_puts_writer_and_auditor_in_one_family(db):
-    assert "different model family" in commands.run(["model", "auditor", "sonnet-5.5"])[1]   # the writer is Anthropic
-    assert "different model family" in commands.run(["model", "strong", "deepseek-v4-pro"])[1]  # the auditor is DeepSeek
-    assert do("model", "strong", "gpt-6-sol")[0] == 0
-    assert "both would be openai" in commands.run(["model", "auditor", "gpt-6-sol"])[1]
-    assert do("model", "auditor", "sonnet-5.5")[0] == 0  # now the writer is OpenAI, so Anthropic may audit
+def test_model_allows_writer_and_auditor_in_one_family(db):
+    # my decision (2026-10-09): writer and auditor may be the same model (both Sonnet 5.5 high by default)
+    assert do("model", "auditor", "sonnet-5.5")[0] == 0
+    assert do("model", "strong", "gpt-6-sol")[0] == 0 and do("model", "auditor", "gpt-6-sol")[0] == 0
