@@ -694,7 +694,9 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
 45. **Debt from the long-term line alone when no current portion is reported.** Rivian and McDonald's (2026) report only
     `LongTermDebtNoncurrent`; every group needed its current part too, so debt was "not found". A last group
     `LongTermDebtNoncurrent` alone is tried after all the others (if a current portion were reported, the first group would be
-    complete and win); short-term borrowings are still added. Rivian 4.44 bn (the balance sheet's long-term debt).
+    complete and win); short-term borrowings are still added. Rivian 4.44 bn (the balance sheet's long-term debt). **Fixed the
+    same day (round 2):** as a group among the others it was also a candidate beside the full group and gave Nike a false
+    "debt candidates disagree: 7.9 / 5.9 bn"; it is now `DEBT_LAST_RESORT`, tried only when no group is complete.
 46. **Rows by value also look for one decimal in millions.** Starbucks prints `3,449.8`, so rule 41 found none of its rows (7 of 8
     `not_found`); Nike's, Boeing's, Dow's and McDonald's share counts likely the same. `filing._shown` now also tries the
     one-decimal form in millions (never inside a longer number).
