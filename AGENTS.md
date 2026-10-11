@@ -132,7 +132,12 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   the roadmap, "Agent 2 rules" 8 and 9 (Claude's proposals where I had not decided: the web-search tool, the quick-health arithmetic for 3–4
   computed checks, the summary contents, the alert list, the schedule) — change any by saying so. Slices: R1 web search in `shared/ai` + database
   version 9 · R2 quick health, sector tailwind, score · R3 reading, news, events audit · R4 Research run, cards, `/candidates`, `/watch` · S1 summary,
-  `/summary`, `/status` warnings · S2 alerts · S3 the Sunday chain and `docs/SCHEDULE.md`. Status of each: see the entries below as they are added.
+  `/summary`, `/status` warnings · S2 alerts · S3 the Sunday chain and `docs/SCHEDULE.md`. **Built so far (2026-10-11):** R1 (web search in `shared/ai`: `ai.call(..., web_search=N)`, Anthropic's `web_search_20260209`, sources and the $0.01
+  per search counted; database version 9: `readings`, `news_events`, `stocks.commodity_checked`) · R2 (`agents/research`: `health`, `tailwind`, `score`;
+  `settings.yaml` `commodity_symbols`, `research:`; the price job also fetches linked commodities; agent 3's `Result.series`) · R3 (`reading`, `news`
+  — one web-search call returns the story, the events and the commodity links —, `page`, auditor card 4 `event.md` + 5 test-set cases) · R4
+  (`run`, `python -m agents.research [TICKER]`, `/candidates`, `/watch` for a new stock runs agent 2 then agent 3). The auditor test set (now with
+  the event cases) and the web search have not met a real model yet: that is the Air test. Left: S1–S3.
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
