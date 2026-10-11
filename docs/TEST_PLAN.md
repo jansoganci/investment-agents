@@ -208,7 +208,7 @@ audit prompts for phases 4, 5 and 6.
 |---|---|---|---|---|
 | A1 | M | | — | |
 | A2 | H | 2026-10-11 | PASS | `~/check-repo` at fb76bd2: 658 passed in 42 s (the throwaway `db init` step was skipped; A3 covers the upgrade). Run by U in the Air terminal. |
-| A3 | H | | — | |
+| A3 | H | 2026-10-11 | PASS | Copy of the real Air database (version 5) upgraded to 10 (steps 6–10) in `~/check-data2`. All 20 old tables kept their row counts (stocks 5, prices 4382, financials 576, card_entries 6, ai_calls 22, runs 13 …); 5 new tables, all empty. `integrity_check` ok, `foreign_key_check` empty. D1 may run. Run by U in the Air terminal. |
 | A4 | H | | — | |
 | A5 | H | | — | |
 | A6 | H | | — | |
