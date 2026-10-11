@@ -110,12 +110,14 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   sites are Ghost; Emtia Defteri shows nothing without a login, Dragonomi a cut preview; `lastmod` jumps on thousands of old posts, so
   a post is new when its address is not in the database (first run = baseline, a pass with > 200 new addresses reads none);
   a post's own tags come from the page meta as display names; Dragonomi's tags are mostly Chinese companies. Written into the roadmap,
-  "Agent 1 rules" 10–15. **My decisions (2026-10-11):** non-US company tags: no SEC check, no question to me · login by my cookie
-  header over plain HTTP, no Playwright for now. **Built:** `agents/eye` (`http`, `sites`, `extract`, `session_check`), 30 tests, `.env.example`
+  "Agent 1 rules" 10–18. **My decisions (2026-10-11):** a pass with > 200 new addresses reads none · a gated page is `text_missing`,
+  never forced or retried, no "log-in ended" alert · a company listed in the US (ADR too) gets the SEC check, a non-US one gets none
+  and no question · `Inbox/` = one file a day, `YYYY-MM-DD.md` · the subsector list is drafted from the first passes' tags · login by my
+  cookie header over plain HTTP, no Playwright for now (Ghost has no password; I never give the system my e-mail password). **Built:** `agents/eye` (`http`, `sites`, `extract`, `session_check`; slices A + B: `sitemap`, `store`, `run`, `python -m agents.eye [--accept-many]`; database version 6 = `eye_seen`), 50 more tests, `.env.example`
   `EMTIA_COOKIE` / `DRAGONOMI_COOKIE`. **Next, my part (main Mac):** `git pull` → log in to each site in my browser → copy the request's
   `cookie` header into `.env` → `uv run python -m agents.eye.session_check emtia` and `... dragonomi` → send the output to Claude
-  (the cookie is never printed; do not send it to Telegram or Hermes). Then slices A (fetching + baseline), B (extraction + `articles`),
-  C (one sentence + `Inbox/` + the 20-post model test), D (tags, `/tag`, `/subsector`, database version 6).
+  (the cookie is never printed; do not send it to Telegram or Hermes). Then slices C (one sentence + `Inbox/` + the 20-post model test) and D (tags,
+  `/tag`, `/subsector`, database version 7).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.

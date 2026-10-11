@@ -390,6 +390,19 @@ CREATE INDEX signals_week ON signals (kind, date);
 CREATE INDEX holdings_stock ON holdings (stock_id, date);
 """
 
+STEP_6 = """
+-- Phase 4 (2026-10-11). The Eye's list of seen addresses (roadmap, Agent 1 rules 11): a post is new when its address is not
+-- here yet. The first run of a site records every address of its sitemap as `baseline` and reads none. `lastmod` is not trusted
+-- (it jumps on thousands of old posts on one day), so it is not stored.
+CREATE TABLE eye_seen (
+    url      TEXT PRIMARY KEY,
+    site     TEXT NOT NULL,                     -- the site key: emtia | dragonomi
+    seen_at  TEXT NOT NULL,
+    how      TEXT NOT NULL CHECK (how IN ('baseline', 'read', 'text_missing', 'glossary', 'gone'))
+);
+CREATE INDEX eye_seen_site ON eye_seen (site);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -397,6 +410,7 @@ STEPS: list[tuple[int, str]] = [
     (3, STEP_3),
     (4, STEP_4),
     (5, STEP_5),
+    (6, STEP_6),
 ]
 
 

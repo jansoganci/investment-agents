@@ -131,14 +131,17 @@ Title, date, and tags are public; the rest of the post requires a member login.
 11. **`lastmod` is not a "new post" sign.** On Dragonomi it jumps on thousands of old posts on one day (3,750 on 2026-10-10) —
     mass edits, not new posts. (This replaces "posts since the previous pass" in rule 2.) **A post is new when its address is not
     in the database yet.** The first run is a **baseline**: every address in the sitemaps is recorded as seen, nothing is
-    downloaded (the 7-day window of the Counter fills during the one-week check; no backfill). **Guard:** if one pass finds more
-    than 200 new addresses, none is read, the pass stops and Telegram gets "unusual number of new posts". A post that is edited
-    later is not read again.
+    downloaded (the 7-day window of the Counter fills during the one-week check; no backfill). **Guard (my decision, 2026-10-11):**
+    if one pass finds more than **200** new addresses, none is read, the pass stops and Telegram gets "unusual number of new
+    posts"; `python -m agents.eye --accept-many` reads them anyway (Claude's addition: the Air being off for two days would trip the
+    guard, and there must be a way on). A post that is edited later is not read again. The 80-page cap is for the whole pass; the
+    two sites are taken in turn, the oldest new address first (Claude's reading of rule 4).
 12. **Without a login:** Emtia Defteri shows nothing (a hard paywall: an empty body and a log-in block, `aside.gh-post-upgrade-cta`);
-    Dragonomi shows a cut preview of 500–800 characters (`div.content.post-sneak-peek`, gate `div.content-cta.paid`). A page that
-    carries a gate block is **`text_missing`**, not an article: no sentence is written, it is tried again in a later pass. If most
-    of a pass's pages are gated, the login has ended: the pass stops and Telegram says "log-in ended" (not a block). Dragonomi's
-    body also holds an audio player (`div.kg-audio-player`, "Yazıyı dinle"): removed before the text is taken.
+    Dragonomi shows a cut preview of 500–800 characters (`div.content.post-sneak-peek`, gate `div.content-cta.paid`). **My decision
+    (2026-10-11):** a page that carries a gate block is **`text_missing`**: it is not read, not forced and **not tried again**; no
+    sentence is written for it. There is **no "log-in ended" stop or alert** (I give my logins; I do not expect a paywall). The pass
+    message only says how many pages of the pass were gated. Dragonomi's body also holds an audio player (`div.kg-audio-player`,
+    "Yazıyı dinle"): removed before the text is taken.
 13. **Login:** Ghost's sign-in is an e-mail link (Dragonomi's page confirms it; Emtia's is a pop-up, same kind expected), so it
     cannot be automated. I log in once in my own browser and copy the request's `cookie` header into `.env`
     (`EMTIA_COOKIE`, `DRAGONOMI_COOKIE`; never in git, never sent to Telegram or to Hermes). The Eye asks with that cookie over
@@ -153,7 +156,15 @@ Title, date, and tags are public; the rest of the post requires a member login.
     `tags.kind` therefore also takes `region` and `other`.
 15. **Non-US companies (my decision, 2026-10-11):** a company tag the cheap model places outside the US is stored as a
     non-US `company` (country and exchange when known). **No SEC check, and I am not asked about it.** Only a tag that looks
-    US (or an ADR) and fails the SEC name check waits for me.
+    US (or an ADR) and fails the SEC name check waits for me. **Exactly (my decision, 2026-10-11):** the model says whether the
+    company is **listed in the US (an ADR counts)**. Listed → the SEC check (Alibaba's ADR is checked); not listed → no check,
+    no question.
+16. **Login is a cookie, never a password (2026-10-11):** Ghost's sign-in has no password (an e-mail link), so there is no
+    password to give the system. I never give the system my e-mail password; the only secret is the cookie header in `.env`.
+17. **`Inbox/` (my decision, 2026-10-11):** one file a day, `YYYY-MM-DD.md` (Turkey date), each pass appends its lines: title, the
+    one sentence, the address (rule 6).
+18. **Subsector list (my decision, 2026-10-11):** Claude drafts it from the tags the first passes collect and I approve it; until
+    then a tag's subsector stays empty. It is not needed before the build.
 
 ### Sector list (decision: 2026-10-03)
 
