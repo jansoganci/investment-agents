@@ -47,7 +47,35 @@ def _status(conn: sqlite3.Connection, args: list[str]) -> str:
     since = clock.utc_iso(clock.now_utc() - timedelta(days=7))
     errors = conn.execute("SELECT count(*) FROM runs WHERE status='error' AND started_at >= ?", (since,)).fetchone()[0]
     lines.append(f"Errors in the last 7 days: {errors}")
+    lines += warnings(conn)
     return "\n".join(lines)
+
+
+def warnings(conn: sqlite3.Connection, now=None) -> list[str]:
+    """Roadmap, phase 6: a job stuck in `running` and a backup that is too old. The limits are in settings.yaml `warnings:`."""
+    from shared import config, drive
+
+    limits = config.settings().get("warnings") or {}
+    now = now or clock.now_utc()
+    out = []
+    stuck_after = float(limits.get("stuck_job_hours", 1))
+    cutoff = clock.utc_iso(now - timedelta(hours=stuck_after))
+    for job, started in conn.execute("SELECT job, started_at FROM runs WHERE status = 'running' AND started_at < ? ORDER BY started_at", (cutoff,)):
+        out.append(f"WARNING: {job} has been running since {clock.show(started)} (more than {stuck_after:g} h): it may be stuck")
+    try:
+        folder = drive.backup_dir()
+    except config.SettingMissing:
+        return out
+    max_age = float(limits.get("backup_max_hours", 36))
+    files = [p for p in folder.glob("*") if p.is_file()] if folder.exists() else []
+    if not files:
+        out.append("WARNING: no backup found in Investing/Backup/")
+    else:
+        newest = max(p.stat().st_mtime for p in files)
+        age = (now.timestamp() - newest) / 3600
+        if age > max_age:
+            out.append(f"WARNING: the newest backup is {age:.0f} hours old (limit {max_age:g})")
+    return out
 
 
 # --- /undo ------------------------------------------------------------------------------------------------------

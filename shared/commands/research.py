@@ -27,3 +27,22 @@ def _candidates(conn, args):
 
 
 register(Command("candidates", "This week's candidates with scores and reasons", "/candidates", phase=5, info=_candidates))
+
+
+def _summary(conn, args):
+    from shared import config, notify, summary
+
+    try:
+        found = summary.latest()
+    except config.SettingMissing as exc:
+        from shared.commands import Refused
+
+        raise Refused(str(exc)) from exc
+    if found is None:
+        return "SUMMARY\nNo Sunday summary has been written yet (python -m shared.sunday)."
+    name, text = found
+    lines = text.splitlines()
+    return notify.message(lines[0], lines[1:])
+
+
+register(Command("summary", "Shows the latest Sunday summary again", "/summary", phase=6, info=_summary))

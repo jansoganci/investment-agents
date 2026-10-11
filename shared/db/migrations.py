@@ -494,6 +494,16 @@ CREATE UNIQUE INDEX scores_week ON scores (stock_id, week);
 CREATE UNIQUE INDEX commodity_links_pair ON commodity_links (stock_id, commodity);
 """
 
+STEP_10 = """
+-- Phase 6 (2026-10-11). Immediate messages (roadmap, Agent 2 rules 9): each alert is sent once. `key` says what it is about
+-- (grade_drop:<card entry>, solid:<card entry>, drop:<signal>, audit:<audit>, spend:<month start>).
+CREATE TABLE alerts_sent (
+    key       TEXT PRIMARY KEY,
+    sent_at   TEXT NOT NULL,
+    text      TEXT
+);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -505,6 +515,7 @@ STEPS: list[tuple[int, str]] = [
     (7, STEP_7),
     (8, STEP_8),
     (9, STEP_9),
+    (10, STEP_10),
 ]
 
 
