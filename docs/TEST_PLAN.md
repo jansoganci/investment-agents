@@ -453,23 +453,16 @@ for N in ANTHROPIC_API_KEY DEEPSEEK_API_KEY OPENAI_API_KEY OPENROUTER_API_KEY SE
 ```
 The `DRIVE_DIR` line must print `Investing-dev` on the main Mac. A `0` next to a key means it is missing; add it by hand with an editor (`nano .env`). `SEC_UA` looks like `"Your Name you@mail.com"`.
 
-**U2 — the cookies into `.env` (the value is never shown on the screen).** Do **not** use `read -s -p` — in zsh `-p` means something else and the line fails
-(it wrote an empty `EMTIA_COOKIE=''` on 2026-10-11). Do **not** type the cookie into the terminal either: a terminal line is cut at about 1,000 characters on macOS.
-Use the clipboard: in the browser's developer tools, right-click the `cookie` request header → copy the **value** (without the word `cookie:`), then:
+**U2 — the cookies into `.env` (the value is never shown on the screen).** In the browser's developer tools, right-click the `cookie` request header → copy
+the **value**. Then run the helper — it reads the clipboard, replaces the site's old line, removes broken lines left by earlier tries (the old file stays as
+`.env.bak`), makes the file private and empties the clipboard. It prints only the name and the length:
 ```bash
 cd ~/investment-agents
-printf "EMTIA_COOKIE='%s'\n" "$(pbpaste | sed 's/^[Cc]ookie: *//')" >> .env
-printf '' | pbcopy
+uv run python -m agents.eye.set_cookie emtia
 ```
-Repeat for the second site with the other name:
-```bash
-printf "DRAGONOMI_COOKIE='%s'\n" "$(pbpaste | sed 's/^[Cc]ookie: *//')" >> .env
-printf '' | pbcopy
-chmod 600 .env
-for N in EMTIA_COOKIE DRAGONOMI_COOKIE; do echo $N $(grep -c "^$N='.\{20,\}'" .env); done
-```
-Each name must print 1 (a value of at least 20 characters). `printf '' | pbcopy` empties the clipboard. If you ran it twice, delete the old line with `nano .env`
-(the last one wins, but keep the file clean). An empty one left by a failed try: `sed -i '' "/^EMTIA_COOKIE=''$/d;/^DRAGONOMI_COOKIE=''$/d" .env`.
+For the second site copy its cookie value and run `uv run python -m agents.eye.set_cookie dragonomi`. Do **not** use `read -s -p` (in zsh `-p` means
+something else; it wrote an empty line on 2026-10-11) and do not build the line with `printf`: a copy with several lines broke `.env` on 2026-10-11.
+Check: `uv run python -m agents.eye.session_check emtia`. When all is well: `rm .env.bak`.
 
 **U3 — session check yourself** (instead of M, if you prefer):
 ```bash
@@ -477,15 +470,9 @@ uv run python -m agents.eye.session_check emtia
 uv run python -m agents.eye.session_check dragonomi
 ```
 
-**U4 — the cookies on the Air, by ssh (never through Telegram):**
-```bash
-ssh jans.@<the Air's address>
-cd ~/check-repo
-test -f .env || cp .env.example .env ; chmod 600 .env
-printf "EMTIA_COOKIE='%s'\n" "$(pbpaste | sed 's/^[Cc]ookie: *//')" >> .env
-exit
-```
-Use `cd ~/Downloads/investment-agents` instead of `~/check-repo` in block D. The check copy also needs the Air's keys: copy them once with `grep -E '^(ANTHROPIC|DEEPSEEK|OPENAI|OPENROUTER)_API_KEY=|^SEC_UA=' ~/Downloads/investment-agents/.env >> ~/check-repo/.env` (on the Air, in the ssh session; nothing is printed).
+**U4 — the cookies on the Air.** Sitting at the Air itself (the case since 2026-10-11), do U2 with `cd ~/check-repo` (and later `cd ~/Downloads/investment-agents` in
+block D). By ssh the helper would read the Air's clipboard, not your Mac's, so avoid ssh for this. The check copy also needs the Air's keys (already
+there on 2026-10-11); if ever missing, copy them once with `grep -E '^(ANTHROPIC|DEEPSEEK|OPENAI|OPENROUTER)_API_KEY=|^SEC_UA=' ~/Downloads/investment-agents/.env >> ~/check-repo/.env`.
 
 **U5 — what you look at in Telegram:** `/status` (no `WARNING` lines), `/spend`, `/candidates`, `/summary`, `/tag` (the tags that wait for you).
 

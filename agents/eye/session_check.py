@@ -8,8 +8,8 @@ it — and prints what each page shows: status, size, whether the page is cut, w
 text, the first 200. Three requests per site, six seconds apart. The cookie value is never printed.
 
 How to get the cookie: log in to the site in your browser → open any post → developer tools → Network → click the post's
-request → Request Headers → copy the whole value of `cookie:` → put it in `.env` as EMTIA_COOKIE="..." / DRAGONOMI_COOKIE="..."
-(then `chmod 600 .env`). Never commit it, never send it to Telegram or to Hermes."""
+request → Request Headers → copy the whole value of `cookie:` → `uv run python -m agents.eye.set_cookie emtia` (or `dragonomi`) puts
+it in `.env`. Never commit it, never send it to Telegram or to Hermes."""
 
 from __future__ import annotations
 
