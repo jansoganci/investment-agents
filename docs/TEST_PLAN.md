@@ -206,12 +206,12 @@ audit prompts for phases 4, 5 and 6.
 
 | ID | Who | Date | Result | Notes |
 |---|---|---|---|---|
-| A1 | M | | — | |
+| A1 | M | 2026-10-11 | SKIPPED | The main Mac is away; A2 ran the same 658 tests on the Air check copy. Not needed for the next blocks. |
 | A2 | H | 2026-10-11 | PASS | `~/check-repo` at fb76bd2: 658 passed in 42 s (the throwaway `db init` step was skipped; A3 covers the upgrade). Run by U in the Air terminal. |
 | A3 | H | 2026-10-11 | PASS | Copy of the real Air database (version 5) upgraded to 10 (steps 6–10) in `~/check-data2`. All 20 old tables kept their row counts (stocks 5, prices 4382, financials 576, card_entries 6, ai_calls 22, runs 13 …); 5 new tables, all empty. `integrity_check` ok, `foreign_key_check` empty. D1 may run. Run by U in the Air terminal. |
 | A4 | U | 2026-10-11 | PASS | `ai ping` 8/8. Auditor test set (42e5eed) **21/21 caught**, incl. the 5 new event cases and the GE cases; month spend 0.22 $. (First attempt was stopped by Ctrl-C because the run printed nothing until the end; it now prints a line per case.) |
 | A5 | U | 2026-10-11 | PASS (with 2 findings) | `~/check-repo` 42e5eed, throwaway folders. NVDA 5/10, FCX 4/10, DAL 3/10 (the five parts add up). NVDA 2:28, FCX 0:37, DAL 0:47; cost 0.43 / 0.15 / 0.20 $ (month so far 0.86 $). FCX: copper + gold links as `producer`; DAL: crude oil as `user`; 3 cards in `~/check-drive/Stocks/`. NVDA: Bloomberg page refused (HTTP 403) → `not_confirmed` (right); the France-regulator case confirmed → news 0. DAL: guidance cut of 2026-10-09 confirmed. **Finding 1:** an `important_positive` event has no age limit and its page is not read: FCX got news 2 for an item dated 2026-02-18 whose source is the generic news-release list page. **Finding 2:** sources are often secondary sites (pymnts, asktraders) although the company's own 8-K was in the search results (DAL). Both are proposals for U to decide, nothing built. |
-| A6 | H | | — | |
+| A6 | U | 2026-10-11 | PASS | All 30 symbols OK (17 commodity futures, URA, 11 sector funds, SPY). The doubtful ones work: LBR=F has only 1,050 rows (from 2022-08, enough for a 40-week average), LE=F, HE=F, PL=F, PA=F have full history. CT=F ends 2026-10-08 (one day behind, harmless). |
 | A7 | U | | — | |
 | B1 | U | | — | |
 | B2 | M | | — | |
