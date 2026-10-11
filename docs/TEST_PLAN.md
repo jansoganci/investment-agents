@@ -432,16 +432,21 @@ uv run python -m shared.commands candidates ; uv run python -m shared.commands s
 
 ## Appendix C — the terminal commands for you
 
+**Read first.** (1) zsh does **not** treat `# text` after a command as a comment, so the blocks below have no comments; if you ever paste a line with one,
+run `setopt interactive_comments` once in that window. (2) Check which machine you are on: `hostname` and `ls -d ~/investment-agents ~/Downloads/investment-agents ~/check-repo`.
+On the **Air** the production copy is `~/Downloads/investment-agents` and the throwaway check copy is `~/check-repo`; there is no `~/investment-agents`.
+On the **main Mac** use the folder where you cloned the repo (the examples say `~/investment-agents`; replace it).
+
 **U1 — the Mac, once** (replace the folder name with yours):
 ```bash
-cd ~/investment-agents          # your repo
+cd ~/investment-agents
 git checkout main && git pull
 uv sync
 test -f .env || cp .env.example .env ; chmod 600 .env
-grep '^DRIVE_DIR=' .env | sed 's/.*\///'      # must print: Investing-dev
+grep '^DRIVE_DIR=' .env | sed 's/.*\///'
 for N in ANTHROPIC_API_KEY DEEPSEEK_API_KEY OPENAI_API_KEY OPENROUTER_API_KEY SEC_UA; do echo $N $(grep -c "^$N=." .env); done
 ```
-A `0` next to a key means it is missing; add it by hand with an editor (`nano .env`). `SEC_UA` looks like `"Your Name you@mail.com"`.
+The `DRIVE_DIR` line must print `Investing-dev` on the main Mac. A `0` next to a key means it is missing; add it by hand with an editor (`nano .env`). `SEC_UA` looks like `"Your Name you@mail.com"`.
 
 **U2 — the cookies into the Mac's `.env` (the value is not shown on the screen):**
 ```bash
@@ -449,9 +454,9 @@ cd ~/investment-agents
 read -s -p "Emtia cookie header: " C; echo; printf "EMTIA_COOKIE='%s'\n" "$C" >> .env; unset C
 read -s -p "Dragonomi cookie header: " C; echo; printf "DRAGONOMI_COOKIE='%s'\n" "$C" >> .env; unset C
 chmod 600 .env
-for N in EMTIA_COOKIE DRAGONOMI_COOKIE; do echo $N $(grep -c "^$N=." .env); done     # each must print 1
+for N in EMTIA_COOKIE DRAGONOMI_COOKIE; do echo $N $(grep -c "^$N=." .env); done
 ```
-If you run it twice, delete the old duplicate line with `nano .env` (the last one wins, but keep the file clean).
+Each name must print 1. If you run it twice, delete the old duplicate line with `nano .env` (the last one wins, but keep the file clean).
 
 **U3 — session check yourself** (instead of M, if you prefer):
 ```bash
@@ -461,14 +466,14 @@ uv run python -m agents.eye.session_check dragonomi
 
 **U4 — the cookies on the Air, by ssh (never through Telegram):**
 ```bash
-ssh jans.@<the Air's address>          # the address you use for Remote Login
-cd ~/check-repo                        # for block C; in block D use ~/Downloads/investment-agents
+ssh jans.@<the Air's address>
+cd ~/check-repo
 test -f .env || cp .env.example .env ; chmod 600 .env
 read -s -p "Emtia cookie header: " C; echo; printf "EMTIA_COOKIE='%s'\n" "$C" >> .env; unset C
 read -s -p "Dragonomi cookie header: " C; echo; printf "DRAGONOMI_COOKIE='%s'\n" "$C" >> .env; unset C
 exit
 ```
-The check copy also needs the Air's keys: copy them once with `grep -E '^(ANTHROPIC|DEEPSEEK|OPENAI|OPENROUTER)_API_KEY=|^SEC_UA=' ~/Downloads/investment-agents/.env >> ~/check-repo/.env` (on the Air, in the ssh session; nothing is printed).
+Use `cd ~/Downloads/investment-agents` instead of `~/check-repo` in block D. The check copy also needs the Air's keys: copy them once with `grep -E '^(ANTHROPIC|DEEPSEEK|OPENAI|OPENROUTER)_API_KEY=|^SEC_UA=' ~/Downloads/investment-agents/.env >> ~/check-repo/.env` (on the Air, in the ssh session; nothing is printed).
 
 **U5 — what you look at in Telegram:** `/status` (no `WARNING` lines), `/spend`, `/candidates`, `/summary`, `/tag` (the tags that wait for you).
 
