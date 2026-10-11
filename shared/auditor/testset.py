@@ -8,6 +8,8 @@ The texts are short stand-ins written for the traps, not real filings."""
 
 from __future__ import annotations
 
+import sys
+
 from shared import auditor
 
 KO = ("Cash and cash equivalents $ 10,270\nShort-term investments 3,602\nMarketable securities 1,934\nTotal current assets 28,000\n"
@@ -119,10 +121,11 @@ CASES = [
 
 def run(model: str | None = None, run=None) -> list[dict]:
     out = []
-    for card, name, text, items, want in CASES:
+    for n, (card, name, text, items, want) in enumerate(CASES, 1):
         res = auditor.audit(card, items, text, model=model, run=run)
         got = res.items[0]["verdict"] if res.items else "no_answer"
         out.append({"card": card, "case": name, "want": want, "got": got, "ok": got == want, "reason": (res.items or [{}])[0].get("reason", res.error)})
+        print(f"[{n}/{len(CASES)}] card {card} · {name} → {got} (want {want})", file=sys.stderr, flush=True)
     return out
 
 
