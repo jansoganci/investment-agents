@@ -122,6 +122,39 @@ Title, date, and tags are public; the rest of the post requires a member login.
 8. **Not taken:** only glossary posts ("Emtia Sözlüğü", "Yatırım Sözlüğü"). Everything else is taken; agent 2 decides whether it is useful.
 9. **Cost:** ~150 posts / day, cheap model → roughly 1–5 $ / month (exact figure in the implementation plan).
 
+**What the site probe found (2026-10-11; Hermes on the Air, no login, saved in `~/eye-probe/` on the Air) and what changed because of it:**
+
+10. **Both sites are Ghost, behind Fastly (not Cloudflare), no rate-limit headers; `robots.txt` disallows only `/ghost/`, `/email/`,
+    `/members/api/comments/counts/`, `/r/`, `/webmentions/receive/`, `/.ghost/analytics/api/`.** Our own slowness is the only
+    protection (rule 4). Archive: Emtia Defteri 11,091 posts (about 60 a day; weekdays 70–96, weekends 15–20; 42% are short
+    "emtia-flash" notes), Dragonomi 14,863 posts.
+11. **`lastmod` is not a "new post" sign.** On Dragonomi it jumps on thousands of old posts on one day (3,750 on 2026-10-10) —
+    mass edits, not new posts. (This replaces "posts since the previous pass" in rule 2.) **A post is new when its address is not
+    in the database yet.** The first run is a **baseline**: every address in the sitemaps is recorded as seen, nothing is
+    downloaded (the 7-day window of the Counter fills during the one-week check; no backfill). **Guard:** if one pass finds more
+    than 200 new addresses, none is read, the pass stops and Telegram gets "unusual number of new posts". A post that is edited
+    later is not read again.
+12. **Without a login:** Emtia Defteri shows nothing (a hard paywall: an empty body and a log-in block, `aside.gh-post-upgrade-cta`);
+    Dragonomi shows a cut preview of 500–800 characters (`div.content.post-sneak-peek`, gate `div.content-cta.paid`). A page that
+    carries a gate block is **`text_missing`**, not an article: no sentence is written, it is tried again in a later pass. If most
+    of a pass's pages are gated, the login has ended: the pass stops and Telegram says "log-in ended" (not a block). Dragonomi's
+    body also holds an audio player (`div.kg-audio-player`, "Yazıyı dinle"): removed before the text is taken.
+13. **Login:** Ghost's sign-in is an e-mail link (Dragonomi's page confirms it; Emtia's is a pop-up, same kind expected), so it
+    cannot be automated. I log in once in my own browser and copy the request's `cookie` header into `.env`
+    (`EMTIA_COOKIE`, `DRAGONOMI_COOKIE`; never in git, never sent to Telegram or to Hermes). The Eye asks with that cookie over
+    plain HTTP — **no Playwright for now** (my decision, 2026-10-11; if the Mac check `agents.eye.session_check` shows the cookie
+    does not give the full text, Playwright comes back). The cookie is sent only to its own site (a redirect to another host is
+    not followed). `read_deep` is agent 2's flag; the Eye only sets `text_missing`.
+14. **Tags:** a post's own tags are in its page meta (`article:tag`; Emtia also has them in the JSON-LD `keywords`) as **display
+    names**. The `/tag/` links in the page are the site menu. So `tags.tag` is the display name (trimmed, Unicode-normalised) —
+    the sitemap's tag list (459 / 1,849 slugs) is not needed. Glossary posts are the ones tagged `emtia-sozlugu` /
+    `yatirim-sozlugu` (compared by the tag's slug). The tags are mixed: commodities, themes, regions and countries, companies
+    (mostly China on Dragonomi), page types ("Rapor Özetleri"), a few ticker-like (`leu`, `apd`) and some made from a post title.
+    `tags.kind` therefore also takes `region` and `other`.
+15. **Non-US companies (my decision, 2026-10-11):** a company tag the cheap model places outside the US is stored as a
+    non-US `company` (country and exchange when known). **No SEC check, and I am not asked about it.** Only a tag that looks
+    US (or an ADR) and fails the SEC name check waits for me.
+
 ### Sector list (decision: 2026-10-03)
 
 Two levels; the AI picks **only from the list** for both (if it writes freely, "Energy" / "Fossil energy" / "Oil and gas"

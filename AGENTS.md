@@ -52,11 +52,11 @@ shared/                    phase 0: config, clock, db (tables + upgrade steps), 
                            phase 3: commands/portfolio.py (/bought /sold /gold /bes /portfolio)
 agents/analysis/           phase 1: agent 3's numbers — measures, card, run; python -m agents.analysis KO | --weekly
 agents/portfolio/          phase 3: agent 4 — ledger, marketdata, value, watch, block, run; python -m agents.portfolio [--show]
+agents/eye/                phase 4 (started): agent 1 — sites, http, extract, session_check; python -m agents.eye.session_check emtia|dragonomi
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 pyproject.toml, uv.lock, settings.yaml, .env.example
 
 Planned (not created yet):
-agents/eye/         1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
 agents/counter/     1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
 agents/research/    2. Research — reading + web search + score; opens the card (weekly, Sunday)
 shared/             still to come: AI, the auditor, the Sunday summary
@@ -80,7 +80,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
+- **Last update:** 2026-10-11 (phase 4 started, see the Phase 4 entry) · 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
@@ -106,6 +106,16 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   dividend $4.24 — checked by hand. Gold and BES entered on 10-09 are not in the 10-02 snapshot (right). **Phase 3 done (my
   decision, 2026-10-09):** the block reads well. `/portfolio` on the real database: empty (no real buy entered yet) — right.
   The Air's production copy is `~/Downloads/investment-agents` (macOS asked once for Downloads access).
+- **Phase 4 (Eye) started (2026-10-11)** on `feat/phase-4-eye`. **Site probe** (Hermes on the Air, no login, files in `~/eye-probe/`): both
+  sites are Ghost; Emtia Defteri shows nothing without a login, Dragonomi a cut preview; `lastmod` jumps on thousands of old posts, so
+  a post is new when its address is not in the database (first run = baseline, a pass with > 200 new addresses reads none);
+  a post's own tags come from the page meta as display names; Dragonomi's tags are mostly Chinese companies. Written into the roadmap,
+  "Agent 1 rules" 10–15. **My decisions (2026-10-11):** non-US company tags: no SEC check, no question to me · login by my cookie
+  header over plain HTTP, no Playwright for now. **Built:** `agents/eye` (`http`, `sites`, `extract`, `session_check`), 30 tests, `.env.example`
+  `EMTIA_COOKIE` / `DRAGONOMI_COOKIE`. **Next, my part (main Mac):** `git pull` → log in to each site in my browser → copy the request's
+  `cookie` header into `.env` → `uv run python -m agents.eye.session_check emtia` and `... dragonomi` → send the output to Claude
+  (the cookie is never printed; do not send it to Telegram or Hermes). Then slices A (fetching + baseline), B (extraction + `articles`),
+  C (one sentence + `Inbox/` + the 20-post model test), D (tags, `/tag`, `/subsector`, database version 6).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
