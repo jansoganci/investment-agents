@@ -258,3 +258,49 @@ def test_card_entries_lynch_type_uses_the_glossary_values(db):
     db.execute("INSERT INTO card_entries (stock_id, date, record, who, created_at) VALUES (1, '2026-10-04', 'research', 'agent_2', 'x')")
     with pytest.raises(sqlite3.IntegrityError):
         db.execute("INSERT INTO card_entries (stock_id, date, record, who, lynch_type, created_at) VALUES (1, '2026-10-04', 'fundamental', 'agent_3', 'bank', 'x')")
+
+
+def test_the_airs_upgrade_from_version_5_to_the_latest_keeps_every_row(env):
+    """The Air is at version 5 with real rows (stocks, tags, subsectors, scores …); steps 6–10 must leave them whole."""
+    from shared import config
+
+    path = config.db_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = dbmod._open(path)                      # connect() would upgrade at once; the Air's database stands at 5
+    dbmod.upgrade(conn, steps=migrations.STEPS[:5])
+    assert dbmod.version(conn) == 5
+    conn.executescript("""
+        INSERT INTO stocks (id, ticker, company, status, created_at) VALUES (1, 'KO', 'Coca-Cola', 'watching', 'x');
+        INSERT INTO tags (tag, kind, maps_to, exchange, country, sector, subsector, source, created_at)
+            VALUES ('Coca-Cola', 'company', 'KO', 'NYSE', 'United States', 'Consumer Staples', NULL, 'ai', 'x'),
+                   ('Bakır', 'commodity', 'copper', NULL, NULL, NULL, NULL, 'user', 'x');
+        INSERT INTO subsectors (name, sector, created_at) VALUES ('Uranium', 'Energy', 'x');
+        INSERT INTO scores (stock_id, week, mentions, tone, sector_tailwind, news_flow, quick_health, score, reasons, created_at)
+            VALUES (1, '2026-W40', 1, 1, 1, 1, 1, 5, '{}', 'x');
+        INSERT INTO commodity_links (stock_id, commodity, role, created_at) VALUES (1, 'sugar', 'user', 'x');
+        INSERT INTO articles (url, site, title, tags, created_at) VALUES ('https://x/1/', 'emtia', 't', '["Bakır"]', 'x');
+        INSERT INTO holdings (kind, stock_id, date, quantity, price, created_at) VALUES ('buy', 1, '2026-10-04', 10, 85.65, 'x');
+    """)
+    conn.commit()
+    done = dbmod.upgrade(conn)
+    assert done == [6, 7, 8, 9, 10] and dbmod.version(conn) == 10
+    assert conn.execute("SELECT tag, kind, maps_to, exchange, sector, source, status, us_listed, note FROM tags ORDER BY id").fetchall() == [
+        ("Coca-Cola", "company", "KO", "NYSE", "Consumer Staples", "ai", "confirmed", None, None),
+        ("Bakır", "commodity", "copper", None, None, "user", "confirmed", None, None)]
+    assert conn.execute("SELECT name, sector, void FROM subsectors").fetchall() == [("Uranium", "Energy", 0)]
+    assert conn.execute("SELECT week, score FROM scores").fetchall() == [("2026-W40", 5)]
+    assert conn.execute("SELECT commodity_checked FROM stocks").fetchone() == (None,)
+    assert conn.execute("SELECT commodity, role FROM commodity_links").fetchall() == [("sugar", "user")]
+    assert conn.execute("SELECT count(*) FROM articles").fetchone() == (1,) and conn.execute("SELECT quantity FROM holdings").fetchone() == (10,)
+    assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+    # the new tag kinds work after the upgrade, the old ones still hold
+    conn.execute("INSERT INTO tags (tag, kind, source, created_at) VALUES ('Japonya', 'region', 'ai', 'x')")
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute("INSERT INTO tags (tag, kind, source, created_at) VALUES ('Bad', 'planet', 'ai', 'x')")
+    # a score is unique per stock and week; a commodity link per stock and commodity
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute("INSERT INTO scores (stock_id, week, score, reasons, created_at) VALUES (1, '2026-W40', 1, '{}', 'x')")
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute("INSERT INTO commodity_links (stock_id, commodity, role, created_at) VALUES (1, 'sugar', 'producer', 'x')")
+    conn.close()
+    assert len(list((env["data"] / "pre-upgrade").glob("v5-*.sqlite"))) == 1            # the copy made first

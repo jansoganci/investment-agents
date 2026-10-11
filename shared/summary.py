@@ -7,7 +7,6 @@ A section with nothing to say is left out, except the portfolio block and the sp
 
 from __future__ import annotations
 
-import json
 from datetime import date, timedelta
 
 from shared import ai, clock, config, drive, notify

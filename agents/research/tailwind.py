@@ -89,7 +89,7 @@ def evaluate(conn, sector: str | None, links: list[tuple[str, str]]) -> Tailwind
     if judged:
         good = sum(1 for f, _ in judged if f)
         b = good > len(judged) - good
-        parts.append(f"B: linked commodity — " + "; ".join(t for _, t in judged) + (" → favorable" if b else " → not favorable"))
+        parts.append("B: linked commodity — " + "; ".join(t for _, t in judged) + (" → favorable" if b else " → not favorable"))
     else:
         b, b_text = beat_benchmark(conn, fund)
         parts.append("B: no linked commodity with a price; " + b_text + ("" if b is not None else " (counted as not met)"))
