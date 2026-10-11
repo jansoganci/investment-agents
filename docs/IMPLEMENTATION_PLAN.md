@@ -338,7 +338,7 @@ criteria, thresholds, the serious-negative list, quick health, `unclear` = 1) ·
 `/watch` for a stock with no card).
 
 **Builds:**
-- `agents/counter`: a rolling 7 days, distinct posts, only US-listed stocks in the ranking (ADRs included), the 30-day count
+- `agents/counter` (**built 2026-10-11**, roadmap "Agent 1B rules" 6; database version 8 `counts`): a rolling 7 days, distinct posts, only US-listed stocks in the ranking (ADRs included), the 30-day count
   beside it, stocks with a card left out with the "mentioned a lot" line, the non-US information line.
 - `agents/research`: at most 10 stocks; reading against set questions with a quote for every claim (`read_deep`); tone per post;
   news flow (web search, a source for every event, `company_specific` / `general_risk`, serious negatives checked by the auditor,
@@ -414,7 +414,7 @@ left stuck on purpose shows in `/status`.
 | 2 | ✅ | ✅ | ✅ | Air | ✅ | ✅ | `claude/phase-2-agent3-ai-arj800` + fixes | real-model runs and the 20-stock acceptance test on the Air (isolated); round 2 passed 2026-10-09 (roadmap, after rule 47); 3 cards read, rule 48 |
 | 3 | ✅ | ✅ no blocker | ✅ | ✅ (Hermes on the Air, isolated) | ✅ | ⏳ | `feat/phase-3-portfolio` (merged locally 2026-10-09) · `fix/phase-3-not-computed` | the real check found one crash (`peg: not_computed`), fixed; second run passed; **done 2026-10-09** (block approved) |
 | 4 | ✅ slices A–D (code) | ⏳ | — | ⏳ `session_check` | — | — | `feat/phase-4-eye*` | site probe 2026-10-11 done (roadmap "Agent 1 rules" 10–18); the Mac check, the 20-post model test and the one-week check need the real sites |
-| 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
+| 5 | ⏳ Counter built | — | — | — | — | — | `feat/phase-5-counter` | the Counter was built before phase 4 is done (my exception to rule 5, 2026-10-11); agent 2 waits for real posts (score thresholds, the web search) |
 | 6 | — | — | — | — | — | — | — | runs on the Air |
 
 ## 8. Not now — on purpose (2026-10-05)

@@ -53,13 +53,13 @@ shared/                    phase 0: config, clock, db (tables + upgrade steps), 
                            phase 4: commands/eye.py (/tag /subsector)
 agents/analysis/           phase 1: agent 3's numbers — measures, card, run; python -m agents.analysis KO | --weekly
 agents/portfolio/          phase 3: agent 4 — ledger, marketdata, value, watch, block, run; python -m agents.portfolio [--show]
+agents/counter/            phase 5 (built early): 1B — count; python -m agents.counter [--show]
 agents/eye/                phase 4: agent 1 — sites, http, sitemap, extract, store, run, sentence, inbox, tags, modeltest, session_check;
                            python -m agents.eye [--accept-many] · .session_check emtia|dragonomi · .modeltest
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 pyproject.toml, uv.lock, settings.yaml, .env.example
 
 Planned (not created yet):
-agents/counter/     1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
 agents/research/    2. Research — reading + web search + score; opens the card (weekly, Sunday)
 shared/             still to come: AI, the auditor, the Sunday summary
 ```
@@ -82,7 +82,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-11 (phase 4 started, see the Phase 4 entry) · 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
+- **Last update:** 2026-10-11 (phase 4 code done, the Counter built early — see the Phase 4 entry and the rule 5 exception) · 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
@@ -122,6 +122,12 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   `session_check` (does the cookie give the full text? how long does it live?), then on the Air `git pull` + `shared.db upgrade`
   (5 → 7), the cookies in its `.env`, the 20-post cheap-model test (`python -m agents.eye.modeltest`, after a few real passes),
   then the phase 4 audit session and the one-week check.
+- **Exception to fixed rule 5 (my decision, 2026-10-11):** the Counter (1B, phase 5) is built before phase 4 is done (phase 4 waits for the
+  Mac `session_check`, the Air and the one-week check). **Counter decisions (roadmap "Agent 1B rules" 6):** the 7 days count on the
+  published date · posts cut by the paywall count · only confirmed tags count (waiting tags are one line of note) · tags of one company
+  are one stock, a post counts once · a stock with a card is "mentioned a lot" at 6 posts in 7 days · sector counts come from sector
+  tags only · order: 7-day posts, then 30-day posts, then ticker · the result goes to the table `counts` (database version 8; agent 2
+  reads the latest run) · numbers in `settings.yaml` `counter:`. **Built (same day):** `agents/counter` (`count`, `block`, `python -m agents.counter [--show]`), database version 8 (`counts`), 23 tests, **514 tests pass**. On the Air it needs `shared.db upgrade` (7 → 8) and real posts. Agent 2 (Research) waits for real posts.
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
