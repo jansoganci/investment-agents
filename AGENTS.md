@@ -50,9 +50,11 @@ docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, BAGLAM.md
 shared/                    phase 0: config, clock, db (tables + upgrade steps), backup, runlog, notify, drive, commands, ask
                            phase 1: sec (client, facts, synonyms), sectors, prices (job + yahoo), commands/stocks.py
                            phase 3: commands/portfolio.py (/bought /sold /gold /bes /portfolio)
+                           phase 4: commands/eye.py (/tag /subsector)
 agents/analysis/           phase 1: agent 3's numbers — measures, card, run; python -m agents.analysis KO | --weekly
 agents/portfolio/          phase 3: agent 4 — ledger, marketdata, value, watch, block, run; python -m agents.portfolio [--show]
-agents/eye/                phase 4 (started): agent 1 — sites, http, extract, session_check; python -m agents.eye.session_check emtia|dragonomi
+agents/eye/                phase 4: agent 1 — sites, http, sitemap, extract, store, run, sentence, inbox, tags, modeltest, session_check;
+                           python -m agents.eye [--accept-many] · .session_check emtia|dragonomi · .modeltest
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 pyproject.toml, uv.lock, settings.yaml, .env.example
 
