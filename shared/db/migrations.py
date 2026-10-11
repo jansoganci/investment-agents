@@ -432,6 +432,27 @@ ALTER TABLE subsectors ADD COLUMN void INTEGER NOT NULL DEFAULT 0 CHECK (void IN
 ALTER TABLE subsectors ADD COLUMN voided_by INTEGER REFERENCES command_log (id);
 """
 
+STEP_8 = """
+-- Phase 5 (2026-10-11). The Counter's result (roadmap, Agent 1B rules 6): agents talk only through the database, so agent 2 reads
+-- the latest run from here. One run = the rows with one `run_at`; rows are never deleted. Only entities mentioned in the last 7
+-- days are stored. A stock that already has a card is stored with no rank and no points.
+CREATE TABLE counts (
+    id          INTEGER PRIMARY KEY,
+    run_at      TEXT NOT NULL,
+    kind        TEXT NOT NULL CHECK (kind IN ('stock', 'non_us', 'commodity', 'sector')),
+    key         TEXT NOT NULL,                  -- stock: the ticker · non_us: the ticker if known, else the tag · commodity: its name · sector: GICS
+    label       TEXT,                           -- a name to show
+    posts_7d    INTEGER NOT NULL,               -- distinct posts in the last 7 days
+    posts_30d   INTEGER NOT NULL,
+    rank        INTEGER,                        -- within its kind, 1 = most mentioned; empty for a stock that has a card
+    has_card    INTEGER NOT NULL DEFAULT 0 CHECK (has_card IN (0, 1)),
+    points      INTEGER CHECK (points BETWEEN 0 AND 2),     -- agent 2's `mentions` score (stocks without a card)
+    created_at  TEXT NOT NULL,
+    UNIQUE (run_at, kind, key)
+);
+CREATE INDEX counts_run ON counts (run_at, kind, rank);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -441,6 +462,7 @@ STEPS: list[tuple[int, str]] = [
     (5, STEP_5),
     (6, STEP_6),
     (7, STEP_7),
+    (8, STEP_8),
 ]
 
 

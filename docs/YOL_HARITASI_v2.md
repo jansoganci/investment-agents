@@ -190,6 +190,22 @@ I can correct it. The Eye's tag mapping takes over in phase 4 (`docs/IMPLEMENTAT
    summary they appear only as an information line: "Non-US names mentioned a lot" (the data is ready when the China add-on comes).
 5. **A stock that already has a card does not enter the ranking** (it is not scored again). But the Sunday summary has one line: "Stocks with
    a card mentioned a lot this week: XYZ (12 posts)" — I decide whether it gets scored again.
+6. **How phase 5 builds the Counter (my decisions, 2026-10-11):**
+   - The 7 days are counted on the post's **published** date (the date it was read, if the page gave none).
+   - A post cut by the paywall (`text_missing`) is counted: its tags are on the page.
+   - Only **confirmed** tags are counted. A tag that waits for my `/tag` is in no ranking; the output has one line saying how many wait.
+     A tag not classified yet is counted nowhere and noted.
+   - Two tags that map to one company (the same ticker) are one stock; a post counts once.
+   - The "mentioned a lot" bar for a stock that already has a card: **6 posts in 7 days**.
+   - A sector's count comes from **sector** tags only; a company tag adds nothing to a sector.
+   - Order: posts in 7 days, a tie → posts in 30 days, then the ticker. Only entities mentioned in the last 7 days are listed.
+   - The result is stored in the table `counts` (database version 8): one run = the rows with one `run_at`, never deleted; agent 2
+     reads the latest run (agents talk only through the database, fixed rule 4). A stock with a card is stored with no rank.
+     `mentions` points for agent 2 (1–2 posts → 0, 3–5 → 1, 6+ → 2) are stored with each stock. The numbers (7, 30, 10, 6, 3, 6) are
+     in `settings.yaml` `counter:`; they are starting values.
+   - `python -m agents.counter` counts, stores and prints; `--show` prints the latest stored run. Hermes can also read `counts` for
+     "what was mentioned most this week?".
+   - Built before phase 4 is done: an exception to fixed rule 5 (my decision, 2026-10-11).
 
 ### Agent 2 (Research) rules (decision: 2026-10-03)
 

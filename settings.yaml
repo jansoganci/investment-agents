@@ -28,6 +28,13 @@ sector_overrides:
   GE: Industrials                  # SIC 3600 (electrical equipment) → the table says Information Technology
   MMM: Industrials                 # SIC 3841 (medical instruments) → the table says Health Care
 
+counter:                           # 1B (roadmap "Agent 1B rules" 6): starting values, adjusted after the first weeks
+  window_days: 7
+  long_days: 30
+  top: 10                          # stocks shown / handed to agent 2
+  card_mention_bar: 6              # a stock that already has a card is "mentioned a lot" at this many posts in the window
+  mention_points: [3, 6]           # `mentions` score: below the first = 0, from the first = 1, from the second = 2
+
 portfolio:
   goal_usd: 800000                 # total wealth goal (agent 4 rule 4)
   dividend_withholding: 0.20       # 20%, user-confirmed (agent 4 rule 1)

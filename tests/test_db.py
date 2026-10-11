@@ -13,6 +13,8 @@ ALL_TABLES = {
     "card_entries", "audits", "command_log", "settings", "subsectors",
     # added 2026-10-11 (phase 4)
     "eye_seen",
+    # added 2026-10-11 (phase 5)
+    "counts",
 }
 
 
