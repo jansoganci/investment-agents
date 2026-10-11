@@ -11,6 +11,8 @@ ALL_TABLES = {
     "signals", "holdings", "other_assets", "snapshots", "runs",
     # added 2026-10-04
     "card_entries", "audits", "command_log", "settings", "subsectors",
+    # added 2026-10-11 (phase 4)
+    "eye_seen",
 }
 
 

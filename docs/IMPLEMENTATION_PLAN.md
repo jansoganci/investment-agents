@@ -300,9 +300,10 @@ reading, permission) · section 10.1 (the cheap model and its test).
 
 **Builds** (reshaped by the site probe of 2026-10-11 — roadmap "Agent 1 rules" 10–15):
 - **A. Fetching** (`agents/eye`): the sitemaps; a post is new when its address is not in the database; the first run is a
-  baseline (everything seen, nothing downloaded); a pass with more than 200 new addresses reads none and reports; plain HTTP
+  baseline (everything seen, nothing downloaded); a pass with more than 200 new addresses (my decision) reads none and reports (`--accept-many` goes on); plain HTTP
   with my cookie (no Playwright for now); 20–30 seconds between pages, at most ~80 pages a pass; stop at once on "too many
-  requests" / "access denied" + a message; "log-in ended" (most pages gated) is a separate message.
+  requests" / "access denied" + a message. No "log-in ended" alert (my decision, 2026-10-11): a gated page is `text_missing` and is
+  not tried again; the pass message counts the gated pages.
 - **B. Extraction:** the body by the site's selectors, audio player and gate removed, plain text; glossary posts skipped;
   `articles` (full text, `text_missing`; `read_deep` stays 0 — agent 2's flag).
 - **C. One sentence:** one neutral English sentence (cheap model); the daily list in `Inbox/`; the cheap-model test.
@@ -310,15 +311,15 @@ reading, permission) · section 10.1 (the cheap model and its test).
   `other`); a US-looking company tag counts only if the ticker is in SEC's company list and the name is close, otherwise it
   waits and the Sunday summary asks me; a non-US company is stored as non-US with no SEC check and no question; subsectors only
   from the approved list (`subsectors`; `other` → "add a new subsector?"). Commands: `/tag`, `/subsector`.
-- **Database version 6:** the new `tags.kind` values and a state for tags (`confirmed` / `waiting`), the addresses seen at the
-  baseline.
+- **Database:** version 6 (built) = `eye_seen`, the addresses seen; version 7 (with slice D) = the new `tags.kind` values and a state
+  for tags (`confirmed` / `waiting`).
 - The cheap-model test (section 10.1): 20 real posts, the sentences side by side; I choose.
 
 **Built so far (2026-10-11, `feat/phase-4-eye`):** the fetch call with block detection and the same-host cookie rule
 (`agents/eye/http.py`), the site table and extraction (`sites.py`, `extract.py`, tested on pages built by hand in the shape the
-probe found), and the Mac cookie check `python -m agents.eye.session_check emtia|dragonomi` (3 requests a site).
+probe found), the pass (`sitemap.py`, `store.py`, `run.py`, `python -m agents.eye`: baseline, the 200 guard, turns between the two sites, oldest first, 80 pages, block stop, `text_missing`; database version 6 `eye_seen`), and the Mac cookie check `python -m agents.eye.session_check emtia|dragonomi` (3 requests a site).
 
-**Input needed first:** none to start. The subsector list (`subsectors`) is drafted by Claude from the tags the first passes collect and approved by me (proposed 2026-10-11; before, it was asked for before the build).
+**Input needed first:** none to start. The subsector list (`subsectors`) is drafted by Claude from the tags the first passes collect and approved by me (my decision, 2026-10-11).
 
 **Tests (here):** saved sitemap and post pages · only new posts are taken · the stop-on-block rule · glossary posts skipped · text
 extraction · tag mapping and the SEC name check.
