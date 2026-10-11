@@ -228,6 +228,52 @@ I can correct it. The Eye's tag mapping takes over in phase 4 (`docs/IMPLEMENTAT
    card. The stock is marked **"added by me"** (`added_by: user`) and shows with that label in the week's ranking. Then X goes to
    `watching` and agent 3 writes the first fundamental entry (the balance-sheet analysis). A note can say where it came from
    (`/watch X recommended by abi`).
+8. **How phase 5 builds Research (decisions of 2026-10-11; built early under the exception to fixed rule 5; the web-search choice is
+   Claude's recommendation and stands until I say otherwise):**
+   - **Who:** the first `top` (10) US stocks without a card in the latest `counts` run. Run the Counter first; with no run, Research says so.
+   - **Reading and tone:** the strong model reads each post of the last 7 days that mentions the stock, one call per post, and gives a
+     label (positive / negative / neutral), one sentence of what is said, whether it is an event or a general comment, and a **quote**.
+     Code checks the quote is in the post word for word; if not, the label becomes neutral and a note says so. A post read before for
+     the same stock is not read again (table `readings`, `articles.read_deep = 1`). A post cut by the paywall (`text_missing`) cannot
+     be read and is not counted in the tone. Tone points: net = positive − negative; ≤ −2 → 0, −1…+1 → 1, ≥ +2 → 2.
+   - **News flow:** one strong-model call with **web search** per stock a week (Anthropic's web search tool `web_search_20260209`,
+     about 0.01–0.05 $ a call; only the Anthropic provider of the strong job can do it — if it cannot, `news_flow` is `unclear` = 1).
+     Every event has a source address, a quote, its scope (`company_specific` / `general_risk`), and its class (one of the 5 serious
+     negatives of the score rules, `important_positive`, or `other`). A company-specific serious negative is checked: the source page is
+     fetched (plain GET, no login), the quote must be on the page (code), then the auditor's event card (card 4) must pass, and the event
+     must be from the last 12 months. Not confirmed → not counted and a note says why (`news_events`). Points: a confirmed serious
+     negative → 0; none and at least one company-specific important positive with a source → 2; otherwise 1.
+   - **Commodity link:** the first time a stock is researched, one web-search call; the commodity must be a name from `settings.yaml`
+     `commodity_symbols` (so it has a Yahoo price), the role `producer` / `user`, with a source address → `commodity_links`. Checked
+     once (`stocks.commodity_checked`). The price job also fetches the linked commodities' symbols.
+   - **Sector tailwind (code):** item A: the stock's sector fund (XLE …) is above its 40-week average of weekly closes. Item B: if a
+     linked commodity has a price: a producer's commodity above its 40-week average, a user's below it; otherwise (no link or no price)
+     the sector fund beat SPY over the last 13 weeks. Less than 40 weeks of prices → item A fails with the reason "not enough price
+     history". The stock's sector: the tag's GICS sector, else SEC's industry code table.
+   - **Quick health (code, SEC):** the 5 checks of the score rules, computed from SEC's annual figures with the same free-cash formula
+     as agent 3. 5 computed: ≤ 2 passed → 0, 3–4 → 1, 5 → 2. 3 or 4 computed: all passed → 2, one short → 1, else 0. Fewer than 3
+     computed → `unclear` = 1. A share-count jump that looks like a split is not counted as dilution (that check is `unclear`).
+   - **Score:** code adds the five points; every criterion has its reason sentence. `scores` holds one row per stock per ISO week
+     (`2026-W41`); a rerun in the same week replaces it. The `mentions` points come from the Counter's row.
+   - **The card is born:** a `stocks` row (`candidate`, `added_by: counter`, CIK from SEC), the card on Drive with the story (2 sentences
+     from the news call), and the first entry `## <date> · research · agent_2` with the YAML block (score, the 5 criteria with reasons,
+     events with sources, commodity links) and `### Summary`. Prose and figures follow the card format.
+   - **Output:** `Weekly/YYYY-MM-DD-research.md` and a Telegram message (the ranking, the reasons in one line each, what was not confirmed).
+   - **`/watch X` for a stock with no card** runs Research for X alone (mentions 0, tone 1, `added_by: user`), then `watching`. `/candidates`
+     shows the latest week's ranking with reasons.
+   - **Cost:** about 1–2 $ a week with Sonnet 5.5 (10 stocks × reading + two web calls); inside the 25–30 $ budget.
+9. **Phase 6 (decisions of 2026-10-11; Claude's proposals, built to be tested):**
+   - **The Sunday chain** `python -m shared.sunday`: Counter → Research → Analysis weekly → Portfolio weekly → the summary. A failing step
+     is reported and the next ones still run. One message at the end.
+   - **The summary** (code, from the database) has: new candidates and their scores · card changes of the week · stocks with a card mentioned a
+     lot · non-US names mentioned a lot · tags waiting for my `/tag` · tags marked `other` (subsector questions) · data still `unclear` and open
+     missing-data requests · archive reminders · the portfolio block · AI spend this month. Saved as `Weekly/YYYY-MM-DD-summary.md`;
+     `/summary` shows the latest.
+   - **`/status` warnings:** a job `running` for more than 1 hour; a backup older than 36 hours.
+   - **Immediate messages** `python -m shared.alerts` (hourly, each alert once, table `alerts_sent`): a holding's grade dropped · a stock became
+     `solid` (green list) · a pending drop alert · an auditor `fail` on a card · the AI spend reached the 10 $ warning.
+   - **Schedule** (Turkey time; written for Hermes script-only jobs in `docs/SCHEDULE.md`): prices 03:00 · backup 04:00 · Eye 07:00 / 13:00 / 20:00 ·
+     alerts every hour at :05 · Sunday 09:00 the chain.
 
 ### Score rules (decision: 2026-10-03)
 

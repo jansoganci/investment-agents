@@ -71,6 +71,7 @@ class Result:
     missing: list[dict] = field(default_factory=list)
     liquid: dict = field(default_factory=dict)
     debt: dict = field(default_factory=dict)
+    series: dict = field(default_factory=dict)     # plain numbers by period end, for agent 2's quick health (phase 5)
 
 
 def _avg(vals, need=2):
@@ -180,6 +181,8 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
     debt_last = debt.get(last)
     r.free_cash = {"value": fcf.get(last), "average_3y": fcf3, "stock_comp": sbc.get(last),
                    "path_5y": {e: fcf.get(e) for e in Y[-5:]}}
+    r.series = {"ends": list(Y), "revenue": dict(rev), "operating": dict(op), "fcf": dict(fcf), "shares": dict(shares),
+                "debt": dict(debt), "liquid": dict(liquid)}
 
     M, N, X = {}, {}, {}  # values, notes, source names
     # 1 revenue growth (3-year average annual)
