@@ -11,6 +11,7 @@ the month's spend has reached the limit. The providers are in `shared/ai/backend
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, replace
 from typing import Callable
 
@@ -162,6 +163,19 @@ def spend_by_provider(conn) -> list[dict]:
         "coalesce(sum(outcome != 'ok'), 0) FROM ai_calls WHERE created_at >= ? GROUP BY provider ORDER BY provider",
         (month_start(),)).fetchall()
     return [{"provider": p, "calls": n, "usd": usd, "estimated": e, "rejected": r} for p, n, usd, e, r in rows]
+
+
+def parse_json(text: str):
+    """The first JSON object or list in an answer (a code fence or text around it is tolerated)."""
+    starts = [i for i in (text.find("{"), text.find("[")) if i >= 0]
+    if not starts:
+        raise ValueError("no JSON in the answer")
+    start = min(starts)
+    closer = "}" if text[start] == "{" else "]"
+    end = text.rfind(closer)
+    if end < start:
+        raise ValueError("the JSON is not closed")
+    return json.loads(text[start:end + 1])
 
 
 # --- the call -------------------------------------------------------------------------------------------------------------

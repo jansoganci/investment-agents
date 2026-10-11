@@ -403,6 +403,35 @@ CREATE TABLE eye_seen (
 CREATE INDEX eye_seen_site ON eye_seen (site);
 """
 
+STEP_7 = """
+-- Phase 4 (2026-10-11), slice D. Tags (roadmap, Agent 1 rules 14–15): `kind` also takes `region` and `other`; a tag has a state
+-- (`waiting` = a US-looking company the SEC check did not confirm, I fix it with /tag), whether the company is listed in the US,
+-- and a note with the reason. SQLite cannot widen a CHECK, so the table is rebuilt; every row is copied.
+CREATE TABLE tags_new (
+    id            INTEGER PRIMARY KEY,
+    tag           TEXT NOT NULL UNIQUE,         -- the display name as the post writes it (trimmed, Unicode-normalised)
+    kind          TEXT CHECK (kind IN ('company', 'commodity', 'sector', 'region', 'other')),
+    maps_to       TEXT,                         -- company: ticker · commodity: its name · sector: the GICS sector
+    exchange      TEXT,
+    country       TEXT,
+    sector        TEXT,
+    subsector     TEXT,
+    source        TEXT CHECK (source IN ('ai', 'user')),
+    status        TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'waiting')),
+    us_listed     INTEGER CHECK (us_listed IN (0, 1)),
+    note          TEXT,
+    created_at    TEXT NOT NULL
+);
+INSERT INTO tags_new (id, tag, kind, maps_to, exchange, country, sector, subsector, source, created_at)
+    SELECT id, tag, kind, maps_to, exchange, country, sector, subsector, source, created_at FROM tags;
+DROP TABLE tags;
+ALTER TABLE tags_new RENAME TO tags;
+
+-- /subsector add can be cancelled by /undo: the row is marked void, never deleted.
+ALTER TABLE subsectors ADD COLUMN void INTEGER NOT NULL DEFAULT 0 CHECK (void IN (0, 1));
+ALTER TABLE subsectors ADD COLUMN voided_by INTEGER REFERENCES command_log (id);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -411,6 +440,7 @@ STEPS: list[tuple[int, str]] = [
     (4, STEP_4),
     (5, STEP_5),
     (6, STEP_6),
+    (7, STEP_7),
 ]
 
 

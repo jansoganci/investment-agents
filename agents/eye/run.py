@@ -11,10 +11,10 @@ import random
 import time
 from dataclasses import dataclass, field
 
-from agents.eye import http, sitemap, store
+from agents.eye import http, inbox, sentence, sitemap, store, tags
 from agents.eye.extract import is_glossary, parse_post
 from agents.eye.sites import SITES, Site
-from shared import notify
+from shared import ai, notify
 
 CAP = 80                   # pages per pass (Agent 1 rule 4)
 GUARD = 200                # more new addresses than this in one pass → read none (my decision, 2026-10-11)
@@ -38,9 +38,16 @@ class Tally:
     note: str = ""
 
 
+SENTENCES_PER_PASS = 120   # sentences written in one pass (the new posts of a pass are at most CAP; the rest are earlier failures)
+
+
 @dataclass
 class Result:
     tally: dict = field(default_factory=dict)
+    notes: list = field(default_factory=list)      # the AI stage: a problem worth a message
+    sentences: int = 0
+    tags_classified: int = 0
+    tags_waiting: int = 0
 
     def message(self) -> str | None:
         """A quiet pass says nothing; a baseline, a gated page, a failure or a skipped site does."""
@@ -55,6 +62,7 @@ class Result:
                 lines.append(f"{name}: {t.failed} page(s) could not be fetched; they are tried again next pass.")
             if t.note:
                 lines.append(f"{name}: {t.note}")
+        lines += self.notes
         return notify.message("EYE · pass", lines) if lines else None
 
 
@@ -69,7 +77,8 @@ class _Pacer:
 
 
 def run_pass(conn, *, sites: dict | None = None, cookies: dict | None = None, fetch=None, sleep=time.sleep,
-             pause=random.uniform, cap: int = CAP, guard: int = GUARD, accept_many: bool = False) -> Result:
+             pause=random.uniform, cap: int = CAP, guard: int = GUARD, accept_many: bool = False, ai_stage: bool = False,
+             run=None, seclist: tags.SecList | None = None) -> Result:
     sites = SITES if sites is None else sites
     cookies = {k: os.environ.get(s.cookie_env, "").strip() for k, s in sites.items()} if cookies is None else cookies
     fetch = http.fetch if fetch is None else fetch
@@ -149,7 +158,35 @@ def run_pass(conn, *, sites: dict | None = None, cookies: dict | None = None, fe
 
     for key, queue in queues.items():
         result.tally[key].waiting = len(queue)
+    if ai_stage:
+        after_reading(conn, result, run=run, seclist=seclist)
     return result
+
+
+def after_reading(conn, result: Result, *, run=None, seclist: tags.SecList | None = None) -> None:
+    """The AI stage, after the slow reading: the sentences, then the new tags, then the Inbox list. An AI problem never loses a page:
+    the post is already saved, and the missing sentence or tag is tried again in the next pass."""
+    written = []
+    rows = conn.execute("SELECT id, site, title, url, full_text FROM articles WHERE sentence IS NULL AND text_missing = 0 "
+                        "AND length(full_text) > 0 ORDER BY id LIMIT ?", (SENTENCES_PER_PASS,)).fetchall()
+    for article_id, site, title, url, text in rows:
+        try:
+            line = sentence.write(title, text, run=run, conn=conn)
+        except ai.AIError as error:
+            result.notes.append(f"Sentences stopped: {error}. They are written in the next pass.")
+            break
+        except ValueError:
+            line = ""          # two unusable answers: given up on this post ('' is not NULL, so it is not asked again)
+        conn.execute("UPDATE articles SET sentence = ? WHERE id = ?", (line, article_id))
+        conn.commit()
+        if line:
+            written.append({"site": site, "title": title, "sentence": line, "url": url})
+    result.sentences = len(written)
+    stats = tags.classify_new(conn, run, seclist=seclist)
+    result.tags_classified, result.tags_waiting = stats.classified, stats.waiting
+    if stats.note:
+        result.notes.append(stats.note)
+    inbox.append(written)
 
 
 def _fail(count: int, site: Site, why: str) -> int:

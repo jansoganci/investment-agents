@@ -1,6 +1,7 @@
 """uv run python -m agents.eye                  one pass: the new posts of both sites (slow: up to ~35 minutes)
 uv run python -m agents.eye --accept-many     the same, but read even when more than 200 new addresses are found
-The first run of a site only records its addresses as seen (nothing is read)."""
+The first run of a site only records its addresses as seen (nothing is read). After the reading: a one-sentence summary of each new
+post (cheap model), the new tags classified, and the day's list appended to Inbox/YYYY-MM-DD.md."""
 
 from __future__ import annotations
 
@@ -19,10 +20,10 @@ def main(argv: list[str] | None = None) -> int:
         print(USAGE)
         return 2
 
-    def work(_run):
+    def work(job):
         conn = dbmod.connect()
         try:
-            return run.run_pass(conn, accept_many="--accept-many" in argv).message()
+            return run.run_pass(conn, accept_many="--accept-many" in argv, ai_stage=True, run=job).message()
         finally:
             conn.close()
 
