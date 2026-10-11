@@ -204,6 +204,11 @@ audit prompts for phases 4, 5 and 6.
 
 ## 6. Results log (C fills it in as the RESULT blocks arrive)
 
+**Decision (U, 2026-10-11): Dragonomi is postponed.** U has no Dragonomi membership yet, so no Dragonomi cookie. Blocks B and C run on Emtia Defteri only; every step
+that names two sites is done for Emtia now and for Dragonomi later (one short extra round: cookie, `session_check dragonomi`, baseline, one read pass). The Eye already
+copes: a site without a cookie is not read and its new addresses stay "waiting" (`EMTIA_COOKIE is not set` style note). Watch: waiting addresses of both sites count
+toward the 200-address guard, so a long postponement needs `--accept-many` or a "skip this site" setting (not built; decide when it matters).
+
 | ID | Who | Date | Result | Notes |
 |---|---|---|---|---|
 | A1 | M | 2026-10-11 | SKIPPED | The main Mac is away; A2 ran the same 658 tests on the Air check copy. Not needed for the next blocks. |
