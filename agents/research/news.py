@@ -166,7 +166,7 @@ def search(conn, run, ticker: str, company: str, *, today: date, fetch=page.fetc
     prompt = f"Company: {company}\nTicker: {ticker}\nToday: {today.isoformat()}"
     news = News()
     try:
-        reply = ai.call("strong", prompt, system=system_prompt(), run=run, conn=conn, web_search=uses, max_tokens=8000)
+        reply = ai.call("strong", prompt, system=system_prompt(), run=run, conn=conn, web_search=uses, max_tokens=16000)
         data = parse(reply.text)
     except ai.AIError as error:
         news.error = str(error)
