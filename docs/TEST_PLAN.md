@@ -207,7 +207,7 @@ audit prompts for phases 4, 5 and 6.
 | ID | Who | Date | Result | Notes |
 |---|---|---|---|---|
 | A1 | M | | — | |
-| A2 | H | | — | |
+| A2 | H | 2026-10-11 | PASS | `~/check-repo` at fb76bd2: 658 passed in 42 s (the throwaway `db init` step was skipped; A3 covers the upgrade). Run by U in the Air terminal. |
 | A3 | H | | — | |
 | A4 | H | | — | |
 | A5 | H | | — | |
