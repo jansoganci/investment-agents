@@ -23,6 +23,7 @@ from shared.commands import UNDO, Applied, Command, Plan, Refused, register
 from shared.sec.synonyms import SYNONYMS
 
 SOURCES = None  # SEC + Yahoo by default (agents.analysis.run.LiveSources); tests put saved data here
+RESEARCH_ON_WATCH = True  # /watch for a stock with no card runs agent 2 for it, then agent 3 (roadmap, "Agent 2 rules" 7); tests switch it off
 FIGURES = sorted(set(SYNONYMS["us-gaap"]) | {"debt"})
 
 
@@ -56,6 +57,42 @@ def _card_note(ticker: str, text: str, header: dict) -> None:
 
 # --- stock state -----------------------------------------------------------------------------------------------------
 
+def _research_then_analysis(ticker: str):
+    """Runs after the `/watch` is saved: agent 2 opens the card for a stock I added (no posts needed), then agent 3 writes the first
+    fundamental entry. A problem in one never hides the other."""
+    def after() -> str:
+        from agents.analysis import run as analysis
+        from agents.research import run as research
+        from shared import db as dbmod
+        from shared import notify, runlog
+
+        parts = []
+        try:
+            with runlog.run("research") as r:
+                c = dbmod.connect()
+                try:
+                    o = research.research_one(c, ticker, added_by="user", sources=_sources(), run=r)
+                finally:
+                    c.close()
+            parts.append(notify.message(f"RESEARCH · {ticker}", o.lines() + [f"Card: {o.card_path}"]))
+        except research.Refused as exc:
+            parts.append(f"Research skipped: {exc}")
+        except Exception as exc:  # noqa: BLE001 — the message must reach me
+            parts.append(notify.error("research", f"{type(exc).__name__}: {exc}"))
+        try:
+            with runlog.run("analysis") as r:
+                c = dbmod.connect()
+                try:
+                    parts.append(analysis.analyze(c, ticker, _sources(), use_ai=True, run=r, ask_missing=True).text)
+                finally:
+                    c.close()
+        except Exception as exc:  # noqa: BLE001
+            parts.append(notify.error("analysis", f"{type(exc).__name__}: {exc}"))
+        return "\n\n".join(parts)
+
+    return after
+
+
 def _state_change(name: str, ticker: str, stock: dict | None, new: str, found: dict | None = None) -> Plan:
     """`found`: SEC's answer for a ticker new to us (a new stock, or a renamed ticker of a stock we have)."""
     rename_from = (found or {}).get("rename_from")
@@ -67,7 +104,12 @@ def _state_change(name: str, ticker: str, stock: dict | None, new: str, found: d
         preview = [f"ticker {rename_from['ticker']} → {ticker} (the same company, SEC CIK {rename_from['cik']}); the card is kept",
                    f"status {old} → {new}" if old != new else f"status stays {old}"]
     elif stock is None:
-        preview = [f"{label}: new stock (SEC: {found['name']}), status → {new}", "the card is opened by the first analysis"]
+        preview = [f"{label}: new stock (SEC: {found['name']}), status → {new}"]
+        if name == "watch" and RESEARCH_ON_WATCH:
+            preview += ["agent 2 runs for it right after (the posts there are, the news by web search, the score; about 0.1–0.3 $) and "
+                        "opens the card, then agent 3 writes the first analysis (the usual /analyze cost)"]
+        else:
+            preview += ["the card is opened by the first analysis"]
     else:
         preview = [f"{label}: status {old} → {new}", "a dated note on the card"]
 
@@ -101,7 +143,8 @@ def _state_change(name: str, ticker: str, stock: dict | None, new: str, found: d
                 _card_note(ticker, f"Status: {old} → {new} (/{name}, change #{number})", {"status": new})
         text = (f"{ticker}: ticker {rename_from['ticker']} → {ticker}; " if rename_from else f"{ticker}: ") + \
             f"status {old or 'new'} → {new}."
-        return Applied(text, "stocks", sid, before=before)
+        after = _research_then_analysis(ticker) if (stock is None and name == "watch" and RESEARCH_ON_WATCH) else None
+        return Applied(text, "stocks", sid, before=before, after=after)
 
     return Plan(preview, [name, ticker], apply, recheck=recheck)
 

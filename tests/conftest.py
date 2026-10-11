@@ -27,3 +27,11 @@ def db(env):
     conn = dbmod.connect()
     yield conn
     conn.close()
+
+
+@pytest.fixture(autouse=True)
+def no_research_on_watch(monkeypatch):
+    """/watch for a new stock runs agent 2 and agent 3 afterwards (needs the web); the older tests check the state change only."""
+    from shared.commands import stocks
+
+    monkeypatch.setattr(stocks, "RESEARCH_ON_WATCH", False)
