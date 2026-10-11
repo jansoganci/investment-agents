@@ -113,8 +113,8 @@ def test_unknown_command_is_refused(db):
 
 
 def test_planned_command_says_not_built_yet(db):
-    code, text = commands.run(["tag", "rio-tinto", "RIO"])
-    assert code == 1 and "phase 4" in text
+    code, text = commands.run(["candidates"])      # agent 2's list: built in phase 5
+    assert code == 1 and "phase 5" in text
     assert db.execute("SELECT count(*) FROM command_log").fetchone()[0] == 0
 
 

@@ -317,7 +317,7 @@ reading, permission) · section 10.1 (the cheap model and its test).
 
 **Built so far (2026-10-11, `feat/phase-4-eye`):** the fetch call with block detection and the same-host cookie rule
 (`agents/eye/http.py`), the site table and extraction (`sites.py`, `extract.py`, tested on pages built by hand in the shape the
-probe found), the pass (`sitemap.py`, `store.py`, `run.py`, `python -m agents.eye`: baseline, the 200 guard, turns between the two sites, oldest first, 80 pages, block stop, `text_missing`; database version 6 `eye_seen`), and the Mac cookie check `python -m agents.eye.session_check emtia|dragonomi` (3 requests a site).
+probe found), the pass (`sitemap.py`, `store.py`, `run.py`, `python -m agents.eye`: baseline, the 200 guard, turns between the two sites, oldest first, 80 pages, block stop, `text_missing`; database version 6 `eye_seen`), and the Mac cookie check `python -m agents.eye.session_check emtia|dragonomi` (3 requests a site). **Slices C and D built (2026-10-11):** after the reading, `sentence.py` (cheap model, one neutral sentence; an unusable answer twice → given up, an AI outage → tried again next pass), `inbox.py` (`Inbox/YYYY-MM-DD.md`), `tags.py` (classification in batches of 20 with the post title and the other tags as context; the SEC check for US-listed companies; non-US: none), `modeltest.py` (20 posts, two hidden models, `--reveal`), the commands `/tag` and `/subsector` (with `/undo`), database version 7. Claude's choices: the name-closeness rule (equal words, or all words of one name in the other with at most one extra word), tags the model does not answer are asked again next pass, `/tag` fixes only a tag the Eye has met. Left for the sites: the Mac check, the model test, the Air steps, the audit.
 
 **Input needed first:** none to start. The subsector list (`subsectors`) is drafted by Claude from the tags the first passes collect and approved by me (my decision, 2026-10-11).
 
@@ -413,7 +413,7 @@ left stuck on purpose shows in `/status`.
 | 1 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-1-analysis-numbers-arj800` · PR #4 → PR #5 (merged 2026-10-05) | built and audited 2026-10-05 (exception, section 1) · PR #4 went into the phase 0 branch, PR #5 brought it to `main` · Mac check together with phase 0's, on `main` (incl. the real Yahoo answers, section 8) · on the Air: `git pull` + `uv run python -m shared.db upgrade` (version 2 → 3) |
 | 2 | ✅ | ✅ | ✅ | Air | ✅ | ✅ | `claude/phase-2-agent3-ai-arj800` + fixes | real-model runs and the 20-stock acceptance test on the Air (isolated); round 2 passed 2026-10-09 (roadmap, after rule 47); 3 cards read, rule 48 |
 | 3 | ✅ | ✅ no blocker | ✅ | ✅ (Hermes on the Air, isolated) | ✅ | ⏳ | `feat/phase-3-portfolio` (merged locally 2026-10-09) · `fix/phase-3-not-computed` | the real check found one crash (`peg: not_computed`), fixed; second run passed; **done 2026-10-09** (block approved) |
-| 4 | ⏳ slices A–B started | — | — | ⏳ `session_check` | — | — | `feat/phase-4-eye` | site probe 2026-10-11 done (roadmap "Agent 1 rules" 10–15); needs the Air for the one-week check |
+| 4 | ✅ slices A–D (code) | ⏳ | — | ⏳ `session_check` | — | — | `feat/phase-4-eye*` | site probe 2026-10-11 done (roadmap "Agent 1 rules" 10–18); the Mac check, the 20-post model test and the one-week check need the real sites |
 | 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
 | 6 | — | — | — | — | — | — | — | runs on the Air |
 
