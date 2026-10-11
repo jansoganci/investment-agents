@@ -56,7 +56,7 @@ agents/analysis/           phase 1: agent 3's numbers — measures, card, run; p
 agents/portfolio/          phase 3: agent 4 — ledger, marketdata, value, watch, block, run; python -m agents.portfolio [--show]
 agents/counter/            phase 5 (built early): 1B — count; python -m agents.counter [--show]
 agents/research/           phase 5 (built early): agent 2 — health, tailwind, score, reading, news, page, run; python -m agents.research [TICKER]
-agents/eye/                phase 4: agent 1 — sites, http, sitemap, extract, store, run, sentence, inbox, tags, modeltest, session_check;
+agents/eye/                phase 4: agent 1 — sites, http, sitemap, extract, store, run, sentence, inbox, tags, modeltest, session_check, set_cookie;
                            python -m agents.eye [--accept-many] · .session_check emtia|dragonomi · .modeltest
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 pyproject.toml, uv.lock, settings.yaml, .env.example
