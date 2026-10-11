@@ -45,7 +45,7 @@ archive. Do not move or rename the archive unless that is the task.
 Exists today:
 ajanlar/analiz/prototip/   agent 3 rule trial (archive, not production)
 ajanlar/teknik/backtest/   backtest scripts (archive)
-docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md,
+docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, TEST_PLAN.md (the real-world tests of phases 4–6), SCHEDULE.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md,
                            telegram_setcommands.txt; reviews/ (external reviews)
 shared/                    phase 0: config, clock, db (tables + upgrade steps), backup, runlog, notify, drive, commands, ask
                            phase 1: sec (client, facts, synonyms), sectors, prices (job + yahoo), commands/stocks.py
@@ -143,6 +143,10 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   database version 10 `alerts_sent`), `shared/sunday` (the chain), `docs/SCHEDULE.md` (the five Hermes jobs), `settings.yaml` `hours`. **Nothing of phases 4–6 has met the real
   sites, a real model or Hermes yet.** Next, only with real data: the Mac `session_check`, the Air update (`git pull`, `shared.db upgrade` → 10, cookies in `.env`), the Eye baseline,
   a week of passes, the model tests, then `docs/SCHEDULE.md` "Before the first scheduled run", the audits.
+- **Real-world tests of phases 4–6 (2026-10-11):** the plan, the order, who does what (U me · M Claude Code on the Mac · H Hermes on the Air · C the cloud
+  session), the prompts and the terminal commands are in `docs/TEST_PLAN.md`; its section 6 is the results log. Block A (no login: baseline, upgrade rehearsal
+  on a copy of the real database, real models, the auditor test set, Research with web search, Yahoo symbols) comes first because the Anthropic credit ends
+  on 2026-10-19. Hermes' limits stay the last step (D4).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
