@@ -5,10 +5,9 @@ tags are only counted for the note. The 7 days are counted on the post's publish
 
 from __future__ import annotations
 
-import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from shared import clock, config
 
