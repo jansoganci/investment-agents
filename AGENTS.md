@@ -51,16 +51,17 @@ shared/                    phase 0: config, clock, db (tables + upgrade steps), 
                            phase 1: sec (client, facts, synonyms), sectors, prices (job + yahoo), commands/stocks.py
                            phase 3: commands/portfolio.py (/bought /sold /gold /bes /portfolio)
                            phase 4: commands/eye.py (/tag /subsector)
+                           phase 5–6 (built early): commands/research.py (/candidates /summary), summary, alerts, sunday (python -m shared.sunday | shared.alerts)
 agents/analysis/           phase 1: agent 3's numbers — measures, card, run; python -m agents.analysis KO | --weekly
 agents/portfolio/          phase 3: agent 4 — ledger, marketdata, value, watch, block, run; python -m agents.portfolio [--show]
 agents/counter/            phase 5 (built early): 1B — count; python -m agents.counter [--show]
+agents/research/           phase 5 (built early): agent 2 — health, tailwind, score, reading, news, page, run; python -m agents.research [TICKER]
 agents/eye/                phase 4: agent 1 — sites, http, sitemap, extract, store, run, sentence, inbox, tags, modeltest, session_check;
                            python -m agents.eye [--accept-many] · .session_check emtia|dragonomi · .modeltest
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 pyproject.toml, uv.lock, settings.yaml, .env.example
 
 Planned (not created yet):
-agents/research/    2. Research — reading + web search + score; opens the card (weekly, Sunday)
 shared/             still to come: AI, the auditor, the Sunday summary
 ```
 
@@ -137,7 +138,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   `settings.yaml` `commodity_symbols`, `research:`; the price job also fetches linked commodities; agent 3's `Result.series`) · R3 (`reading`, `news`
   — one web-search call returns the story, the events and the commodity links —, `page`, auditor card 4 `event.md` + 5 test-set cases) · R4
   (`run`, `python -m agents.research [TICKER]`, `/candidates`, `/watch` for a new stock runs agent 2 then agent 3). The auditor test set (now with
-  the event cases) and the web search have not met a real model yet: that is the Air test. Left: S1–S3.
+  the event cases) and the web search have not met a real model yet: that is the Air test. **S1–S3 built:** `shared/summary` (the Sunday summary, saved in
+  `Weekly/`, `/summary`), `/status` warnings (a job `running` over 1 h, a backup over 36 h; `settings.yaml` `warnings:`), `shared/alerts` (hourly, each alert once,
+  database version 10 `alerts_sent`), `shared/sunday` (the chain), `docs/SCHEDULE.md` (the five Hermes jobs), `settings.yaml` `hours`. **Nothing of phases 4–6 has met the real
+  sites, a real model or Hermes yet.** Next, only with real data: the Mac `session_check`, the Air update (`git pull`, `shared.db upgrade` → 10, cookies in `.env`), the Eye baseline,
+  a week of passes, the model tests, then `docs/SCHEDULE.md` "Before the first scheduled run", the audits.
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.

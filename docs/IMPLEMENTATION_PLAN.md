@@ -414,8 +414,8 @@ left stuck on purpose shows in `/status`.
 | 2 | ✅ | ✅ | ✅ | Air | ✅ | ✅ | `claude/phase-2-agent3-ai-arj800` + fixes | real-model runs and the 20-stock acceptance test on the Air (isolated); round 2 passed 2026-10-09 (roadmap, after rule 47); 3 cards read, rule 48 |
 | 3 | ✅ | ✅ no blocker | ✅ | ✅ (Hermes on the Air, isolated) | ✅ | ⏳ | `feat/phase-3-portfolio` (merged locally 2026-10-09) · `fix/phase-3-not-computed` | the real check found one crash (`peg: not_computed`), fixed; second run passed; **done 2026-10-09** (block approved) |
 | 4 | ✅ slices A–D (code) | ⏳ | — | ⏳ `session_check` | — | — | `feat/phase-4-eye*` | site probe 2026-10-11 done (roadmap "Agent 1 rules" 10–18); the Mac check, the 20-post model test and the one-week check need the real sites |
-| 5 | ⏳ Counter built | — | — | — | — | — | `feat/phase-5-counter` | the Counter was built before phase 4 is done (my exception to rule 5, 2026-10-11); agent 2 waits for real posts (score thresholds, the web search) |
-| 6 | — | — | — | — | — | — | — | runs on the Air |
+| 5 | ✅ Counter + Research built (stand-in data only) | — | — | — | — | — | `feat/phase-5-counter` | the Counter was built before phase 4 is done (my exception to rule 5, 2026-10-11); agent 2 waits for real posts (score thresholds, the web search) |
+| 6 | ✅ code built (summary, alerts, chain, `/status` warnings, `docs/SCHEDULE.md`) | — | — | — | — | — | `feat/phase-6-sunday` | built early under my exception to rule 5; the Air schedule and a full Sunday need the real data |
 
 ## 8. Not now — on purpose (2026-10-05)
 
