@@ -5,7 +5,8 @@ its own.
     uv run python -m shared.prices --ticker KO   one ticker on demand: 10 years of daily closes with splits and dividends
 
 What the nightly job fetches: the stocks I hold, the green list (watching + solid), SPY, gold (GC=F, USD per troy ounce),
-USD/TRY and the 11 sector funds. Linked commodities come with agent 2 (phase 5; `commodity_links` has no Yahoo symbols yet).
+USD/TRY, the 11 sector funds and the commodities linked to stocks that have a card (`commodity_links`, symbols in
+`settings.yaml` `commodity_symbols`).
 History is kept: a day that is already stored is skipped, never overwritten (the database refuses it too). A day that has
 not closed yet is not stored.
 """
@@ -25,11 +26,21 @@ SECTOR_FUNDS = {"Energy": "XLE", "Materials": "XLB", "Industrials": "XLI", "Cons
 CLOSE_HOUR = 17  # a day is stored once it is past 17:00 where the exchange is (the US close is 16:00)
 
 
+def commodity_symbols(conn) -> list[str]:
+    """Yahoo symbols of the commodities linked to a stock that has a card and is not archived."""
+    from shared import config
+    table = {k.lower(): v for k, v in (config.settings().get("commodity_symbols") or {}).items()}
+    rows = conn.execute("SELECT DISTINCT l.commodity FROM commodity_links l JOIN stocks s ON s.id = l.stock_id "
+                        "WHERE s.status != 'archived' ORDER BY l.commodity").fetchall()
+    return [table[r[0].lower()] for r in rows if r[0].lower() in table]
+
+
 def job_symbols(conn) -> list[str]:
     rows = conn.execute(
         "SELECT ticker FROM stocks WHERE in_portfolio = 'yes' OR (status = 'watching' AND grade = 'solid') ORDER BY ticker"
     ).fetchall()
-    return [r[0] for r in rows] + BENCHMARKS + list(SECTOR_FUNDS.values())
+    symbols = [r[0] for r in rows] + BENCHMARKS + list(SECTOR_FUNDS.values()) + commodity_symbols(conn)
+    return list(dict.fromkeys(symbols))
 
 
 def _closed(day: str, tz: str | None, now: datetime | None = None) -> bool:

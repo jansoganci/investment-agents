@@ -15,6 +15,8 @@ ALL_TABLES = {
     "eye_seen",
     # added 2026-10-11 (phase 5)
     "counts",
+    # added 2026-10-11 (Research)
+    "readings", "news_events",
 }
 
 

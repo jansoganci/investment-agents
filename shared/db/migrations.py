@@ -453,6 +453,47 @@ CREATE TABLE counts (
 CREATE INDEX counts_run ON counts (run_at, kind, rank);
 """
 
+STEP_9 = """
+-- Phase 5 (2026-10-11), Research (roadmap, Agent 2 rules 8). The stock may not have a row yet when its posts are read, so these tables
+-- are keyed by the ticker.
+-- What the strong model read in a post about a stock: read once, not again (and `articles.read_deep` is set).
+CREATE TABLE readings (
+    id          INTEGER PRIMARY KEY,
+    article_id  INTEGER NOT NULL REFERENCES articles (id),
+    ticker      TEXT NOT NULL,
+    tone        TEXT NOT NULL CHECK (tone IN ('positive', 'negative', 'neutral')),
+    about       TEXT,                            -- one sentence: what the post says about the company
+    kind        TEXT CHECK (kind IN ('event', 'general_comment')),
+    quote       TEXT,                            -- word for word from the post; empty when the model's quote was not in the post
+    model       TEXT,
+    created_at  TEXT NOT NULL,
+    UNIQUE (article_id, ticker)
+);
+
+-- The news events of the week for a stock (web search), and what became of each.
+CREATE TABLE news_events (
+    id            INTEGER PRIMARY KEY,
+    ticker        TEXT NOT NULL,
+    week          TEXT NOT NULL,                 -- ISO week, e.g. 2026-W41
+    summary       TEXT NOT NULL,
+    event_date    TEXT,
+    source_url    TEXT,
+    quote         TEXT,
+    scope         TEXT CHECK (scope IN ('company_specific', 'general_risk')),
+    class         TEXT NOT NULL CHECK (class IN ('serious_negative', 'important_positive', 'other')),
+    serious_type  TEXT,                          -- one of the five of the score rules
+    status        TEXT NOT NULL CHECK (status IN ('confirmed', 'not_confirmed', 'not_checked')),
+    note          TEXT,                          -- why it was not confirmed
+    audit_id      INTEGER REFERENCES audits (id),
+    created_at    TEXT NOT NULL
+);
+CREATE INDEX news_events_week ON news_events (ticker, week);
+
+ALTER TABLE stocks ADD COLUMN commodity_checked TEXT;       -- the date the commodity link was looked for (once per stock)
+CREATE UNIQUE INDEX scores_week ON scores (stock_id, week);
+CREATE UNIQUE INDEX commodity_links_pair ON commodity_links (stock_id, commodity);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -463,6 +504,7 @@ STEPS: list[tuple[int, str]] = [
     (6, STEP_6),
     (7, STEP_7),
     (8, STEP_8),
+    (9, STEP_9),
 ]
 
 
