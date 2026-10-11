@@ -128,6 +128,11 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   are one stock, a post counts once · a stock with a card is "mentioned a lot" at 6 posts in 7 days · sector counts come from sector
   tags only · order: 7-day posts, then 30-day posts, then ticker · the result goes to the table `counts` (database version 8; agent 2
   reads the latest run) · numbers in `settings.yaml` `counter:`. **Built (same day):** `agents/counter` (`count`, `block`, `python -m agents.counter [--show]`), database version 8 (`counts`), 23 tests, **514 tests pass**. On the Air it needs `shared.db upgrade` (7 → 8) and real posts. Agent 2 (Research) waits for real posts.
+- **Phase 5 Research and phase 6 built early (my instruction, 2026-10-11: "write all the code that can be written, then test it"):** decisions are in
+  the roadmap, "Agent 2 rules" 8 and 9 (Claude's proposals where I had not decided: the web-search tool, the quick-health arithmetic for 3–4
+  computed checks, the summary contents, the alert list, the schedule) — change any by saying so. Slices: R1 web search in `shared/ai` + database
+  version 9 · R2 quick health, sector tailwind, score · R3 reading, news, events audit · R4 Research run, cards, `/candidates`, `/watch` · S1 summary,
+  `/summary`, `/status` warnings · S2 alerts · S3 the Sunday chain and `docs/SCHEDULE.md`. Status of each: see the entries below as they are added.
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
