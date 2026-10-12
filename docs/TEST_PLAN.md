@@ -221,8 +221,8 @@ toward the 200-address guard, so a long postponement needs `--accept-many` or a 
 | B1 | U | 2026-10-12 | PASS (Emtia only) | Cookie copied from Chrome (`Copy as cURL`), written by `agents.eye.set_cookie emtia` (313 characters). Expiry date of the login cookie: not yet noted. The cookie was pasted into the cloud chat by mistake: after the tests, log out of Emtia and log in again. Dragonomi: no membership yet. |
 | B2 | U (on the Air) | 2026-10-12 | PASS (Emtia only) | `session_check emtia`: without the cookie the page is gated, 0 characters; with it not gated, 833 characters, body found by `article.ghost-content`, tags read (Alüminyum, Sanayi Metalleri, Asya). The extractor and the gate check work on the real site. A leftover broken `DRAGONOMI_COOKIE` line in `~/check-repo/.env` causes a harmless dotenv warning; to be deleted. |
 | B3 | U (on the Air) | 2026-10-12 | PASS | Eye baseline in throwaway folders: Emtia 11,126 and Dragonomi 14,906 addresses recorded as `baseline`, nothing read, 28 s. Second run: quiet (only the note that `DRAGONOMI_COOKIE` is not set), 29 s. |
-| B4 | M | | — | |
-| B5 | M+U | | — | |
+| B4 | U (on the Air) | 2026-10-12 | PASS (Emtia only) | 10 newest Emtia posts un-seen and read in 5 min 28 s (20–30 s pause per page, no block): 10 rows in `articles`, average text 815 characters (short flash posts, `text_missing` 0), 10 sentences, none empty; cost 0.01 $ (11 DeepSeek calls). A quiet pass prints nothing for the site that was read fine (by design). |
+| B5 | U | 2026-10-12 | PARTIAL | Sentences are neutral English, factual ("The post says …"), no advice words (0 hits for should / bullish / bearish). Tags: 10 commodity, 3 region, 1 sector (Fosil Enerji → Energy), 1 other (Rapor Özetleri), all `confirmed`. Not testable with Emtia alone: company tags, the SEC check, a non-US company without a question, glossary posts (Emtia's 10 posts carry commodity tags, no company tag). `Inbox/2026-10-12.md` exists; U to read it. Watch for B7: the Counter counts company tags, so with Emtia only it may list no stock; Dragonomi's tags are the company ones. |
 | B6 | M+U | | — | |
 | B7 | M | | — | |
 | B8 | M+U | | — | |
