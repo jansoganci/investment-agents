@@ -453,8 +453,8 @@ for N in ANTHROPIC_API_KEY DEEPSEEK_API_KEY OPENAI_API_KEY OPENROUTER_API_KEY SE
 ```
 The `DRIVE_DIR` line must print `Investing-dev` on the main Mac. A `0` next to a key means it is missing; add it by hand with an editor (`nano .env`). `SEC_UA` looks like `"Your Name you@mail.com"`.
 
-**U2 — the cookies into `.env` (the value is never shown on the screen).** In the browser's developer tools, right-click the `cookie` request header → copy
-the **value**. Then run the helper — it reads the clipboard, replaces the site's old line, removes broken lines left by earlier tries (the old file stays as
+**U2 — the cookies into `.env` (the value is never shown on the screen).** In Chrome open the post, then `Cmd+Option+I` → Network → reload the page (`Cmd+R`) → in the list click the row of the post (type `document`) → right-click it →
+**Copy → Copy as cURL (bash)**. (Or copy the `cookie` header value from Request Headers.) Then run the helper — it reads the clipboard, replaces the site's old line, removes broken lines left by earlier tries (the old file stays as
 `.env.bak`), makes the file private and empties the clipboard. It prints only the name and the length:
 ```bash
 cd ~/investment-agents

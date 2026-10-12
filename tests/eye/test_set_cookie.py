@@ -16,6 +16,15 @@ def test_clean_takes_the_value_of_one_line_or_the_cookie_line_of_a_block():
         set_cookie.clean("a=1\nb=2")
 
 
+def test_clean_takes_the_cookie_out_of_a_copied_curl_command():
+    chrome = ("curl 'https://x.com/post/' \\\n  -H 'accept: text/html' \\\n  -b '" + COOKIE + "' \\\n  -H 'user-agent: Mozilla/5.0'")
+    assert set_cookie.clean(chrome) == COOKIE
+    header_style = "curl 'https://x.com/post/' -H 'accept: */*' -H 'Cookie: " + COOKIE + "'"
+    assert set_cookie.clean(header_style) == COOKIE
+    with pytest.raises(ValueError):
+        set_cookie.clean("curl 'https://x.com/post/?a=1' -H 'accept: */*'")
+
+
 def test_check_refuses_what_is_not_a_cookie_or_cannot_be_kept():
     set_cookie.check(COOKIE)
     for bad in ("", "short=1", "x" * 30, COOKIE + "'", COOKIE + "${HOME}"):
