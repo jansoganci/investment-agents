@@ -18,6 +18,7 @@ Answer with the sentence only: no quotes, no label, no line break."""
 
 MAX_POST_CHARS = 60000      # a deep read can be 15,000+ characters; this only stops a runaway page
 MAX_SENTENCE_CHARS = 500
+SENTENCE_TOKENS = 8000      # the cheap reasoning model spends tokens on thinking; at 2,000 about 1 post in 4 was cut (2026-10-12 test)
 
 
 def clean(text: str) -> str:
@@ -36,7 +37,7 @@ def write(title: str | None, text: str, *, run=None, conn=None, model: str | Non
     problem = None
     for _ in range(2):
         asked = prompt if problem is None else prompt + f"\n\nYour previous answer could not be used ({problem}). Answer again with one sentence."
-        reply = ai.call("cheap", asked, system=SYSTEM, run=run, conn=conn, model=model, only_first=only_first, max_tokens=2000)
+        reply = ai.call("cheap", asked, system=SYSTEM, run=run, conn=conn, model=model, only_first=only_first, max_tokens=SENTENCE_TOKENS)
         try:
             return clean(reply.text)
         except ValueError as error:
