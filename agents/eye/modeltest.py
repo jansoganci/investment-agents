@@ -49,6 +49,7 @@ def main(argv: list[str], rng: random.Random | None = None) -> str:
                         line = f"(no answer: {error})"
                     out.append(f"  {slot}: {line}")
                     key[f"{n}. article {article_id} {slot}"] = models[idx]
+                print(f"[{n}/{count}] done", file=sys.stderr, flush=True)
         key_path.write_text(json.dumps(key, indent=1))
         out.append("\nWhich is better, A or B? Then: uv run python -m agents.eye.modeltest --reveal")
         return "\n".join(out)
