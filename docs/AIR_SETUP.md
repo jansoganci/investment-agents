@@ -80,7 +80,7 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
   no `python -m` vs `python -c`, no lock on `.env` or on its own `config.yaml`. `approvals.mode` is `smart` (an AI guesses
   what is dangerous; `shared.commands … --yes` passes unasked). So today the only wall is that Hermes follows its
   instructions. A wrapper script alone does not help while Hermes can run any terminal command.
-- [ ] **Level 1 — now (my decision, 2026-10-12), in the Air's terminal, never from Telegram:**
+- [ ] **Level 1 (written 2026-10-12; done at `TEST_PLAN.md` D4 unless I choose earlier), in the Air's terminal, never from Telegram:**
       1. `hermes config set approvals.mode manual` — every shell command waits for my yes on Telegram (enforced by
          Hermes's software, not by the model; questions ask too — accepted for now).
       2. `~/.hermes/.env` has `TELEGRAM_ALLOWED_USERS=<my numeric user ID>` and nothing else in it (the gateway denies
