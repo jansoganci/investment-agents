@@ -22,16 +22,22 @@ class FakeAI:
         self.models: list[str] = []
         self.input_tokens, self.output_tokens = input_tokens, output_tokens
         self.fail: set[str] = set()  # providers that fail with a ProviderError
+        self.sources: list[dict] = []  # what a web-search call "found" (only the anthropic stand-in can search, like the real one)
+        self.searches = 1
 
     def _backend(self, provider: str):
         def backend(entry, system, prompt, max_tokens):
             if provider in self.fail:
                 raise ProviderError("fake failure")
+            if entry.get("web_search") and provider != "anthropic":
+                raise ProviderError("no web search here")
             self.calls.append((entry["job"], system, prompt))
             self.models.append(f"{provider}:{entry['model']}")
             out = self.handler(entry["job"], system, prompt)
             text = out if isinstance(out, str) else json.dumps(out)
-            return Reply(text, provider, entry["model"], self.input_tokens, self.output_tokens)
+            web = bool(entry.get("web_search"))
+            return Reply(text, provider, entry["model"], self.input_tokens, self.output_tokens,
+                         sources=tuple(self.sources) if web else (), searches=self.searches if web else 0)
         return backend
 
     def install(self, monkeypatch) -> "FakeAI":

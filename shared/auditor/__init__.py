@@ -21,7 +21,7 @@ from shared import ai, clock, config
 from shared.sec import filing
 
 CARDS = Path(__file__).resolve().parent / "cards"
-KINDS = ("figure", "reading", "sell")
+KINDS = ("figure", "reading", "sell", "event")
 VERDICTS = ("pass", "fail", "not_found")
 
 ENGINE = """You are an auditor. You check; you never produce or correct figures and you never write new claims.

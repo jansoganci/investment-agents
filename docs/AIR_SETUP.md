@@ -80,7 +80,7 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
   no `python -m` vs `python -c`, no lock on `.env` or on its own `config.yaml`. `approvals.mode` is `smart` (an AI guesses
   what is dangerous; `shared.commands … --yes` passes unasked). So today the only wall is that Hermes follows its
   instructions. A wrapper script alone does not help while Hermes can run any terminal command.
-- [ ] **Level 1 — now (my decision, 2026-10-12), in the Air's terminal, never from Telegram:**
+- [ ] **Level 1 (written 2026-10-12; done at `TEST_PLAN.md` D4 unless I choose earlier), in the Air's terminal, never from Telegram:**
       1. `hermes config set approvals.mode manual` — every shell command waits for my yes on Telegram (enforced by
          Hermes's software, not by the model; questions ask too — accepted for now).
       2. `~/.hermes/.env` has `TELEGRAM_ALLOWED_USERS=<my numeric user ID>` and nothing else in it (the gateway denies
@@ -138,7 +138,7 @@ is limited to, together with `shared.commands`.
 
 ## Later (not step 0)
 
-- Playwright + the one-time logins to Emtia Defteri and Dragonomi (with agent 1).
+- The cookie header of my login to Emtia Defteri and Dragonomi in the Air's `.env` (with agent 1; roadmap "Agent 1 rules" 13 — plain HTTP, no Playwright for now).
 - The nightly SQLite backup to `Investing/Backup/` is built (`uv run python -m shared.backup`); it is scheduled with the other
   jobs in phase 6.
 

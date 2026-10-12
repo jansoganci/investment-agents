@@ -38,31 +38,81 @@ def make_openai(key: str, base_url: str | None, timeout: float):
     return openai.OpenAI(api_key=key, base_url=base_url, timeout=timeout)
 
 
+WEB_SEARCH_TOOL = "web_search_20260209"      # Sonnet 5.5 / Opus 5.x: dynamic filtering (claude-api skill, 2026-10)
+MAX_CONTINUES = 4                            # a long search turn can end in `pause_turn`: ask again, at most this many times
+
+
+def _web_sources(content) -> tuple[list[dict], bool]:
+    """The pages a web-search answer rests on (search results and the citations in the text), and whether a search failed."""
+    found: dict[str, dict] = {}
+    failed = False
+    for block in content:
+        kind = getattr(block, "type", "")
+        if kind == "web_search_tool_result":
+            results = getattr(block, "content", None)
+            if isinstance(results, list):
+                for item in results:
+                    url = getattr(item, "url", None)
+                    if url:
+                        found.setdefault(url, {"url": url, "title": getattr(item, "title", None), "cited_text": None})
+            else:
+                failed = True                # an error object, not a list (HTTP 200: the tool reports it in the block)
+        elif kind == "text":
+            for cite in getattr(block, "citations", None) or []:
+                url = getattr(cite, "url", None)
+                if url:
+                    entry = found.setdefault(url, {"url": url, "title": getattr(cite, "title", None), "cited_text": None})
+                    entry["cited_text"] = entry["cited_text"] or getattr(cite, "cited_text", None)
+    return list(found.values()), failed
+
+
 def anthropic_backend(entry: dict, system: str, prompt: str, max_tokens: int) -> Reply:
     client = make_anthropic(_key("anthropic"), _timeout())
-    kwargs = {"model": entry["model"], "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]}
+    messages = [{"role": "user", "content": prompt}]
+    kwargs = {"model": entry["model"], "max_tokens": max_tokens}
     if system:
         kwargs["system"] = system
     if entry.get("effort"):
         kwargs["output_config"] = {"effort": entry["effort"]}  # thinking stays on its default (adaptive)
-    try:
-        msg = client.messages.create(**kwargs)
-    except anthropic.APIStatusError as exc:
-        raise ProviderError(f"HTTP {exc.status_code}: {exc.message}") from exc
-    except anthropic.APIConnectionError as exc:
-        raise ProviderError("could not be reached") from exc
-    usage = (msg.usage.input_tokens, msg.usage.output_tokens, None)  # billed even when the answer is rejected below
-    if msg.stop_reason == "refusal":
-        raise ProviderError("the model refused (safety classifier)", usage=usage, outcome="refused")
-    if msg.stop_reason == "max_tokens":
-        raise ProviderError("the answer was cut at max_tokens (thinking counts too); raise `ai.max_tokens`", usage=usage,
-                            outcome="cut")
-    text = "".join(b.text for b in msg.content if b.type == "text")
-    return Reply(text, "anthropic", entry["model"], usage[0], usage[1])
+    if entry.get("web_search"):
+        kwargs["tools"] = [{"type": WEB_SEARCH_TOOL, "name": "web_search", "max_uses": int(entry["web_search"])}]
+    n_in = n_out = searches = 0
+    sources: dict[str, dict] = {}
+    text = ""
+    for _ in range(MAX_CONTINUES + 1):
+        try:
+            msg = client.messages.create(messages=messages, **kwargs)
+        except anthropic.APIStatusError as exc:
+            raise ProviderError(f"HTTP {exc.status_code}: {exc.message}") from exc
+        except anthropic.APIConnectionError as exc:
+            raise ProviderError("could not be reached") from exc
+        n_in += msg.usage.input_tokens
+        n_out += msg.usage.output_tokens
+        used = getattr(getattr(msg.usage, "server_tool_use", None), "web_search_requests", None)
+        searches += int(used or 0)
+        usage = (n_in, n_out, None)  # billed even when the answer is rejected below
+        if msg.stop_reason == "refusal":
+            raise ProviderError("the model refused (safety classifier)", usage=usage, outcome="refused")
+        if msg.stop_reason == "max_tokens":
+            raise ProviderError("the answer was cut at max_tokens (thinking counts too); raise `ai.max_tokens`", usage=usage,
+                                outcome="cut")
+        found, _failed = _web_sources(msg.content)
+        for item in found:
+            sources.setdefault(item["url"], item)
+        text += "".join(b.text for b in msg.content if b.type == "text")
+        if msg.stop_reason == "pause_turn":
+            messages = messages + [{"role": "assistant", "content": msg.content}]
+            continue
+        break
+    else:
+        raise ProviderError("the search turn did not finish", usage=(n_in, n_out, None), outcome="cut")
+    return Reply(text, "anthropic", entry["model"], n_in, n_out, sources=tuple(sources.values()), searches=searches)
 
 
 def openai_style_backend(provider: str):
     def backend(entry: dict, system: str, prompt: str, max_tokens: int) -> Reply:
+        if entry.get("web_search"):
+            raise ProviderError(f"{provider} cannot run a web search here")      # only Anthropic's tool is wired
         client = make_openai(_key(provider), BASE_URLS[provider], _timeout())
         messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
         kwargs = {"model": entry["model"], "messages": messages}

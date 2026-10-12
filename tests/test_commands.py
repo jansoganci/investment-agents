@@ -112,9 +112,11 @@ def test_unknown_command_is_refused(db):
     assert code == 2 and "not on the command list" in text.lower()
 
 
-def test_planned_command_says_not_built_yet(db):
-    code, text = commands.run(["tag", "rio-tinto", "RIO"])
-    assert code == 1 and "phase 4" in text
+def test_planned_command_says_not_built_yet(db, monkeypatch):
+    # every menu command is built by now; a planned one is simulated
+    monkeypatch.setitem(commands.REGISTRY, "futurecmd", commands.Command("futurecmd", "A command that is not built yet", "/futurecmd", phase=9))
+    code, text = commands.run(["futurecmd"])
+    assert code == 1 and "phase 9" in text
     assert db.execute("SELECT count(*) FROM command_log").fetchone()[0] == 0
 
 

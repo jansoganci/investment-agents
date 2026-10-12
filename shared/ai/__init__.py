@@ -11,6 +11,7 @@ the month's spend has reached the limit. The providers are in `shared/ai/backend
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, replace
 from typing import Callable
 
@@ -42,6 +43,8 @@ class Reply:
     cost_usd: float | None = None      # None = the tokens are unknown
     job: str = ""
     estimated: bool = False            # counted at the default price (the model has none in settings.yaml)
+    sources: tuple = ()                # web search: ({"url", "title", "cited_text"}, ...) the answer rests on
+    searches: int = 0                  # web searches the provider ran (each is billed on top of the tokens)
 
 
 # provider → backend(entry, system, prompt, max_tokens) -> Reply. Filled by `shared.ai.backends`; tests replace it.
@@ -164,12 +167,27 @@ def spend_by_provider(conn) -> list[dict]:
     return [{"provider": p, "calls": n, "usd": usd, "estimated": e, "rejected": r} for p, n, usd, e, r in rows]
 
 
+def parse_json(text: str):
+    """The first JSON object or list in an answer (a code fence or text around it is tolerated)."""
+    starts = [i for i in (text.find("{"), text.find("[")) if i >= 0]
+    if not starts:
+        raise ValueError("no JSON in the answer")
+    start = min(starts)
+    closer = "}" if text[start] == "{" else "]"
+    end = text.rfind(closer)
+    if end < start:
+        raise ValueError("the JSON is not closed")
+    return json.loads(text[start:end + 1])
+
+
 # --- the call -------------------------------------------------------------------------------------------------------------
 
 def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = None, run=None, stock_id=None,
-         model: str | None = None, conn=None, exclude_families: set | None = None, only_first: bool = False) -> Reply:
+         model: str | None = None, conn=None, exclude_families: set | None = None, only_first: bool = False,
+         web_search: int | None = None) -> Reply:
     """`exclude_families`: models of these makers are skipped (the auditor never uses the writer's family).
-    `only_first`: no fallback to the next provider (the strong-model test must know which model answered)."""
+    `only_first`: no fallback to the next provider (the strong-model test must know which model answered).
+    `web_search`: the most searches the model may run (Anthropic's web search tool); a provider that cannot search is skipped."""
     s = config.settings()
     own = conn is None
     conn = conn or dbmod.connect()
@@ -194,7 +212,7 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
                 errors.append(f"{entry['provider']}: unknown provider")
                 continue
             try:
-                reply = backend(dict(entry, job=job), system, prompt, tokens)
+                reply = backend(dict(entry, job=job, web_search=web_search), system, prompt, tokens)
             except ProviderError as exc:
                 errors.append(f"{entry['provider']} {entry['model']}: {exc}")
                 if exc.usage:  # billed although rejected: still counted
@@ -205,6 +223,8 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
                 continue
             if reply.cost_usd is None:
                 cost, est = cost_of(reply.model, reply.input_tokens, reply.output_tokens)
+                if cost is not None and reply.searches:
+                    cost += reply.searches * float((s.get("pricing") or {}).get("web_search_per_call", 0.01))
                 reply = replace(reply, cost_usd=cost, estimated=est)
             reply = replace(reply, job=job)
             _log(conn, run, reply, stock_id)

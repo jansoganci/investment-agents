@@ -45,20 +45,23 @@ archive. Do not move or rename the archive unless that is the task.
 Exists today:
 ajanlar/analiz/prototip/   agent 3 rule trial (archive, not production)
 ajanlar/teknik/backtest/   backtest scripts (archive)
-docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md,
+docs/                      YOL_HARITASI_v2.md, IMPLEMENTATION_PLAN.md, TEST_PLAN.md (the real-world tests of phases 4–6), SCHEDULE.md, BAGLAM.md, GLOSSARY.md, TASINANLAR.md, DIS_INCELEME_PROMPT.md, AIR_SETUP.md,
                            telegram_setcommands.txt; reviews/ (external reviews)
 shared/                    phase 0: config, clock, db (tables + upgrade steps), backup, runlog, notify, drive, commands, ask
                            phase 1: sec (client, facts, synonyms), sectors, prices (job + yahoo), commands/stocks.py
                            phase 3: commands/portfolio.py (/bought /sold /gold /bes /portfolio)
+                           phase 4: commands/eye.py (/tag /subsector)
+                           phase 5–6 (built early): commands/research.py (/candidates /summary), summary, alerts, sunday (python -m shared.sunday | shared.alerts)
 agents/analysis/           phase 1: agent 3's numbers — measures, card, run; python -m agents.analysis KO | --weekly
 agents/portfolio/          phase 3: agent 4 — ledger, marketdata, value, watch, block, run; python -m agents.portfolio [--show]
+agents/counter/            phase 5 (built early): 1B — count; python -m agents.counter [--show]
+agents/research/           phase 5 (built early): agent 2 — health, tailwind, score, reading, news, page, run; python -m agents.research [TICKER]
+agents/eye/                phase 4: agent 1 — sites, http, sitemap, extract, store, run, sentence, inbox, tags, modeltest, session_check, set_cookie;
+                           python -m agents.eye [--accept-many] · .session_check emtia|dragonomi · .modeltest
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 pyproject.toml, uv.lock, settings.yaml, .env.example
 
 Planned (not created yet):
-agents/eye/         1. Eye — reads Emtia Defteri + Dragonomi, writes one sentence (3 passes a day)
-agents/counter/     1B. Counter — counts stocks / sectors / commodities over the last 7 days (code, no AI)
-agents/research/    2. Research — reading + web search + score; opens the card (weekly, Sunday)
 shared/             still to come: AI, the auditor, the Sunday summary
 ```
 
@@ -80,7 +83,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-12 (Hermes limits, level 1 decided — `approvals.mode manual`, only my Telegram user, Telegram two-step; I apply it in the Air's terminal; level 2 = the terminal tool off + our commands as Hermes's own tools, later. Phase 3 done 2026-10-09; next after the limits: phase 4)
+- **Last update:** 2026-10-12 (Hermes limits: what Hermes can enforce and levels 1–2 written in `AIR_SETUP.md` phase 5; done at `TEST_PLAN.md` D4 unless I choose earlier) · 2026-10-11 (phase 4 code done, the Counter built early — see the Phase 4 entry and the rule 5 exception) · 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
@@ -106,6 +109,44 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   dividend $4.24 — checked by hand. Gold and BES entered on 10-09 are not in the 10-02 snapshot (right). **Phase 3 done (my
   decision, 2026-10-09):** the block reads well. `/portfolio` on the real database: empty (no real buy entered yet) — right.
   The Air's production copy is `~/Downloads/investment-agents` (macOS asked once for Downloads access).
+- **Phase 4 (Eye) started (2026-10-11)** on `feat/phase-4-eye`. **Site probe** (Hermes on the Air, no login, files in `~/eye-probe/`): both
+  sites are Ghost; Emtia Defteri shows nothing without a login, Dragonomi a cut preview; `lastmod` jumps on thousands of old posts, so
+  a post is new when its address is not in the database (first run = baseline, a pass with > 200 new addresses reads none);
+  a post's own tags come from the page meta as display names; Dragonomi's tags are mostly Chinese companies. Written into the roadmap,
+  "Agent 1 rules" 10–18. **My decisions (2026-10-11):** a pass with > 200 new addresses reads none · a gated page is `text_missing`,
+  never forced or retried, no "log-in ended" alert · a company listed in the US (ADR too) gets the SEC check, a non-US one gets none
+  and no question · `Inbox/` = one file a day, `YYYY-MM-DD.md` · the subsector list is drafted from the first passes' tags · login by my
+  cookie header over plain HTTP, no Playwright for now (Ghost has no password; I never give the system my e-mail password). **Built:** `agents/eye` (`http`, `sites`, `extract`, `session_check`; slices A + B: `sitemap`, `store`, `run`, `python -m agents.eye [--accept-many]`; slice C: `sentence`, `inbox`, `modeltest`; slice D: `tags`, `/tag`, `/subsector`; database version 6 = `eye_seen`, version 7 = tags `region` / `other`, state, `subsectors.void`), 100+ more tests, `.env.example`
+  `EMTIA_COOKIE` / `DRAGONOMI_COOKIE`. **Next, my part (main Mac):** `git pull` → log in to each site in my browser → copy the request's
+  `cookie` header into `.env` → `uv run python -m agents.eye.session_check emtia` and `... dragonomi` → send the output to Claude
+  (the cookie is never printed; do not send it to Telegram or Hermes). **All the code that can be written without the sites is written** (slices A–D). Left, all needing the real sites: the Mac
+  `session_check` (does the cookie give the full text? how long does it live?), then on the Air `git pull` + `shared.db upgrade`
+  (5 → 7), the cookies in its `.env`, the 20-post cheap-model test (`python -m agents.eye.modeltest`, after a few real passes),
+  then the phase 4 audit session and the one-week check.
+- **Exception to fixed rule 5 (my decision, 2026-10-11):** the Counter (1B, phase 5) is built before phase 4 is done (phase 4 waits for the
+  Mac `session_check`, the Air and the one-week check). **Counter decisions (roadmap "Agent 1B rules" 6):** the 7 days count on the
+  published date · posts cut by the paywall count · only confirmed tags count (waiting tags are one line of note) · tags of one company
+  are one stock, a post counts once · a stock with a card is "mentioned a lot" at 6 posts in 7 days · sector counts come from sector
+  tags only · order: 7-day posts, then 30-day posts, then ticker · the result goes to the table `counts` (database version 8; agent 2
+  reads the latest run) · numbers in `settings.yaml` `counter:`. **Built (same day):** `agents/counter` (`count`, `block`, `python -m agents.counter [--show]`), database version 8 (`counts`), 23 tests, **514 tests pass**. On the Air it needs `shared.db upgrade` (7 → 8) and real posts. Agent 2 (Research) waits for real posts.
+- **Phase 5 Research and phase 6 built early (my instruction, 2026-10-11: "write all the code that can be written, then test it"):** decisions are in
+  the roadmap, "Agent 2 rules" 8 and 9 (Claude's proposals where I had not decided: the web-search tool, the quick-health arithmetic for 3–4
+  computed checks, the summary contents, the alert list, the schedule) — change any by saying so. Slices: R1 web search in `shared/ai` + database
+  version 9 · R2 quick health, sector tailwind, score · R3 reading, news, events audit · R4 Research run, cards, `/candidates`, `/watch` · S1 summary,
+  `/summary`, `/status` warnings · S2 alerts · S3 the Sunday chain and `docs/SCHEDULE.md`. **Built so far (2026-10-11):** R1 (web search in `shared/ai`: `ai.call(..., web_search=N)`, Anthropic's `web_search_20260209`, sources and the $0.01
+  per search counted; database version 9: `readings`, `news_events`, `stocks.commodity_checked`) · R2 (`agents/research`: `health`, `tailwind`, `score`;
+  `settings.yaml` `commodity_symbols`, `research:`; the price job also fetches linked commodities; agent 3's `Result.series`) · R3 (`reading`, `news`
+  — one web-search call returns the story, the events and the commodity links —, `page`, auditor card 4 `event.md` + 5 test-set cases) · R4
+  (`run`, `python -m agents.research [TICKER]`, `/candidates`, `/watch` for a new stock runs agent 2 then agent 3). The auditor test set (now with
+  the event cases) and the web search have not met a real model yet: that is the Air test. **S1–S3 built:** `shared/summary` (the Sunday summary, saved in
+  `Weekly/`, `/summary`), `/status` warnings (a job `running` over 1 h, a backup over 36 h; `settings.yaml` `warnings:`), `shared/alerts` (hourly, each alert once,
+  database version 10 `alerts_sent`), `shared/sunday` (the chain), `docs/SCHEDULE.md` (the five Hermes jobs), `settings.yaml` `hours`. **Nothing of phases 4–6 has met the real
+  sites, a real model or Hermes yet.** Next, only with real data: the Mac `session_check`, the Air update (`git pull`, `shared.db upgrade` → 10, cookies in `.env`), the Eye baseline,
+  a week of passes, the model tests, then `docs/SCHEDULE.md` "Before the first scheduled run", the audits.
+- **Real-world tests of phases 4–6 (2026-10-11):** the plan, the order, who does what (U me · M Claude Code on the Mac · H Hermes on the Air · C the cloud
+  session), the prompts and the terminal commands are in `docs/TEST_PLAN.md`; its section 6 is the results log. Block A (no login: baseline, upgrade rehearsal
+  on a copy of the real database, real models, the auditor test set, Research with web search, Yahoo symbols) comes first because the Anthropic credit ends
+  on 2026-10-19. Hermes' limits stay the last step (D4).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
