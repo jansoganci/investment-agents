@@ -229,7 +229,7 @@ toward the 200-address guard, so a long postponement needs `--accept-many` or a 
 | C1 | U | | — | |
 | C2 | H | | — | |
 | C3 | H | | — | |
-| D1 | H | | — | |
+| D1 | H (U approves by Telegram) | 2026-10-12 | PASS | Production `~/Downloads/investment-agents` pulled to d929cef; real database backed up first (`~/investment-agents-data/pre-d1-20261012.sqlite`, 708,608 bytes), then upgraded 5 → 10 (steps 6–10). All 20 old tables kept their row counts (diff showed only new tables: alerts_sent, counts, eye_seen, news_events, readings, all empty); `integrity_check` ok, `foreign_key_check` empty. Hermes checked the target path before upgrading. |
 | D2 | U+H | | — | |
 | D3 | H | | — | |
 | D4 | U + H | 2026-10-12 | PARTIAL (Level 1 only, remotely) | `approvals.mode manual` set by Hermes on U's Telegram while U travels; `rm -rf` of a non-existing folder asked for approval, harmless commands did not. Only dangerous patterns are gated (see `AIR_SETUP.md` phase 5). Telegram allowed-user line checked (one numeric ID). Level 2 and the other-account test wait until U is home (2026-10-23). |
