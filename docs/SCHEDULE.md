@@ -11,7 +11,7 @@ Every command is run from the production folder `~/Downloads/investment-agents` 
 |---|---|---|---|---|
 | 1 | Prices | every day 03:00 | `python -m shared.prices` | only an error |
 | 2 | Backup | every day 04:00 | `python -m shared.backup` | nothing when all is well |
-| 3 | Eye | 07:00, 13:00, 20:00 | `python -m agents.eye` | the first-run baseline, pages cut by the paywall, failures, a block |
+| 3 | Eye | 07:00, 13:00, 20:00 | `python -m agents.eye` | the first-run baseline, pages cut by the paywall, **"the login cookie has probably expired" when the last 5 pages in a row were cut (decision 2026-10-12)**, failures, a block |
 | 4 | Alerts | every hour at :05 | `python -m shared.alerts` | only new alerts (grade drop of a holding, new solid, drop alert, auditor disagreement, OpenRouter spend) |
 | 5 | Sunday chain | Sunday 09:00 | `python -m shared.sunday` | the Sunday summary |
 
