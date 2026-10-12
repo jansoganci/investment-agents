@@ -20,6 +20,7 @@ CAP = 80                   # pages per pass (Agent 1 rule 4)
 GUARD = 200                # more new addresses than this in one pass → read none (my decision, 2026-10-11)
 PAUSE_S = (20, 30)         # seconds between two requests
 MAX_FAILS_IN_A_ROW = 3     # network errors, or pages whose body could not be found
+COOKIE_WARN_AFTER = 5      # this many cut pages in a row with a cookie set → "the cookie has probably expired" (my decision, 2026-10-12)
 
 
 class PassStopped(RuntimeError):
@@ -158,9 +159,20 @@ def run_pass(conn, *, sites: dict | None = None, cookies: dict | None = None, fe
 
     for key, queue in queues.items():
         result.tally[key].waiting = len(queue)
+    for key, site in sites.items():
+        if cookies.get(key) and result.tally[key].text_missing and _cookie_looks_expired(conn, key):
+            result.notes.append(f"{site.name}: the last {COOKIE_WARN_AFTER} pages in a row were cut by the paywall. The login cookie has "
+                                f"probably expired and needs renewing (python -m agents.eye.set_cookie {key}).")
     if ai_stage:
         after_reading(conn, result, run=run, seclist=seclist)
     return result
+
+
+def _cookie_looks_expired(conn, key: str) -> bool:
+    """The newest COOKIE_WARN_AFTER pages that were read or cut are all cut: with a valid login that does not happen (my decision, 2026-10-12)."""
+    rows = conn.execute("SELECT how FROM eye_seen WHERE site = ? AND how IN ('read', 'text_missing') ORDER BY seen_at DESC, rowid DESC LIMIT ?",
+                        (key, COOKIE_WARN_AFTER)).fetchall()
+    return len(rows) == COOKIE_WARN_AFTER and all(row[0] == "text_missing" for row in rows)
 
 
 def after_reading(conn, result: Result, *, run=None, seclist: tags.SecList | None = None) -> None:

@@ -165,6 +165,10 @@ Title, date, and tags are public; the rest of the post requires a member login.
     one sentence, the address (rule 6).
 18. **Subsector list (my decision, 2026-10-11):** Claude drafts it from the tags the first passes collect and I approve it; until
     then a tag's subsector stays empty. It is not needed before the build.
+19. **The cookie warning (my decision, 2026-10-12):** when the last 5 pages the Eye read or cut for a site (with its cookie set) were all cut
+    by the paywall, the pass message says the login cookie has probably expired and needs renewing. A valid login does not cut 5 in a row, so
+    this is a signal, not a guess. It repeats at every pass (3 a day) until a page is read whole. This answers rule 16's open end: posts cut
+    by an expired cookie still count in the Counter through their public tags; only the sentence and the full text are lost.
 
 ### Sector list (decision: 2026-10-03)
 

@@ -241,3 +241,38 @@ def test_a_cross_host_address_in_the_sitemap_is_never_fetched(db, web):
 def test_the_database_is_at_the_latest_version_with_the_new_table(db):
     assert dbmod.version(db) >= 6
     assert db.execute("SELECT name FROM sqlite_master WHERE name='eye_seen'").fetchone()
+
+
+def _gated(db, web, names):
+    web.set_sitemap(EM, ["old-1", "old-2", *names])
+    for n in names:
+        web.pages[f"{EM.base}/{n}/"] = EMTIA_GATED
+    return go(db, web)
+
+
+def test_five_cut_pages_in_a_row_say_the_cookie_has_probably_expired(db, web):
+    first_run(db, web)
+    result = _gated(db, web, ["a", "b", "c", "d", "e"])
+    assert "the last 5 pages in a row were cut by the paywall" in result.message()
+    assert "set_cookie emtia" in result.message()
+
+
+def test_four_cut_pages_or_a_good_page_among_them_do_not_say_it(db, web):
+    first_run(db, web)
+    assert "probably expired" not in _gated(db, web, ["a", "b", "c", "d"]).message()
+    web.set_sitemap(EM, ["old-1", "old-2", "a", "b", "c", "d", "ok"])
+    web.pages[f"{EM.base}/ok/"] = EMTIA_FULL
+    go(db, web)                                              # a good page is read after the four cut ones
+    web.set_sitemap(EM, ["old-1", "old-2", "a", "b", "c", "d", "ok", "e"])
+    web.pages[f"{EM.base}/e/"] = EMTIA_GATED
+    result = go(db, web)                                     # one more cut page: the newest five are not all cut
+    assert "probably expired" not in (result.message() or "")
+
+
+def test_no_cookie_no_warning(db, web):
+    first_run(db, web)
+    web.set_sitemap(EM, ["old-1", "old-2", "a", "b", "c", "d", "e"])
+    for n in "abcde":
+        web.pages[f"{EM.base}/{n}/"] = EMTIA_GATED
+    result = run.run_pass(db, cookies={"emtia": "", "dragonomi": ""}, fetch=web, sleep=lambda s: None, pause=lambda a, b: a)
+    assert "probably expired" not in (result.message() or "")
