@@ -8,6 +8,8 @@ The texts are short stand-ins written for the traps, not real filings."""
 
 from __future__ import annotations
 
+import sys
+
 from shared import auditor
 
 KO = ("Cash and cash equivalents $ 10,270\nShort-term investments 3,602\nMarketable securities 1,934\nTotal current assets 28,000\n"
@@ -29,6 +31,15 @@ GE_TTM = ("the two year-to-date figures against this filing; never fail the tota
 REV = "Revenue increased 12% to $4.1 billion in the quarter, driven by higher volumes. Management expects growth to continue."
 NOTES = ("In June 2026 we issued $25.0 billion of senior notes to fund general corporate purposes.\n"
          "As of July 26, 2026, we had $33.5 billion aggregate principal amount of senior notes outstanding.")
+
+ACME_CFO = ("Acme Corp announced today that its chief financial officer, Jane Roe, has resigned effective immediately. "
+            "The company also withdrew its full-year outlook and said it would update investors later.")
+ACME_COMPETITOR = ("Beta Corp disclosed that the SEC has opened an investigation into its revenue recognition. "
+                   "Acme Corp, a competitor, said it is not involved and reaffirmed its outlook.")
+ACME_OLD = ("In March 2021 Acme Corp's auditor resigned citing accounting irregularities; the company restated three years of results. "
+            "Since then it has changed auditors and reported clean results.")
+ACME_PLANNED = ("Acme Corp announced that chief executive John Poe will retire in 18 months and that the board has begun a search "
+                "for a successor. Mr Poe will stay on during the transition.")
 
 CASES = [
     # (card, name, text, items, the verdict required for the item)
@@ -86,6 +97,22 @@ CASES = [
        "claim": "Debt rose from 8.5 to 33.4 bn because the company borrowed to pay for the acquisition of a chip designer.",
        "quote": "In June 2026 we issued $25.0 billion of senior notes to fund general corporate purposes.",
        "terms": ["senior notes"]}], "fail"),
+    ("event", "a CFO who left suddenly with a withdrawn outlook is a real serious negative", ACME_CFO,
+     [{"id": "e1", "claim": "Acme Corp (ACME): sudden departure of the CFO together with a withdrawn outlook, 2026-09-15",
+       "quote": "its chief financial officer, Jane Roe, has resigned effective immediately", "terms": ["chief financial officer"]}], "pass"),
+    ("event", "another company's investigation is not this company's", ACME_COMPETITOR,
+     [{"id": "e1", "claim": "Acme Corp (ACME): an official SEC investigation into its revenue recognition, 2026-09-10",
+       "quote": "the SEC has opened an investigation into its revenue recognition", "terms": ["investigation"]}], "fail"),
+    ("event", "a general risk sentence is not an event (NET)", NET,
+     [{"id": "e1", "claim": "Cloudflare (NET): company-specific official investigation, 2026-09-01",
+       "quote": "We may become subject to claims, lawsuits or regulatory proceedings that could be costly and harm our business.",
+       "terms": ["lawsuits"]}], "fail"),
+    ("event", "an event from 2021 repeated in a recent article is too old", ACME_OLD,
+     [{"id": "e1", "claim": "Acme Corp (ACME): accounting or auditor problem, 2026-09-20",
+       "quote": "In March 2021 Acme Corp's auditor resigned citing accounting irregularities", "terms": ["auditor"]}], "fail"),
+    ("event", "a planned CEO retirement is not a sudden departure", ACME_PLANNED,
+     [{"id": "e1", "claim": "Acme Corp (ACME): sudden departure of the CEO, 2026-09-18",
+       "quote": "chief executive John Poe will retire in 18 months", "terms": ["chief executive"]}], "fail"),
     ("sell", "a sell suggestion whose evidence says the opposite", REV,
      [{"id": "sell", "claim": "the thesis broke — revenue fell 30% — \"Revenue increased 12% to $4.1 billion in the quarter\"",
        "terms": ["revenue"]}], "fail"),
@@ -94,10 +121,11 @@ CASES = [
 
 def run(model: str | None = None, run=None) -> list[dict]:
     out = []
-    for card, name, text, items, want in CASES:
+    for n, (card, name, text, items, want) in enumerate(CASES, 1):
         res = auditor.audit(card, items, text, model=model, run=run)
         got = res.items[0]["verdict"] if res.items else "no_answer"
         out.append({"card": card, "case": name, "want": want, "got": got, "ok": got == want, "reason": (res.items or [{}])[0].get("reason", res.error)})
+        print(f"[{n}/{len(CASES)}] card {card} · {name} → {got} (want {want})", file=sys.stderr, flush=True)
     return out
 
 

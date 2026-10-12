@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 from agents.analysis import sell
 from shared import ai, auditor, config
+from shared.ai import parse_json  # noqa: F401 — moved to shared.ai in phase 4 (the Eye needs it too)
 from shared.sec import FORMS_QUARTER, filing
 
 KINDS = ("company_specific", "general_risk")
@@ -128,19 +129,6 @@ class AIPart:
 
 
 # --- talking to the model --------------------------------------------------------------------------------------------------
-
-def parse_json(text: str):
-    """The first JSON object or list in an answer (a code fence or text around it is tolerated)."""
-    starts = [i for i in (text.find("{"), text.find("[")) if i >= 0]
-    if not starts:
-        raise ValueError("no JSON in the answer")
-    start = min(starts)
-    closer = "}" if text[start] == "{" else "]"
-    end = text.rfind(closer)
-    if end < start:
-        raise ValueError("the JSON is not closed")
-    return json.loads(text[start:end + 1])
-
 
 def ask_json(job: str, system: str, prompt: str, check, ctx: Context):
     """One call; a second try (told what was wrong) when the answer is not usable. `check(data)` raises ValueError."""

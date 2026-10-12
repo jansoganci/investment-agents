@@ -298,23 +298,33 @@ commodities and sectors.
 **Relies on:** roadmap section 3 "Agent 1 rules" (1–9) · "Sector list" · the "AI auditor" table row for agent 1 · section 4 (site
 reading, permission) · section 10.1 (the cheap model and its test).
 
-**Builds:**
-- `agents/eye`: new posts since the last pass from the sitemap; Playwright with my stored login; 20–30 seconds between pages, at
-  most ~80 pages a pass; stop at once on "too many requests" / "access denied" + a message; plain text only; glossary posts
-  skipped; `articles` (full text, `read_deep`, `text_missing`); one neutral English sentence (cheap model); the daily list in
-  `Inbox/`.
-- Tag mapping (`tags`): a new tag is classified once (company / commodity / sector); a company tag counts only if the ticker is in
-  SEC's company list and the name is close, otherwise it waits and the Sunday summary asks me; subsectors only from the approved
-  list (`subsectors`; `other` → "add a new subsector?").
-- Commands: `/tag`, `/subsector`.
+**Builds** (reshaped by the site probe of 2026-10-11 — roadmap "Agent 1 rules" 10–15):
+- **A. Fetching** (`agents/eye`): the sitemaps; a post is new when its address is not in the database; the first run is a
+  baseline (everything seen, nothing downloaded); a pass with more than 200 new addresses (my decision) reads none and reports (`--accept-many` goes on); plain HTTP
+  with my cookie (no Playwright for now); 20–30 seconds between pages, at most ~80 pages a pass; stop at once on "too many
+  requests" / "access denied" + a message. No "log-in ended" alert (my decision, 2026-10-11): a gated page is `text_missing` and is
+  not tried again; the pass message counts the gated pages.
+- **B. Extraction:** the body by the site's selectors, audio player and gate removed, plain text; glossary posts skipped;
+  `articles` (full text, `text_missing`; `read_deep` stays 0 — agent 2's flag).
+- **C. One sentence:** one neutral English sentence (cheap model); the daily list in `Inbox/`; the cheap-model test.
+- **D. Tags:** `tags` keyed by the display name; a new tag is classified once (`company` / `commodity` / `sector` / `region` /
+  `other`); a US-looking company tag counts only if the ticker is in SEC's company list and the name is close, otherwise it
+  waits and the Sunday summary asks me; a non-US company is stored as non-US with no SEC check and no question; subsectors only
+  from the approved list (`subsectors`; `other` → "add a new subsector?"). Commands: `/tag`, `/subsector`.
+- **Database:** version 6 (built) = `eye_seen`, the addresses seen; version 7 (with slice D) = the new `tags.kind` values and a state
+  for tags (`confirmed` / `waiting`).
 - The cheap-model test (section 10.1): 20 real posts, the sentences side by side; I choose.
 
-**Input needed first:** the first subsector list.
+**Built so far (2026-10-11, `feat/phase-4-eye`):** the fetch call with block detection and the same-host cookie rule
+(`agents/eye/http.py`), the site table and extraction (`sites.py`, `extract.py`, tested on pages built by hand in the shape the
+probe found), the pass (`sitemap.py`, `store.py`, `run.py`, `python -m agents.eye`: baseline, the 200 guard, turns between the two sites, oldest first, 80 pages, block stop, `text_missing`; database version 6 `eye_seen`), and the Mac cookie check `python -m agents.eye.session_check emtia|dragonomi` (3 requests a site). **Slices C and D built (2026-10-11):** after the reading, `sentence.py` (cheap model, one neutral sentence; an unusable answer twice → given up, an AI outage → tried again next pass), `inbox.py` (`Inbox/YYYY-MM-DD.md`), `tags.py` (classification in batches of 20 with the post title and the other tags as context; the SEC check for US-listed companies; non-US: none), `modeltest.py` (20 posts, two hidden models, `--reveal`), the commands `/tag` and `/subsector` (with `/undo`), database version 7. Claude's choices: the name-closeness rule (equal words, or all words of one name in the other with at most one extra word), tags the model does not answer are asked again next pass, `/tag` fixes only a tag the Eye has met. Left for the sites: the Mac check, the model test, the Air steps, the audit.
+
+**Input needed first:** none to start. The subsector list (`subsectors`) is drafted by Claude from the tags the first passes collect and approved by me (my decision, 2026-10-11).
 
 **Tests (here):** saved sitemap and post pages · only new posts are taken · the stop-on-block rule · glossary posts skipped · text
 extraction · tag mapping and the SEC name check.
 
-**Mac check, then the Air:** one login; one week of passes fills `articles` with no block (roadmap section 8, step 2).
+**Mac check, then the Air:** `session_check` on the Mac for both sites (does the cookie give the full text? how long does it live?); then one week of passes fills `articles` with no block (roadmap section 8, step 2).
 
 **Done when:** the tests pass, the audit has no blocker, the one-week check passes.
 
@@ -328,7 +338,7 @@ criteria, thresholds, the serious-negative list, quick health, `unclear` = 1) ·
 `/watch` for a stock with no card).
 
 **Builds:**
-- `agents/counter`: a rolling 7 days, distinct posts, only US-listed stocks in the ranking (ADRs included), the 30-day count
+- `agents/counter` (**built 2026-10-11**, roadmap "Agent 1B rules" 6; database version 8 `counts`): a rolling 7 days, distinct posts, only US-listed stocks in the ranking (ADRs included), the 30-day count
   beside it, stocks with a card left out with the "mentioned a lot" line, the non-US information line.
 - `agents/research`: at most 10 stocks; reading against set questions with a quote for every claim (`read_deep`); tone per post;
   news flow (web search, a source for every event, `company_specific` / `general_risk`, serious negatives checked by the auditor,
@@ -403,9 +413,9 @@ left stuck on purpose shows in `/status`.
 | 1 | ✅ | ✅ no blocker | ✅ | ⏳ | ✅ | ⏳ | `claude/phase-1-analysis-numbers-arj800` · PR #4 → PR #5 (merged 2026-10-05) | built and audited 2026-10-05 (exception, section 1) · PR #4 went into the phase 0 branch, PR #5 brought it to `main` · Mac check together with phase 0's, on `main` (incl. the real Yahoo answers, section 8) · on the Air: `git pull` + `uv run python -m shared.db upgrade` (version 2 → 3) |
 | 2 | ✅ | ✅ | ✅ | Air | ✅ | ✅ | `claude/phase-2-agent3-ai-arj800` + fixes | real-model runs and the 20-stock acceptance test on the Air (isolated); round 2 passed 2026-10-09 (roadmap, after rule 47); 3 cards read, rule 48 |
 | 3 | ✅ | ✅ no blocker | ✅ | ✅ (Hermes on the Air, isolated) | ✅ | ⏳ | `feat/phase-3-portfolio` (merged locally 2026-10-09) · `fix/phase-3-not-computed` | the real check found one crash (`peg: not_computed`), fixed; second run passed; **done 2026-10-09** (block approved) |
-| 4 | — | — | — | — | — | — | — | needs the Air (one week of passes) and the subsector list |
-| 5 | — | — | — | — | — | — | — | needs the Air (a real Sunday) |
-| 6 | — | — | — | — | — | — | — | runs on the Air |
+| 4 | ✅ slices A–D (code) | ⏳ | — | ⏳ `session_check` | — | — | `feat/phase-4-eye*` | site probe 2026-10-11 done (roadmap "Agent 1 rules" 10–18); the Mac check, the 20-post model test and the one-week check need the real sites |
+| 5 | ✅ Counter + Research built (stand-in data only) | — | — | — | — | — | `feat/phase-5-counter` | the Counter was built before phase 4 is done (my exception to rule 5, 2026-10-11); agent 2 waits for real posts (score thresholds, the web search) |
+| 6 | ✅ code built (summary, alerts, chain, `/status` warnings, `docs/SCHEDULE.md`) | — | — | — | — | — | `feat/phase-6-sunday` | built early under my exception to rule 5; the Air schedule and a full Sunday need the real data |
 
 ## 8. Not now — on purpose (2026-10-05)
 

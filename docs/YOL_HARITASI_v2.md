@@ -122,6 +122,50 @@ Title, date, and tags are public; the rest of the post requires a member login.
 8. **Not taken:** only glossary posts ("Emtia Sözlüğü", "Yatırım Sözlüğü"). Everything else is taken; agent 2 decides whether it is useful.
 9. **Cost:** ~150 posts / day, cheap model → roughly 1–5 $ / month (exact figure in the implementation plan).
 
+**What the site probe found (2026-10-11; Hermes on the Air, no login, saved in `~/eye-probe/` on the Air) and what changed because of it:**
+
+10. **Both sites are Ghost, behind Fastly (not Cloudflare), no rate-limit headers; `robots.txt` disallows only `/ghost/`, `/email/`,
+    `/members/api/comments/counts/`, `/r/`, `/webmentions/receive/`, `/.ghost/analytics/api/`.** Our own slowness is the only
+    protection (rule 4). Archive: Emtia Defteri 11,091 posts (about 60 a day; weekdays 70–96, weekends 15–20; 42% are short
+    "emtia-flash" notes), Dragonomi 14,863 posts.
+11. **`lastmod` is not a "new post" sign.** On Dragonomi it jumps on thousands of old posts on one day (3,750 on 2026-10-10) —
+    mass edits, not new posts. (This replaces "posts since the previous pass" in rule 2.) **A post is new when its address is not
+    in the database yet.** The first run is a **baseline**: every address in the sitemaps is recorded as seen, nothing is
+    downloaded (the 7-day window of the Counter fills during the one-week check; no backfill). **Guard (my decision, 2026-10-11):**
+    if one pass finds more than **200** new addresses, none is read, the pass stops and Telegram gets "unusual number of new
+    posts"; `python -m agents.eye --accept-many` reads them anyway (Claude's addition: the Air being off for two days would trip the
+    guard, and there must be a way on). A post that is edited later is not read again. The 80-page cap is for the whole pass; the
+    two sites are taken in turn, the oldest new address first (Claude's reading of rule 4).
+12. **Without a login:** Emtia Defteri shows nothing (a hard paywall: an empty body and a log-in block, `aside.gh-post-upgrade-cta`);
+    Dragonomi shows a cut preview of 500–800 characters (`div.content.post-sneak-peek`, gate `div.content-cta.paid`). **My decision
+    (2026-10-11):** a page that carries a gate block is **`text_missing`**: it is not read, not forced and **not tried again**; no
+    sentence is written for it. There is **no "log-in ended" stop or alert** (I give my logins; I do not expect a paywall). The pass
+    message only says how many pages of the pass were gated. Dragonomi's body also holds an audio player (`div.kg-audio-player`,
+    "Yazıyı dinle"): removed before the text is taken.
+13. **Login:** Ghost's sign-in is an e-mail link (Dragonomi's page confirms it; Emtia's is a pop-up, same kind expected), so it
+    cannot be automated. I log in once in my own browser and copy the request's `cookie` header into `.env`
+    (`EMTIA_COOKIE`, `DRAGONOMI_COOKIE`; never in git, never sent to Telegram or to Hermes). The Eye asks with that cookie over
+    plain HTTP — **no Playwright for now** (my decision, 2026-10-11; if the Mac check `agents.eye.session_check` shows the cookie
+    does not give the full text, Playwright comes back). The cookie is sent only to its own site (a redirect to another host is
+    not followed). `read_deep` is agent 2's flag; the Eye only sets `text_missing`.
+14. **Tags:** a post's own tags are in its page meta (`article:tag`; Emtia also has them in the JSON-LD `keywords`) as **display
+    names**. The `/tag/` links in the page are the site menu. So `tags.tag` is the display name (trimmed, Unicode-normalised) —
+    the sitemap's tag list (459 / 1,849 slugs) is not needed. Glossary posts are the ones tagged `emtia-sozlugu` /
+    `yatirim-sozlugu` (compared by the tag's slug). The tags are mixed: commodities, themes, regions and countries, companies
+    (mostly China on Dragonomi), page types ("Rapor Özetleri"), a few ticker-like (`leu`, `apd`) and some made from a post title.
+    `tags.kind` therefore also takes `region` and `other`.
+15. **Non-US companies (my decision, 2026-10-11):** a company tag the cheap model places outside the US is stored as a
+    non-US `company` (country and exchange when known). **No SEC check, and I am not asked about it.** Only a tag that looks
+    US (or an ADR) and fails the SEC name check waits for me. **Exactly (my decision, 2026-10-11):** the model says whether the
+    company is **listed in the US (an ADR counts)**. Listed → the SEC check (Alibaba's ADR is checked); not listed → no check,
+    no question.
+16. **Login is a cookie, never a password (2026-10-11):** Ghost's sign-in has no password (an e-mail link), so there is no
+    password to give the system. I never give the system my e-mail password; the only secret is the cookie header in `.env`.
+17. **`Inbox/` (my decision, 2026-10-11):** one file a day, `YYYY-MM-DD.md` (Turkey date), each pass appends its lines: title, the
+    one sentence, the address (rule 6).
+18. **Subsector list (my decision, 2026-10-11):** Claude drafts it from the tags the first passes collect and I approve it; until
+    then a tag's subsector stays empty. It is not needed before the build.
+
 ### Sector list (decision: 2026-10-03)
 
 Two levels; the AI picks **only from the list** for both (if it writes freely, "Energy" / "Fossil energy" / "Oil and gas"
@@ -146,6 +190,22 @@ I can correct it. The Eye's tag mapping takes over in phase 4 (`docs/IMPLEMENTAT
    summary they appear only as an information line: "Non-US names mentioned a lot" (the data is ready when the China add-on comes).
 5. **A stock that already has a card does not enter the ranking** (it is not scored again). But the Sunday summary has one line: "Stocks with
    a card mentioned a lot this week: XYZ (12 posts)" — I decide whether it gets scored again.
+6. **How phase 5 builds the Counter (my decisions, 2026-10-11):**
+   - The 7 days are counted on the post's **published** date (the date it was read, if the page gave none).
+   - A post cut by the paywall (`text_missing`) is counted: its tags are on the page.
+   - Only **confirmed** tags are counted. A tag that waits for my `/tag` is in no ranking; the output has one line saying how many wait.
+     A tag not classified yet is counted nowhere and noted.
+   - Two tags that map to one company (the same ticker) are one stock; a post counts once.
+   - The "mentioned a lot" bar for a stock that already has a card: **6 posts in 7 days**.
+   - A sector's count comes from **sector** tags only; a company tag adds nothing to a sector.
+   - Order: posts in 7 days, a tie → posts in 30 days, then the ticker. Only entities mentioned in the last 7 days are listed.
+   - The result is stored in the table `counts` (database version 8): one run = the rows with one `run_at`, never deleted; agent 2
+     reads the latest run (agents talk only through the database, fixed rule 4). A stock with a card is stored with no rank.
+     `mentions` points for agent 2 (1–2 posts → 0, 3–5 → 1, 6+ → 2) are stored with each stock. The numbers (7, 30, 10, 6, 3, 6) are
+     in `settings.yaml` `counter:`; they are starting values.
+   - `python -m agents.counter` counts, stores and prints; `--show` prints the latest stored run. Hermes can also read `counts` for
+     "what was mentioned most this week?".
+   - Built before phase 4 is done: an exception to fixed rule 5 (my decision, 2026-10-11).
 
 ### Agent 2 (Research) rules (decision: 2026-10-03)
 
@@ -168,6 +228,52 @@ I can correct it. The Eye's tag mapping takes over in phase 4 (`docs/IMPLEMENTAT
    card. The stock is marked **"added by me"** (`added_by: user`) and shows with that label in the week's ranking. Then X goes to
    `watching` and agent 3 writes the first fundamental entry (the balance-sheet analysis). A note can say where it came from
    (`/watch X recommended by abi`).
+8. **How phase 5 builds Research (decisions of 2026-10-11; built early under the exception to fixed rule 5; the web-search choice is
+   Claude's recommendation and stands until I say otherwise):**
+   - **Who:** the first `top` (10) US stocks without a card in the latest `counts` run. Run the Counter first; with no run, Research says so.
+   - **Reading and tone:** the strong model reads each post of the last 7 days that mentions the stock, one call per post, and gives a
+     label (positive / negative / neutral), one sentence of what is said, whether it is an event or a general comment, and a **quote**.
+     Code checks the quote is in the post word for word; if not, the label becomes neutral and a note says so. A post read before for
+     the same stock is not read again (table `readings`, `articles.read_deep = 1`). A post cut by the paywall (`text_missing`) cannot
+     be read and is not counted in the tone. Tone points: net = positive − negative; ≤ −2 → 0, −1…+1 → 1, ≥ +2 → 2.
+   - **News flow:** one strong-model call with **web search** per stock a week (Anthropic's web search tool `web_search_20260209`,
+     about 0.01–0.05 $ a call; only the Anthropic provider of the strong job can do it — if it cannot, `news_flow` is `unclear` = 1).
+     Every event has a source address, a quote, its scope (`company_specific` / `general_risk`), and its class (one of the 5 serious
+     negatives of the score rules, `important_positive`, or `other`). A company-specific serious negative is checked: the source page is
+     fetched (plain GET, no login), the quote must be on the page (code), then the auditor's event card (card 4) must pass, and the event
+     must be from the last 12 months. Not confirmed → not counted and a note says why (`news_events`). Points: a confirmed serious
+     negative → 0; none and at least one company-specific important positive with a source → 2; otherwise 1.
+   - **Commodity link:** the first time a stock is researched, one web-search call; the commodity must be a name from `settings.yaml`
+     `commodity_symbols` (so it has a Yahoo price), the role `producer` / `user`, with a source address → `commodity_links`. Checked
+     once (`stocks.commodity_checked`). The price job also fetches the linked commodities' symbols.
+   - **Sector tailwind (code):** item A: the stock's sector fund (XLE …) is above its 40-week average of weekly closes. Item B: if a
+     linked commodity has a price: a producer's commodity above its 40-week average, a user's below it; otherwise (no link or no price)
+     the sector fund beat SPY over the last 13 weeks. Less than 40 weeks of prices → item A fails with the reason "not enough price
+     history". The stock's sector: the tag's GICS sector, else SEC's industry code table.
+   - **Quick health (code, SEC):** the 5 checks of the score rules, computed from SEC's annual figures with the same free-cash formula
+     as agent 3. 5 computed: ≤ 2 passed → 0, 3–4 → 1, 5 → 2. 3 or 4 computed: all passed → 2, one short → 1, else 0. Fewer than 3
+     computed → `unclear` = 1. A share-count jump that looks like a split is not counted as dilution (that check is `unclear`).
+   - **Score:** code adds the five points; every criterion has its reason sentence. `scores` holds one row per stock per ISO week
+     (`2026-W41`); a rerun in the same week replaces it. The `mentions` points come from the Counter's row.
+   - **The card is born:** a `stocks` row (`candidate`, `added_by: counter`, CIK from SEC), the card on Drive with the story (2 sentences
+     from the news call), and the first entry `## <date> · research · agent_2` with the YAML block (score, the 5 criteria with reasons,
+     events with sources, commodity links) and `### Summary`. Prose and figures follow the card format.
+   - **Output:** `Weekly/YYYY-MM-DD-research.md` and a Telegram message (the ranking, the reasons in one line each, what was not confirmed).
+   - **`/watch X` for a stock with no card** runs Research for X alone (mentions 0, tone 1, `added_by: user`), then `watching`. `/candidates`
+     shows the latest week's ranking with reasons.
+   - **Cost:** about 1–2 $ a week with Sonnet 5.5 (10 stocks × reading + two web calls); inside the 25–30 $ budget.
+9. **Phase 6 (decisions of 2026-10-11; Claude's proposals, built to be tested):**
+   - **The Sunday chain** `python -m shared.sunday`: Counter → Research → Analysis weekly → Portfolio weekly → the summary. A failing step
+     is reported and the next ones still run. One message at the end.
+   - **The summary** (code, from the database) has: new candidates and their scores · card changes of the week · stocks with a card mentioned a
+     lot · non-US names mentioned a lot · tags waiting for my `/tag` · tags marked `other` (subsector questions) · data still `unclear` and open
+     missing-data requests · archive reminders · the portfolio block · AI spend this month. Saved as `Weekly/YYYY-MM-DD-summary.md`;
+     `/summary` shows the latest.
+   - **`/status` warnings:** a job `running` for more than 1 hour; a backup older than 36 hours.
+   - **Immediate messages** `python -m shared.alerts` (hourly, each alert once, table `alerts_sent`): a holding's grade dropped · a stock became
+     `solid` (green list) · a pending drop alert · an auditor `fail` on a card · the AI spend reached the 10 $ warning.
+   - **Schedule** (Turkey time; written for Hermes script-only jobs in `docs/SCHEDULE.md`): prices 03:00 · backup 04:00 · Eye 07:00 / 13:00 / 20:00 ·
+     alerts every hour at :05 · Sunday 09:00 the chain.
 
 ### Score rules (decision: 2026-10-03)
 

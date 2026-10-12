@@ -31,7 +31,9 @@ def test_a_yes_man_auditor_misses_the_error_cases_and_the_report_says_so(monkeyp
 def test_the_cases_cover_the_known_traps():
     names = " ".join(c[1] for c in testset.CASES)
     assert all(w in names for w in ("Coca-Cola", "Nvidia", "Boeing", "Pfizer 2020", "NET", "sell suggestion"))
-    assert {c[0] for c in testset.CASES} == {"figure", "reading", "sell"}
+    assert {c[0] for c in testset.CASES} == {"figure", "reading", "sell", "event"}
+    events = " ".join(c[1] for c in testset.CASES if c[0] == "event")     # card 4's traps (roadmap, "AI auditor")
+    assert all(w in events for w in ("another company", "general risk", "2021", "planned"))
 
 
 def test_the_strong_model_test_hides_the_models_and_keeps_the_key(db, env, monkeypatch):

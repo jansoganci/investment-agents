@@ -390,6 +390,120 @@ CREATE INDEX signals_week ON signals (kind, date);
 CREATE INDEX holdings_stock ON holdings (stock_id, date);
 """
 
+STEP_6 = """
+-- Phase 4 (2026-10-11). The Eye's list of seen addresses (roadmap, Agent 1 rules 11): a post is new when its address is not
+-- here yet. The first run of a site records every address of its sitemap as `baseline` and reads none. `lastmod` is not trusted
+-- (it jumps on thousands of old posts on one day), so it is not stored.
+CREATE TABLE eye_seen (
+    url      TEXT PRIMARY KEY,
+    site     TEXT NOT NULL,                     -- the site key: emtia | dragonomi
+    seen_at  TEXT NOT NULL,
+    how      TEXT NOT NULL CHECK (how IN ('baseline', 'read', 'text_missing', 'glossary', 'gone'))
+);
+CREATE INDEX eye_seen_site ON eye_seen (site);
+"""
+
+STEP_7 = """
+-- Phase 4 (2026-10-11), slice D. Tags (roadmap, Agent 1 rules 14–15): `kind` also takes `region` and `other`; a tag has a state
+-- (`waiting` = a US-looking company the SEC check did not confirm, I fix it with /tag), whether the company is listed in the US,
+-- and a note with the reason. SQLite cannot widen a CHECK, so the table is rebuilt; every row is copied.
+CREATE TABLE tags_new (
+    id            INTEGER PRIMARY KEY,
+    tag           TEXT NOT NULL UNIQUE,         -- the display name as the post writes it (trimmed, Unicode-normalised)
+    kind          TEXT CHECK (kind IN ('company', 'commodity', 'sector', 'region', 'other')),
+    maps_to       TEXT,                         -- company: ticker · commodity: its name · sector: the GICS sector
+    exchange      TEXT,
+    country       TEXT,
+    sector        TEXT,
+    subsector     TEXT,
+    source        TEXT CHECK (source IN ('ai', 'user')),
+    status        TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'waiting')),
+    us_listed     INTEGER CHECK (us_listed IN (0, 1)),
+    note          TEXT,
+    created_at    TEXT NOT NULL
+);
+INSERT INTO tags_new (id, tag, kind, maps_to, exchange, country, sector, subsector, source, created_at)
+    SELECT id, tag, kind, maps_to, exchange, country, sector, subsector, source, created_at FROM tags;
+DROP TABLE tags;
+ALTER TABLE tags_new RENAME TO tags;
+
+-- /subsector add can be cancelled by /undo: the row is marked void, never deleted.
+ALTER TABLE subsectors ADD COLUMN void INTEGER NOT NULL DEFAULT 0 CHECK (void IN (0, 1));
+ALTER TABLE subsectors ADD COLUMN voided_by INTEGER REFERENCES command_log (id);
+"""
+
+STEP_8 = """
+-- Phase 5 (2026-10-11). The Counter's result (roadmap, Agent 1B rules 6): agents talk only through the database, so agent 2 reads
+-- the latest run from here. One run = the rows with one `run_at`; rows are never deleted. Only entities mentioned in the last 7
+-- days are stored. A stock that already has a card is stored with no rank and no points.
+CREATE TABLE counts (
+    id          INTEGER PRIMARY KEY,
+    run_at      TEXT NOT NULL,
+    kind        TEXT NOT NULL CHECK (kind IN ('stock', 'non_us', 'commodity', 'sector')),
+    key         TEXT NOT NULL,                  -- stock: the ticker · non_us: the ticker if known, else the tag · commodity: its name · sector: GICS
+    label       TEXT,                           -- a name to show
+    posts_7d    INTEGER NOT NULL,               -- distinct posts in the last 7 days
+    posts_30d   INTEGER NOT NULL,
+    rank        INTEGER,                        -- within its kind, 1 = most mentioned; empty for a stock that has a card
+    has_card    INTEGER NOT NULL DEFAULT 0 CHECK (has_card IN (0, 1)),
+    points      INTEGER CHECK (points BETWEEN 0 AND 2),     -- agent 2's `mentions` score (stocks without a card)
+    created_at  TEXT NOT NULL,
+    UNIQUE (run_at, kind, key)
+);
+CREATE INDEX counts_run ON counts (run_at, kind, rank);
+"""
+
+STEP_9 = """
+-- Phase 5 (2026-10-11), Research (roadmap, Agent 2 rules 8). The stock may not have a row yet when its posts are read, so these tables
+-- are keyed by the ticker.
+-- What the strong model read in a post about a stock: read once, not again (and `articles.read_deep` is set).
+CREATE TABLE readings (
+    id          INTEGER PRIMARY KEY,
+    article_id  INTEGER NOT NULL REFERENCES articles (id),
+    ticker      TEXT NOT NULL,
+    tone        TEXT NOT NULL CHECK (tone IN ('positive', 'negative', 'neutral')),
+    about       TEXT,                            -- one sentence: what the post says about the company
+    kind        TEXT CHECK (kind IN ('event', 'general_comment')),
+    quote       TEXT,                            -- word for word from the post; empty when the model's quote was not in the post
+    model       TEXT,
+    created_at  TEXT NOT NULL,
+    UNIQUE (article_id, ticker)
+);
+
+-- The news events of the week for a stock (web search), and what became of each.
+CREATE TABLE news_events (
+    id            INTEGER PRIMARY KEY,
+    ticker        TEXT NOT NULL,
+    week          TEXT NOT NULL,                 -- ISO week, e.g. 2026-W41
+    summary       TEXT NOT NULL,
+    event_date    TEXT,
+    source_url    TEXT,
+    quote         TEXT,
+    scope         TEXT CHECK (scope IN ('company_specific', 'general_risk')),
+    class         TEXT NOT NULL CHECK (class IN ('serious_negative', 'important_positive', 'other')),
+    serious_type  TEXT,                          -- one of the five of the score rules
+    status        TEXT NOT NULL CHECK (status IN ('confirmed', 'not_confirmed', 'not_checked')),
+    note          TEXT,                          -- why it was not confirmed
+    audit_id      INTEGER REFERENCES audits (id),
+    created_at    TEXT NOT NULL
+);
+CREATE INDEX news_events_week ON news_events (ticker, week);
+
+ALTER TABLE stocks ADD COLUMN commodity_checked TEXT;       -- the date the commodity link was looked for (once per stock)
+CREATE UNIQUE INDEX scores_week ON scores (stock_id, week);
+CREATE UNIQUE INDEX commodity_links_pair ON commodity_links (stock_id, commodity);
+"""
+
+STEP_10 = """
+-- Phase 6 (2026-10-11). Immediate messages (roadmap, Agent 2 rules 9): each alert is sent once. `key` says what it is about
+-- (grade_drop:<card entry>, solid:<card entry>, drop:<signal>, audit:<audit>, spend:<month start>).
+CREATE TABLE alerts_sent (
+    key       TEXT PRIMARY KEY,
+    sent_at   TEXT NOT NULL,
+    text      TEXT
+);
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -397,6 +511,11 @@ STEPS: list[tuple[int, str]] = [
     (3, STEP_3),
     (4, STEP_4),
     (5, STEP_5),
+    (6, STEP_6),
+    (7, STEP_7),
+    (8, STEP_8),
+    (9, STEP_9),
+    (10, STEP_10),
 ]
 
 

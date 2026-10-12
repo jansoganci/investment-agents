@@ -281,3 +281,77 @@ def test_openai_style_cut_and_refused_answers_are_provider_errors_with_their_usa
     with pytest.raises(ProviderError) as exc:
         backends.openai_style_backend("deepseek")({"model": "m"}, "", "p", 10)
     assert exc.value.outcome == outcome and exc.value.usage == (200, 50, None)
+
+
+# --- web search (phase 5: Research) ------------------------------------------------------------------------------------------
+
+class _SearchAnthropic:
+    """A stand-in client: the first turn pauses (a long search), the second ends; the answer carries results and a citation."""
+
+    def __init__(self, pauses=1, stop="end_turn"):
+        self.messages = self
+        self.pauses, self.stop, self.requests = pauses, stop, []
+
+    def create(self, **kwargs):
+        self.requests.append(kwargs)
+        paused = len(self.requests) <= self.pauses
+        cite = types.SimpleNamespace(url="https://news.example/a", title="A", cited_text="the cited words")
+        blocks = [
+            types.SimpleNamespace(type="web_search_tool_result", content=[
+                types.SimpleNamespace(url="https://news.example/a", title="A"),
+                types.SimpleNamespace(url="https://news.example/b", title="B")]),
+            types.SimpleNamespace(type="text", text="part-" if paused else "done", citations=[cite]),
+        ]
+        usage = types.SimpleNamespace(input_tokens=100, output_tokens=50,
+                                      server_tool_use=types.SimpleNamespace(web_search_requests=2))
+        return types.SimpleNamespace(content=blocks, stop_reason="pause_turn" if paused else self.stop, usage=usage)
+
+
+def test_a_web_search_call_declares_the_tool_continues_a_paused_turn_and_collects_sources(db, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    stub = _SearchAnthropic(pauses=1)
+    monkeypatch.setattr(backends, "make_anthropic", lambda key, timeout: stub)
+    reply = ai.call("strong", "news about X", web_search=4, conn=db, only_first=True)
+    assert reply.text == "part-done" and reply.searches == 4          # 2 searches in each of the 2 requests
+    assert [s["url"] for s in reply.sources] == ["https://news.example/a", "https://news.example/b"]
+    assert reply.sources[0]["cited_text"] == "the cited words"
+    first, second = stub.requests
+    assert first["tools"] == [{"type": "web_search_20260209", "name": "web_search", "max_uses": 4}]
+    assert first["messages"] == [{"role": "user", "content": "news about X"}] and second["messages"][1]["role"] == "assistant"
+    # tokens of both requests, and 4 searches at $0.01 on top
+    assert reply.cost_usd == pytest.approx((200 * 2 + 100 * 10) / 1e6 + 0.04)
+
+
+def test_without_web_search_no_tool_is_sent(db, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    stub = _SearchAnthropic(pauses=0)
+    monkeypatch.setattr(backends, "make_anthropic", lambda key, timeout: stub)
+    ai.call("strong", "hello", conn=db, only_first=True)
+    assert "tools" not in stub.requests[0]
+
+
+def test_a_turn_that_never_finishes_is_a_provider_error(db, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    monkeypatch.setattr(backends, "make_anthropic", lambda key, timeout: _SearchAnthropic(pauses=99))
+    with pytest.raises(AIError, match="did not finish"):
+        ai.call("strong", "x", web_search=1, conn=db, only_first=True)
+
+
+def test_a_provider_that_cannot_search_is_skipped_so_the_chain_ends_in_an_error(db, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "k")
+    with pytest.raises(AIError) as err:
+        ai.call("strong", "x", web_search=2, conn=db)
+    assert "deepseek" in str(err.value) and "cannot run a web search" in str(err.value)
+
+
+def test_the_fake_ai_searches_only_as_anthropic(db, monkeypatch):
+    fake = FakeAI(lambda *a: "found")
+    fake.sources = [{"url": "https://x/1", "title": "t", "cited_text": None}]
+    fake.fail = {"anthropic"}
+    fake.install(monkeypatch)
+    with pytest.raises(AIError):
+        ai.call("strong", "x", web_search=2, conn=db)
+    fake.fail = set()
+    reply = ai.call("strong", "x", web_search=2, conn=db)
+    assert reply.sources[0]["url"] == "https://x/1" and reply.searches == 1

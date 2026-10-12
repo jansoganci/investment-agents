@@ -17,16 +17,56 @@ backup:
   keep_daily: 7                    # roadmap section 5: the last 7 daily copies …
   keep_weekly: 4                   # … and the last 4 weekly copies, in Investing/Backup/
 
-hours:                             # Turkey time
+hours:                             # Turkey time; the Hermes jobs are listed in docs/SCHEDULE.md
   prices: "03:00"                  # the one nightly price job (previous day's close)
-  backup: after prices
+  backup: "04:00"                  # after the prices; move it if the price job runs longer than an hour
   eye: ["07:00", "13:00", "20:00"] # agent 1, 3 passes a day
+  alerts: "every hour at :05"      # python -m shared.alerts
+  sunday: "09:00"                  # the Sunday chain: Counter → Research → Analysis → Portfolio → the summary
+
+warnings:                          # /status (phase 6)
+  stuck_job_hours: 1               # a job in `running` longer than this
+  backup_max_hours: 36             # a backup older than this
 
 # Sector before the Eye exists: from the SEC industry code (shared/sectors.py). Correct a wrong one here, e.g.
 #   sector_overrides: {SNAP: Communication Services}
 sector_overrides:
   GE: Industrials                  # SIC 3600 (electrical equipment) → the table says Information Technology
   MMM: Industrials                 # SIC 3841 (medical instruments) → the table says Health Care
+
+counter:                           # 1B (roadmap "Agent 1B rules" 6): starting values, adjusted after the first weeks
+  window_days: 7
+  long_days: 30
+  top: 10                          # stocks shown / handed to agent 2
+  card_mention_bar: 6              # a stock that already has a card is "mentioned a lot" at this many posts in the window
+  mention_points: [3, 6]           # `mentions` score: below the first = 0, from the first = 1, from the second = 2
+
+research:                          # agent 2 (roadmap "Agent 2 rules" 8)
+  web_search_uses: 5               # most searches in one news call
+  commodity_search_uses: 3
+  event_max_age_days: 365          # a serious negative older than this does not count
+  page_max_bytes: 2000000          # a source page is cut here before the quote is looked for
+
+# Yahoo symbols of the commodities a stock can be linked to (the model must pick from these names; roadmap "Agent 2 rules" 8)
+commodity_symbols:
+  crude oil: CL=F
+  natural gas: NG=F
+  gold: GC=F
+  silver: SI=F
+  copper: HG=F
+  platinum: PL=F
+  palladium: PA=F
+  corn: ZC=F
+  wheat: ZW=F
+  soybeans: ZS=F
+  sugar: SB=F
+  coffee: KC=F
+  cocoa: CC=F
+  cotton: CT=F
+  lumber: LBR=F
+  cattle: LE=F
+  hogs: HE=F
+  uranium: URA        # an ETF: Yahoo has no uranium future
 
 portfolio:
   goal_usd: 800000                 # total wealth goal (agent 4 rule 4)
@@ -83,6 +123,7 @@ pricing:
   deepseek-v4-pro:     {input: 1.32,  output: 3.96}     # DeepSeek's page, 2026-10-09: peak price (off-peak is half)
   gpt-6-sol:           {input: 2.00,  output: 10.00}    # OpenAI's page, 2026-10-09
   default:             {input: 5.00,  output: 25.00}    # cautious: above every model above
+  web_search_per_call: 0.01                                     # Anthropic's web search: $10 per 1,000 searches
 
 # Short names for /analyze KO opus-5.5 and /model strong gpt-6-sol (a one-off or stored override).
 model_aliases:
