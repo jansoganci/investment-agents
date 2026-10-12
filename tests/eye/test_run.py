@@ -276,3 +276,13 @@ def test_no_cookie_no_warning(db, web):
         web.pages[f"{EM.base}/{n}/"] = EMTIA_GATED
     result = run.run_pass(db, cookies={"emtia": "", "dragonomi": ""}, fetch=web, sleep=lambda s: None, pause=lambda a, b: a)
     assert "probably expired" not in (result.message() or "")
+
+
+def test_a_skipped_site_is_not_touched_and_leaves_no_note(db, web):
+    first_run(db, web)
+    web.set_sitemap(DR, ["old-3", "fresh-dr"])
+    web.calls.clear()
+    result = go(db, web, skip=["dragonomi"])
+    assert [c[0] for c in web.calls] == [EM.posts_sitemap]         # the Dragonomi sitemap was not even asked
+    assert "dragonomi" not in result.tally and (result.message() is None)
+    assert f"{DR.base}/fresh-dr/" not in how(db)
