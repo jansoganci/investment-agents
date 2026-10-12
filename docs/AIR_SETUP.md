@@ -76,6 +76,22 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
       database and the cards (for my free questions) — done together, from its docs.
       **Approval (roadmap 10.2, rule 4):** a command with `--yes` must wait for my OK on Telegram. If Hermes cannot do this,
       tell Claude (fallback: a one-time code from the preview).
+- **What Hermes can enforce (its own read-only report, v0.21.5, 2026-10-12):** no allowlist of commands, no rule by path,
+  no `python -m` vs `python -c`, no lock on `.env` or on its own `config.yaml`. `approvals.mode` is `smart` (an AI guesses
+  what is dangerous; `shared.commands … --yes` passes unasked). So today the only wall is that Hermes follows its
+  instructions. A wrapper script alone does not help while Hermes can run any terminal command.
+- [ ] **Level 1 — now (my decision, 2026-10-12), in the Air's terminal, never from Telegram:**
+      1. `hermes config set approvals.mode manual` — every shell command waits for my yes on Telegram (enforced by
+         Hermes's software, not by the model; questions ask too — accepted for now).
+      2. `~/.hermes/.env` has `TELEGRAM_ALLOWED_USERS=<my numeric user ID>` and nothing else in it (the gateway denies
+         everyone when it is unset); then `hermes gateway restart`.
+      3. Test: from another Telegram account, write to the bot → no answer. Ask for a command → it waits for my yes.
+      4. Telegram two-step verification on (Settings → Privacy and Security) — Hermes cannot protect a stolen account.
+      Accepted risk: a command I approve can still do anything, so I read each one before yes; one I do not understand
+      goes to Claude. The monthly spend limits at the AI providers are the second wall. Hermes writes no script and
+      changes no setting of its own.
+- [ ] **Level 2 — later, the real lock:** turn the terminal tool off for Telegram (`hermes tools`) and give Hermes only our
+      commands (and the read-only `ask`) as its own tools — if Hermes can do that (first ask it, read-only). Built by Claude.
 - [ ] Hermes runs as the **same macOS user** as the agents (`jans.`) — the read-only path to the database needs it.
 - [ ] **How tight (decision 2026-10-05): limited, not painful.** I talk in plain words, no command syntax needed: questions
       are answered at once (read-only path, no approval); a change ("watch KO", "I bought 3 NVDA") is turned into our command,
