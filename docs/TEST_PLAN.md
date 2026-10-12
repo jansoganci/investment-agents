@@ -232,7 +232,7 @@ toward the 200-address guard, so a long postponement needs `--accept-many` or a 
 | D1 | H | | — | |
 | D2 | U+H | | — | |
 | D3 | H | | — | |
-| D4 | U | | — | |
+| D4 | U + H | 2026-10-12 | PARTIAL (Level 1 only, remotely) | `approvals.mode manual` set by Hermes on U's Telegram while U travels; `rm -rf` of a non-existing folder asked for approval, harmless commands did not. Only dangerous patterns are gated (see `AIR_SETUP.md` phase 5). Telegram allowed-user line checked (one numeric ID). Level 2 and the other-account test wait until U is home (2026-10-23). |
 | E1–E3 | U | | — | |
 | E4 | C | | — | |
 

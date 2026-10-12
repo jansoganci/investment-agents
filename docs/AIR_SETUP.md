@@ -90,6 +90,10 @@ Estimated time: 1.5–2 hours. "Me" = the user; "Claude" = prepared in the devel
       Accepted risk: a command I approve can still do anything, so I read each one before yes; one I do not understand
       goes to Claude. The monthly spend limits at the AI providers are the second wall. Hermes writes no script and
       changes no setting of its own.
+- **Tried remotely (2026-10-12, by Hermes on my Telegram, I was travelling):** `hermes config set approvals.mode manual` was applied and works, but
+      **`manual` asks only for commands that match Hermes's "dangerous" patterns** (`rm -rf` asked; `echo`, `uname`, `ls`, `date` ran unasked, and
+      the setting needed no restart). So Level 1 is a partial wall: it does not stop reading `.env` or other harmless-looking commands. The
+      real walls stay: only my Telegram ID, Telegram two-step verification, monthly spend caps at the AI providers, and Level 2. Remote Login stays off.
 - [ ] **Level 2 — later, the real lock:** turn the terminal tool off for Telegram (`hermes tools`) and give Hermes only our
       commands (and the read-only `ask`) as its own tools — if Hermes can do that (first ask it, read-only). Built by Claude.
 - [ ] Hermes runs as the **same macOS user** as the agents (`jans.`) — the read-only path to the database needs it.
