@@ -83,7 +83,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-12 (Hermes limits: what Hermes can enforce and levels 1–2 written in `AIR_SETUP.md` phase 5; done at `TEST_PLAN.md` D4 unless I choose earlier) · 2026-10-11 (phase 4 code done, the Counter built early — see the Phase 4 entry and the rule 5 exception) · 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
+- **Last update:** 2026-10-12 (real-world tests of phases 4–6 mostly done, production running, see the bullet below; Hermes limits: what Hermes can enforce and levels 1–2 written in `AIR_SETUP.md` phase 5; done at `TEST_PLAN.md` D4 unless I choose earlier) · 2026-10-11 (phase 4 code done, the Counter built early — see the Phase 4 entry and the rule 5 exception) · 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
@@ -147,6 +147,20 @@ If a file is needed, read it by its full path, copy only the piece that is neede
   session), the prompts and the terminal commands are in `docs/TEST_PLAN.md`; its section 6 is the results log. Block A (no login: baseline, upgrade rehearsal
   on a copy of the real database, real models, the auditor test set, Research with web search, Yahoo symbols) comes first because the Anthropic credit ends
   on 2026-10-19. Hermes' limits stay the last step (D4).
+- **Real-world tests, state on 2026-10-12 (I am travelling until about 2026-10-23; Hermes on Telegram is my only channel, Remote Login stays off):**
+  `docs/TEST_PLAN.md` section 6 has every result. **Passed:** block A (baseline, upgrade rehearsal, `ai ping` 8/8, auditor test set 21/21, Research with web
+  search on NVDA / FCX / DAL, Yahoo symbols, the three cards read) · B1–B4 and B6 on **Emtia only** (Dragonomi has no membership yet) · C1–C3 · D1 (production
+  database 5 → 10, backup first) · D2 (cookie copied inside the Air, Eye baseline in production: Emtia 11,140, Dragonomi 14,916 addresses) · the first Sunday chain by hand
+  (11 s, summary reached Telegram, saved in `Weekly/`). **Partial:** B5 (no company tags in Emtia, so the SEC check and the non-US tag rule are untested) · B7 / B8 (Counter and
+  Research had nothing to do) · D3 (five script-only Hermes jobs registered: prices 03:00, backup 04:00, eye 07 / 13 / 20, alerts hourly :05, sunday Sunday 09:00; `backup`,
+  `prices` and `sunday` fired by hand; `eye` and `alerts` not yet seen) · D4 (Hermes `approvals.mode manual` gates only dangerous patterns; Level 2 waits). **Found and fixed on
+  the way:** the sentence call was cut at 2,000 tokens (now 8,000) · `set_cookie` helper (clipboard / cURL, repairs a broken `.env`) · the auditor test set and `modeltest` print progress ·
+  the Eye warns on Telegram when the last 5 pages in a row were cut by the paywall (the cookie has probably expired; roadmap Agent 1 rule 19) · `settings.yaml` `eye.skip_sites: [dragonomi]`.
+  **My decisions:** Dragonomi postponed · cheap model stays DeepSeek V4 Flash (B6; the A / B answer could not be mapped, C compared the pairs) · Hermes keeps its own skills and notes but
+  my rules win (standing rules stored in its memory) · positive news older than 90 days should not count (proposed, not built, waiting for my yes). **To do when I am home:** the login
+  cookie's expiry date (Chrome → Application → Cookies) · Hermes Level 1 in the Air's terminal and Level 2 · the other-Telegram-account test · Dragonomi cookie, then remove it from
+  `eye.skip_sites` · answer TMDX's missing debt (`/data`) · read `investment-agents-ops` (Hermes's own skill, 30 auto-patches) · the 90-day rule for positive news · the audit sessions of phases 4–6 ·
+  the Anthropic credit ends 2026-10-19 (web search works only through Anthropic).
 - **Card heading:** `### Thesis` stays short. Under it: why it is owned (at most 3 points) and 3 things that would break the thesis. Record heading: `## <date> · <record> · <who> [· <source>]` (`source` only on `fundamental`). Locked in `GLOSSARY.md`, roadmap section 3, and `BAGLAM.md` section 7.
 - **Glossary:** `docs/GLOSSARY.md` is the lock. Documents and new code use the right-hand column as the only name. Three names are approved: `card.md`, `Investing/`, Eye. Folders and the trial code are not renamed yet. English: `docs/TASINANLAR.md`, `docs/YOL_HARITASI_v2.md`, `docs/BAGLAM.md`, `docs/DIS_INCELEME_PROMPT.md`, this file. External reviews live in `docs/reviews/` (see its README: keep the original, translate into a separate file); a review is input, not a rule change.
 - **Done:** The project was opened. The roadmap and `BAGLAM.md` were written. The backtest scripts were brought over.
