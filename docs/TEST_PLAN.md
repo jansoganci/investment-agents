@@ -220,7 +220,7 @@ toward the 200-address guard, so a long postponement needs `--accept-many` or a 
 | A7 | U | 2026-10-11 | PASS | NVDA, FCX, DAL cards read by U: "ok for now". Open small item (not a blocker): the Research `quick_health` debt check for NVDA uses the last annual year (cash and investments 10.61 bn, debt 8.47 bn) while agent 3 on the last 4 quarters has debt 33.4 bn; the result (`pass`) is the same, the shown figures are older. Decisions pending from U: positive events within 90 days (C proposes yes), secondary sources (C proposes leave). |
 | B1 | U | 2026-10-12 | PASS (Emtia only) | Cookie copied from Chrome (`Copy as cURL`), written by `agents.eye.set_cookie emtia` (313 characters). Expiry date of the login cookie: not yet noted. The cookie was pasted into the cloud chat by mistake: after the tests, log out of Emtia and log in again. Dragonomi: no membership yet. |
 | B2 | U (on the Air) | 2026-10-12 | PASS (Emtia only) | `session_check emtia`: without the cookie the page is gated, 0 characters; with it not gated, 833 characters, body found by `article.ghost-content`, tags read (Alüminyum, Sanayi Metalleri, Asya). The extractor and the gate check work on the real site. A leftover broken `DRAGONOMI_COOKIE` line in `~/check-repo/.env` causes a harmless dotenv warning; to be deleted. |
-| B3 | M | | — | |
+| B3 | U (on the Air) | 2026-10-12 | PASS | Eye baseline in throwaway folders: Emtia 11,126 and Dragonomi 14,906 addresses recorded as `baseline`, nothing read, 28 s. Second run: quiet (only the note that `DRAGONOMI_COOKIE` is not set), 29 s. |
 | B4 | M | | — | |
 | B5 | M+U | | — | |
 | B6 | M+U | | — | |
