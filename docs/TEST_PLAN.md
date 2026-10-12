@@ -230,8 +230,8 @@ toward the 200-address guard, so a long postponement needs `--accept-many` or a 
 | C2 | H | | — | |
 | C3 | H | | — | |
 | D1 | H (U approves by Telegram) | 2026-10-12 | PASS | Production `~/Downloads/investment-agents` pulled to d929cef; real database backed up first (`~/investment-agents-data/pre-d1-20261012.sqlite`, 708,608 bytes), then upgraded 5 → 10 (steps 6–10). All 20 old tables kept their row counts (diff showed only new tables: alerts_sent, counts, eye_seen, news_events, readings, all empty); `integrity_check` ok, `foreign_key_check` empty. Hermes checked the target path before upgrading. |
-| D2 | U+H | | — | |
-| D3 | H | | — | |
+| D2 | U + H (inside the Air) | 2026-10-12 | PASS | The cookie line was copied from `~/check-repo/.env` into the production `.env` by Hermes without printing it (313 characters, parsed by dotenv); `DRIVE_DIR` is the symlink to the real Drive `Investing`, no `DATA_DIR`. Eye baseline in production: Emtia 11,140 and Dragonomi 14,916 addresses, nothing read; `/status` shows `eye: ok`. |
+| D3 | H | 2026-10-12 | PARTIAL | Five script-only jobs registered in Hermes cron (no model, delivery to Telegram, times +03): prices 03:00, backup 04:00, eye 07/13/20, alerts hourly :05, sunday Sunday 09:00. Global `cron.script_timeout_seconds` raised 3600 → 7200 (no per-job timeout exists). `backup` fired by hand: silent, a 6.9 MB backup file in `Investing/Backup/`. `prices` fired by hand: 32 s, silent, 4,449 price rows to 2026-10-09. A stale `prices` row of 2026-10-06 was set to `error` by hand (backup taken first). Still to see: eye (13:00), alerts (12:05), sunday (fire by hand), and a non-empty message reaching Telegram. |
 | D4 | U + H | 2026-10-12 | PARTIAL (Level 1 only, remotely) | `approvals.mode manual` set by Hermes on U's Telegram while U travels; `rm -rf` of a non-existing folder asked for approval, harmless commands did not. Only dangerous patterns are gated (see `AIR_SETUP.md` phase 5). Telegram allowed-user line checked (one numeric ID). Level 2 and the other-account test wait until U is home (2026-10-23). |
 | E1–E3 | U | | — | |
 | E4 | C | | — | |
