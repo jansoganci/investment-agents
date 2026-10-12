@@ -101,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
     path.write_text(new)
     os.chmod(path, 0o600)
     if not use_stdin:
-        subprocess.run(["pbcopy"], input=b"", check=False)
+        subprocess.run(["pbcopy"], input=b" ", check=False)  # an empty input would leave the old clipboard as it is
     tail = "The clipboard is empty." if not use_stdin else ""
     print(f"{name} saved ({len(value)} characters). Broken lines removed from .env: {dropped}. "
           f"The old file is kept as .env.bak (delete it when all is well). {tail}".strip())
