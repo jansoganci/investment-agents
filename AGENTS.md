@@ -80,7 +80,7 @@ If a file is needed, read it by its full path, copy only the piece that is neede
 
 ## Current status
 
-- **Last update:** 2026-10-09 (**phase 3 (Portfolio) done** — built, audited, real-checked, the block approved; the Air update (`git pull` + `shared.db upgrade`, 4 → 5) given to Hermes; next: Hermes limits, then phase 4)
+- **Last update:** 2026-10-12 (Hermes limits, level 1 decided — `approvals.mode manual`, only my Telegram user, Telegram two-step; I apply it in the Air's terminal; level 2 = the terminal tool off + our commands as Hermes's own tools, later. Phase 3 done 2026-10-09; next after the limits: phase 4)
 - **Phase 3 built (2026-10-09)** on `feat/phase-3-portfolio` (merged into `main` under my standing permission; the audit is still
   owed): `agents/portfolio` (ledger with code dividends and splits worked out again each week · values in today's share basis ·
   SPY shadow from a total-return index of stored closes + dividends · gold shadow · return, `xirr` after 12 months · total wealth ·
