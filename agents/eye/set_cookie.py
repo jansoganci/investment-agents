@@ -4,8 +4,8 @@
     uv run python -m agents.eye.set_cookie dragonomi
     uv run python -m agents.eye.set_cookie emtia --stdin  (read it from standard input instead of the clipboard)
 
-Copy the value of the `cookie` request header (developer tools → Network → the post's request → Request Headers). A whole block of
-headers also works: the line that starts with `cookie:` is taken. The old line of that site is replaced; lines in `.env` that are not
+Copy the value of the `cookie` request header (developer tools → Network → the post's request → Request Headers). Easier: right-click the
+post's request → Copy → Copy as cURL; the cookie is taken out of the command. A whole block of headers also works: the line that starts with `cookie:` is taken. The old line of that site is replaced; lines in `.env` that are not
 `NAME=value`, comments or blank (left over from a broken paste) are removed; the old file is kept as `.env.bak` — delete it when all
 is well. The value is never printed and the clipboard is emptied afterwards."""
 
@@ -30,7 +30,12 @@ def env_path() -> Path:
 
 
 def clean(text: str) -> str:
-    """The cookie header value from what was copied: one line, or the `cookie:` line of a block of headers."""
+    """The cookie header value from what was copied: one line, the `cookie:` line of a block of headers, or a `Copy as cURL` command."""
+    curl = re.search(r"""(?:\s-b|\s--cookie)\s+(?:\$)?'([^']+)'|\s-H\s+(?:\$)?'(?i:cookie):\s*([^']+)'""", text)
+    if text.lstrip().startswith("curl"):
+        if not curl:
+            raise ValueError("that curl command has no cookie in it; open a post while logged in, then copy that request")
+        return (curl.group(1) or curl.group(2)).strip()
     lines = [line.strip() for line in text.replace("\r", "").split("\n") if line.strip()]
     for line in lines:
         found = re.match(r"(?i)^cookie\s*:\s*(.+)$", line)
