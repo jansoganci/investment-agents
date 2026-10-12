@@ -8,6 +8,7 @@ from __future__ import annotations
 import sys
 
 from agents.eye import run
+from shared import config
 from shared import db as dbmod
 from shared import runlog
 
@@ -23,7 +24,8 @@ def main(argv: list[str] | None = None) -> int:
     def work(job):
         conn = dbmod.connect()
         try:
-            return run.run_pass(conn, accept_many="--accept-many" in argv, ai_stage=True, run=job).message()
+            skip = (config.settings().get("eye") or {}).get("skip_sites") or []
+            return run.run_pass(conn, accept_many="--accept-many" in argv, ai_stage=True, run=job, skip=skip).message()
         finally:
             conn.close()
 

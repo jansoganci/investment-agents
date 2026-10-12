@@ -79,8 +79,9 @@ class _Pacer:
 
 def run_pass(conn, *, sites: dict | None = None, cookies: dict | None = None, fetch=None, sleep=time.sleep,
              pause=random.uniform, cap: int = CAP, guard: int = GUARD, accept_many: bool = False, ai_stage: bool = False,
-             run=None, seclist: tags.SecList | None = None) -> Result:
+             run=None, seclist: tags.SecList | None = None, skip=()) -> Result:
     sites = SITES if sites is None else sites
+    sites = {key: site for key, site in sites.items() if key not in set(skip)}      # a skipped site is not touched at all
     cookies = {k: os.environ.get(s.cookie_env, "").strip() for k, s in sites.items()} if cookies is None else cookies
     fetch = http.fetch if fetch is None else fetch
     pacer = _Pacer(sleep, pause)

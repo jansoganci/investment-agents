@@ -34,6 +34,9 @@ sector_overrides:
   GE: Industrials                  # SIC 3600 (electrical equipment) → the table says Information Technology
   MMM: Industrials                 # SIC 3841 (medical instruments) → the table says Health Care
 
+eye:                               # agent 1
+  skip_sites: [dragonomi]          # sites the pass does not touch at all (no membership yet, 2026-10-12): no sitemap, no note, no waiting list.
+                                   # Remove the name when its cookie is in .env (the posts it missed are then read; `--accept-many` if > 200).
 counter:                           # 1B (roadmap "Agent 1B rules" 6): starting values, adjusted after the first weeks
   window_days: 7
   long_days: 30
