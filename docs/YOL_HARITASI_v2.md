@@ -278,6 +278,9 @@ I can correct it. The Eye's tag mapping takes over in phase 4 (`docs/IMPLEMENTAT
      `solid` (green list) · a pending drop alert · an auditor `fail` on a card · the AI spend reached the 10 $ warning.
    - **Schedule** (Turkey time; written for Hermes script-only jobs in `docs/SCHEDULE.md`): prices 03:00 · backup 04:00 · Eye 07:00 / 13:00 / 20:00 ·
      alerts every hour at :05 · Sunday 09:00 the chain.
+   - **An important positive must be fresh (my decision, 2026-10-14):** for `news_flow`, a company-specific important positive counts only if its date is
+     within the last 90 days (`settings.yaml` `research.positive_max_age_days`); an older one, or one without a usable date, is kept in the card as
+     `not_confirmed` with the reason and gives no points (the news flow stays at 1). Found on the first real run: FCX scored 2 on an item of 2026-02-18.
 
 ### Score rules (decision: 2026-10-03)
 
