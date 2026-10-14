@@ -1,4 +1,4 @@
-"""The Sunday chain (roadmap section 3, "Sunday order"): Counter → agent 2 → agent 3 → agent 4 → the summary. A step that fails is
+"""The Sunday chain (roadmap section 3, "Sunday order"): Counter → agent 2 → agent 3 → agent 4 → agent 3's drop-alert check → the summary. A step that fails is
 reported and the next ones still run. One message at the end (the summary); the agents' own messages are not sent separately.
 
     uv run python -m shared.sunday              Hermes runs it on Sunday 09:00 Turkey time (docs/SCHEDULE.md)
@@ -12,11 +12,11 @@ import sys
 from shared import clock, runlog, summary
 from shared import db as dbmod
 
-STEPS = ("counter", "research", "analysis", "portfolio")
+STEPS = ("counter", "research", "analysis", "portfolio", "drop_alerts")
 
 
 def run_chain(day: str | None = None, sources=None) -> list[str]:
-    """Runs the four steps, builds and saves the summary; returns its lines."""
+    """Runs the five steps (the last is agent 3 checking the drop alerts), builds and saves the summary; returns its lines."""
     from agents.analysis import run as analysis
     from agents.counter import count
     from agents.portfolio import run as portfolio
@@ -45,11 +45,14 @@ def run_chain(day: str | None = None, sources=None) -> list[str]:
     step("research", lambda conn, r: research.weekly(conn, sources, day, r))
     step("analysis", lambda conn, r: analysis.weekly(conn, sources, day, use_ai=True, run=r))
     step("portfolio", lambda conn, r: portfolio.weekly(conn, day))
+    # Portfolio writes the pending drop-alert signals; agent 3 checks them against the latest filing right after (audit 2026-10-14, #4)
+    step("drop_alerts", lambda conn, r: analysis.drop_alerts(conn, sources, day, run=r))
     errors += [line for line in (texts.get("research") or "").splitlines() if line.startswith("Not researched")]
 
     conn = dbmod.connect()
     try:
-        lines = summary.build(conn, day, portfolio_text=texts.get("portfolio"), analysis_text=texts.get("analysis"), errors=errors)
+        agent_3 = "\n\n".join(t for t in (texts.get("analysis"), texts.get("drop_alerts")) if t) or None
+        lines = summary.build(conn, day, portfolio_text=texts.get("portfolio"), analysis_text=agent_3, errors=errors)
     finally:
         conn.close()
     try:

@@ -3,6 +3,8 @@ The login cookie goes only to the host it was meant for: a redirect to another h
 
 from __future__ import annotations
 
+import http.client
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -68,6 +70,9 @@ _opener = urllib.request.build_opener(_SameHostRedirect)
 def fetch(url: str, cookie: str | None = None, timeout: float = 30) -> Response:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept-Language": "tr,en;q=0.8"})
     if cookie:
+        if re.search(r"[\x00-\x1f\x7f]", cookie):
+            raise FetchError(f"{url}: the login cookie in .env holds a line break or a control character; nothing was sent "
+                             "(renew it with `python -m agents.eye.set_cookie`)")
         request.add_header("Cookie", cookie)
     try:
         with _opener.open(request, timeout=timeout) as answer:
@@ -76,6 +81,9 @@ def fetch(url: str, cookie: str | None = None, timeout: float = 30) -> Response:
         response = Response(url, error.code, list(error.headers.items()), error.read())
     except (urllib.error.URLError, TimeoutError, OSError) as error:
         raise FetchError(f"{url}: {error}") from None
+    except (ValueError, http.client.HTTPException) as error:
+        # never echo the error text: for a bad header value it holds the cookie itself (audit 2026-10-14, #3); a cut body is #14
+        raise FetchError(f"{url}: the request failed ({type(error).__name__})") from None
     if response.status in BLOCK_STATUSES:
         raise Blocked(f"{url} answered {response.status}")
     return response

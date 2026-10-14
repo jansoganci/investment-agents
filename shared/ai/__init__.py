@@ -20,7 +20,17 @@ from shared import db as dbmod
 
 
 class AIError(RuntimeError):
-    """The call could not be made (every provider failed, or the monthly limit is reached). The message has no secrets."""
+    """The call could not be made (every provider failed, or the monthly limit is reached). The message has no secrets.
+    `outcomes` = how each provider failed ("cut" = the answer was cut at the token limit); empty for the monthly limit."""
+
+    def __init__(self, message: str = "", *, outcomes: tuple = ()):
+        super().__init__(message)
+        self.outcomes = tuple(outcomes)
+
+    @property
+    def only_cut(self) -> bool:
+        """Every provider answered but was cut at the token limit: the fault is this one input, not the providers or the budget."""
+        return bool(self.outcomes) and all(o == "cut" for o in self.outcomes)
 
 
 class ProviderError(Exception):
@@ -197,7 +207,7 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
         if limit is not None and spent >= limit:
             raise AIError(f"the monthly AI limit is reached (${spent:.2f} of ${limit}); nothing was sent")
         tokens = max_tokens or (s.get("ai") or {}).get("max_tokens", 6000)
-        errors = []
+        errors, outcomes = [], []
         entries = chain(job, conn, model)
         if exclude_families:
             entries = [e for e in entries if entry_family(e) not in exclude_families]
@@ -210,11 +220,13 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
             backend = BACKENDS.get(entry["provider"])
             if backend is None:
                 errors.append(f"{entry['provider']}: unknown provider")
+                outcomes.append("unknown")
                 continue
             try:
                 reply = backend(dict(entry, job=job, web_search=web_search), system, prompt, tokens)
             except ProviderError as exc:
                 errors.append(f"{entry['provider']} {entry['model']}: {exc}")
+                outcomes.append(exc.outcome)
                 if exc.usage:  # billed although rejected: still counted
                     n_in, n_out, given = exc.usage
                     cost, est = (given, False) if given is not None else cost_of(entry["model"], n_in, n_out)
@@ -229,7 +241,7 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
             reply = replace(reply, job=job)
             _log(conn, run, reply, stock_id)
             return reply
-        raise AIError(f"no model answered the job '{job}': " + " | ".join(errors))
+        raise AIError(f"no model answered the job '{job}': " + " | ".join(errors), outcomes=tuple(outcomes))
     finally:
         if own:
             conn.close()

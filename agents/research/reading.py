@@ -13,6 +13,7 @@ from shared.sec import filing
 
 TONES = ("positive", "negative", "neutral")
 KINDS = ("event", "general_comment")
+READ_TOKENS = 12000        # the strong model's thinking counts too; 4,000 was the limit that cut the cheap model's sentences (audit 2026-10-14, #6)
 MAX_POST_CHARS = 60000
 
 SYSTEM = """You read one post of a Turkish-language commodity and equity newsletter, only for what it says about ONE company.
@@ -67,7 +68,7 @@ def read_post(conn, run, ticker: str, company: str, post: dict) -> dict:
     problem, data = None, None
     for _ in range(2):
         asked = prompt if problem is None else prompt + f"\n\nYour previous answer could not be used ({problem}). JSON only."
-        reply = ai.call("strong", asked, system=SYSTEM, run=run, conn=conn, max_tokens=4000)
+        reply = ai.call("strong", asked, system=SYSTEM, run=run, conn=conn, max_tokens=READ_TOKENS)
         try:
             data = _check(ai.parse_json(reply.text))
             break

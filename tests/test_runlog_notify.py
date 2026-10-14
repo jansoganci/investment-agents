@@ -61,3 +61,18 @@ def test_error_message_names_job_and_time():
     assert first == "ERROR · backup"
     assert "disk full" in text
     assert "Turkey time" in text
+
+
+def test_a_row_left_running_by_a_dead_process_is_closed_by_the_next_run_of_that_job(db):
+    """Audit 2026-10-14, #17: otherwise `/status` warns about it for ever."""
+    old, recent = "2020-01-01T00:00:00Z", runlog.clock.utc_iso()
+    db.executemany("INSERT INTO runs (job, started_at, status) VALUES (?, ?, 'running')",
+                   [("eye", old), ("eye", recent), ("prices", old)])
+    db.commit()
+    with runlog.run("eye"):
+        pass
+    rows = db.execute("SELECT job, started_at, status, error FROM runs ORDER BY id").fetchall()
+    assert rows[0][2] == "error" and "abandoned" in rows[0][3]          # the old eye row is closed
+    assert rows[1][2] == "running"                                      # a recent one may be a live run: left alone
+    assert rows[2][2] == "running"                                      # another job's row is not touched
+    assert rows[3][0] == "eye" and rows[3][2] == "ok"

@@ -286,3 +286,20 @@ def test_a_skipped_site_is_not_touched_and_leaves_no_note(db, web):
     assert [c[0] for c in web.calls] == [EM.posts_sitemap]         # the Dragonomi sitemap was not even asked
     assert "dragonomi" not in result.tally and (result.message() is None)
     assert f"{DR.base}/fresh-dr/" not in how(db)
+
+
+def test_accept_many_keeps_the_newest_and_marks_the_older_ones_so_the_next_pass_is_not_stopped_again(db, web):
+    """Audit 2026-10-14, #2: the rest of a big jump must not trip the guard at every following scheduled pass."""
+    first_run(db, web)
+    names = [f"n{i:02d}" for i in range(30)]
+    web.set_sitemap(EM, ["old-1", "old-2", *names], lastmods={n: f"2026-10-11T00:{i:02d}:00Z" for i, n in enumerate(names)})
+    for n in names:
+        web.pages[f"{EM.base}/{n}/"] = EMTIA_FULL
+    with pytest.raises(run.PassStopped):
+        go(db, web, cap=5, guard=10)
+    result = go(db, web, cap=5, guard=10, accept_many=True)        # keeps cap + guard / 2 sites = 10 newest, marks 20 older as seen
+    assert result.tally["emtia"].read == 5 and result.tally["emtia"].skipped == 20 and "20 older new addresses" in result.message()
+    assert {u for u, h in how(db).items() if h == "read"} == {f"{EM.base}/n{i:02d}/" for i in range(20, 25)}
+    again = go(db, web, cap=5, guard=10)                            # the next scheduled pass: 5 left, below the guard, no stop
+    assert again.tally["emtia"].read == 5
+    assert go(db, web, cap=5, guard=10).message() is None

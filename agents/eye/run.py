@@ -36,6 +36,7 @@ class Tally:
     failed: int = 0
     baseline: int = 0
     waiting: int = 0           # new addresses left for the next pass
+    skipped: int = 0           # older new addresses marked as seen without reading (`--accept-many` after a big jump)
     note: str = ""
 
 
@@ -59,6 +60,8 @@ class Result:
                 lines.append(f"{name}: first run — {t.baseline:,} addresses recorded as seen, nothing read.")
             if t.text_missing:
                 lines.append(f"{name}: {t.text_missing} page(s) were cut by the paywall (text_missing) of {t.read + t.text_missing} read.")
+            if t.skipped:
+                lines.append(f"{name}: {t.skipped:,} older new addresses were marked as seen without being read (the newest ones were kept).")
             if t.failed:
                 lines.append(f"{name}: {t.failed} page(s) could not be fetched; they are tried again next pass.")
             if t.note:
@@ -109,6 +112,17 @@ def run_pass(conn, *, sites: dict | None = None, cookies: dict | None = None, fe
             f"Unusual number of new posts: {total_new} new addresses (the limit is {guard}). None was read. "
             "If the site is fine (for example the Air was off for days), run `python -m agents.eye --accept-many`."
         )
+
+    if accept_many and total_new > guard:
+        # A catch-up after a big jump (Air off for days, a site opened late): keep the newest addresses so that what is left after this pass
+        # stays under the guard, and mark the older ones as seen. Otherwise the rest stays "new" and every following scheduled pass trips
+        # the guard again (audit 2026-10-14, #2).
+        keep = cap + guard // max(1, len(queues))
+        for key, queue in queues.items():
+            if len(queue) > keep:
+                store.add_baseline(conn, key, queue[:-keep])
+                result.tally[key].skipped = len(queue) - keep
+                queues[key] = queue[-keep:]
 
     for key in list(queues):
         if not cookies.get(key):
@@ -186,8 +200,10 @@ def after_reading(conn, result: Result, *, run=None, seclist: tags.SecList | Non
         try:
             line = sentence.write(title, text, run=run, conn=conn)
         except ai.AIError as error:
-            result.notes.append(f"Sentences stopped: {error}. They are written in the next pass.")
-            break
+            if not error.only_cut:
+                result.notes.append(f"Sentences stopped: {error}. They are written in the next pass.")
+                break
+            line = ""          # every model was cut on this one post (audit 2026-10-14, #1): give up on it, do not stop the others
         except ValueError:
             line = ""          # two unusable answers: given up on this post ('' is not NULL, so it is not asked again)
         conn.execute("UPDATE articles SET sentence = ? WHERE id = ?", (line, article_id))
