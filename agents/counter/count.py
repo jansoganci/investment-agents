@@ -137,12 +137,25 @@ def count(conn, now: datetime | None = None, write: bool = True) -> Result:
     return result
 
 
+def latest_run(conn) -> tuple[str | None, bool]:
+    """(the time of the latest run, whether it stored no row). A run that found nothing to count writes no `counts` row, so the
+    stored rows alone would show an older run as the latest (audit 2026-10-14, #5): the `runs` table says a newer run happened."""
+    stored = conn.execute("SELECT max(run_at) FROM counts").fetchone()[0]
+    last = conn.execute("SELECT max(started_at) FROM runs WHERE job = 'counter' AND status = 'ok'").fetchone()[0]
+    if last is not None and (stored is None or stored < last):
+        return last, True
+    return stored, False
+
+
 def latest(conn) -> Result | None:
-    """The latest stored run (what agent 2 and `--show` read). The notes about tags are not stored, so they are 0 here."""
-    run_at = conn.execute("SELECT max(run_at) FROM counts").fetchone()[0]
+    """The latest run (what agent 2 and `--show` read). The notes about tags are not stored, so they are 0 here.
+    A latest run that found nothing is an empty Result, not the run before it."""
+    run_at, empty = latest_run(conn)
     if run_at is None:
         return None
     result = Result(run_at=run_at, to_day=clock.today_local(clock.parse_utc(run_at)))
+    if empty:
+        return result
     for kind, key, label, p7, p30, rank, card, points in conn.execute(
             "SELECT kind, key, label, posts_7d, posts_30d, rank, has_card, points FROM counts WHERE run_at = ? "
             "ORDER BY id", (run_at,)):

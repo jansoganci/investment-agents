@@ -165,6 +165,12 @@ def classify_new(conn, run=None, *, seclist: SecList | None = None, limit: int =
         except ai.AIError as error:
             stats.note = f"tags are not classified now: {error}"
             return stats
+        if any(a.get("kind") == "company" and a.get("us_listed") for a in answers):
+            try:
+                seclist.find("")          # the SEC list is fetched before any write starts: SEC is never asked inside the write lock (audit #12)
+            except Exception as error:  # noqa: BLE001 — SEC slow, refusing or SEC_UA missing: the tags wait for the next pass
+                stats.note = f"SEC could not be asked ({type(error).__name__}: {error}); the tags wait for the next pass"
+                return stats
         try:
             for item in answers:
                 row = decide(item, subsectors, seclist)

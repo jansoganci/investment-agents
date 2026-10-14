@@ -40,7 +40,7 @@ def newest_post(site: Site) -> str:
                 loc = (child.text or "").strip()
             elif name == "lastmod":
                 lastmod = (child.text or "").strip()
-        if loc and "/tag/" not in loc and (best is None or (lastmod or "") > best[0]):
+        if loc and loc.startswith(site.base + "/") and "/tag/" not in loc and (best is None or (lastmod or "") > best[0]):     # own host only: the cookie goes with it
             best = (lastmod or "", loc)
     if best is None:
         raise http.FetchError(f"no post found in {site.posts_sitemap}")

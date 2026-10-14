@@ -72,6 +72,18 @@ def test_a_pending_drop_alert_and_an_auditor_fail_are_alerts(db):
     assert any(t.startswith("AUDITOR DISAGREES · NKE: the figure audit failed") for t in out)
 
 
+def test_a_drop_alert_is_judged_by_when_it_was_written_not_by_its_friday_date(db):
+    """Audit 2026-10-14, #16: Portfolio dates the signal with the week's Friday; the chain may run on Monday."""
+    sid = stock(db, "NKE", grade="mid")
+    friday = (NOW - timedelta(days=5)).date().isoformat()
+    db.execute("INSERT INTO signals (kind, stock_id, date, status, created_at) VALUES ('drop_alert', ?, ?, 'pending', ?)",
+               (sid, friday, clock.utc_iso(NOW)))
+    db.execute("INSERT INTO signals (kind, stock_id, date, status, created_at) VALUES ('drop_alert', ?, ?, 'pending', ?)",
+               (sid, DAY, clock.utc_iso(NOW - timedelta(days=10))))                    # old history: not repeated by a first run
+    db.commit()
+    assert len(texts(db)) == 1
+
+
 def test_the_openrouter_spend_warning_comes_once_a_month(db):
     db.execute("INSERT INTO ai_calls (job, provider, model, cost_usd, outcome, created_at) VALUES ('strong', 'openrouter', 'm', 10.5, 'ok', ?)",
                (clock.utc_iso(),))

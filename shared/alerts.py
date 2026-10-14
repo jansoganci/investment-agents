@@ -46,7 +46,7 @@ def pending(conn, now=None) -> list[tuple[str, str]]:
 
     for signal_id, ticker, day, detail in conn.execute(
             "SELECT g.id, s.ticker, g.date, g.detail FROM signals g JOIN stocks s ON s.id = g.stock_id "
-            "WHERE g.kind = 'drop_alert' AND g.status = 'pending' AND g.date >= ? ORDER BY g.id", (since_day,)).fetchall():
+            "WHERE g.kind = 'drop_alert' AND g.status = 'pending' AND g.created_at >= ? ORDER BY g.id", (since,)).fetchall():          # when it was written, not its (Friday) date
         out.append((f"drop:{signal_id}", f"DROP ALERT · {ticker} fell 20% or more from its 52-week high ({day}). Agent 3 checks the latest "
                                           "filing and news; the check is not a sell signal." + (f" Detail: {detail}" if detail else "")))
 

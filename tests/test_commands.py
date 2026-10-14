@@ -194,3 +194,12 @@ def test_failed_change_writes_nothing(db):
         del commands.REGISTRY["testbroken"]
     assert db.execute("SELECT count(*) FROM command_log").fetchone()[0] == 0
     assert db.execute("SELECT count(*) FROM other_assets").fetchone()[0] == 0
+
+
+def test_a_long_information_reply_is_cut_to_one_telegram_message():
+    """Audit 2026-10-14, #18: /candidates with 10 stocks can be longer than Telegram allows."""
+    from shared import commands
+    long = "line\n" * 2000
+    cut = commands._fit(long)
+    assert len(cut) <= 4096 and cut.endswith("4,096-character limit)")
+    assert commands._fit("short") == "short"

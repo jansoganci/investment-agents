@@ -61,6 +61,8 @@ class _SameHostRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if _host(newurl) != _host(req.full_url):
             return None          # urllib then raises HTTPError(3xx); `fetch` hands it back as a Response
+        if urllib.parse.urlparse(req.full_url).scheme == "https" and urllib.parse.urlparse(newurl).scheme != "https":
+            return None          # never send the cookie in clear text after a downgrade (audit 2026-10-14, #13)
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 

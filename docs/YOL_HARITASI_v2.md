@@ -217,7 +217,7 @@ I can correct it. The Eye's tag mapping takes over in phase 4 (`docs/IMPLEMENTAT
 
 1. **Once a week** (Sunday morning), **at most 10 stocks** from the top of the Counter list. Reason: long-term investing;
    I keep control. If budget / quota gets tight, the number drops.
-2. **It does not visit the site;** it reads the full text from `articles`. One exception: a post flagged `text_missing` is fetched from the site once more.
+2. **It does not visit the site;** it reads the full text from `articles`. (A post flagged `text_missing` is **not** fetched again: Agent 1 rule 12 and the 2026-10-11 decision; the earlier "once more" exception was dropped. Corrected 2026-10-14, audit #21.) At most 12 posts per stock are read in a week (`reading.tone_for`, `max_posts`); a stock's alerts look at the last 2 days (`shared/alerts.py`); the schedule hours live in Hermes's cron jobs (`docs/SCHEDULE.md`), `settings.yaml` `hours` is only a reference.
 3. **"Actually reading":** a strong model + reading against set questions (what is said about the company, which figures are there,
    is it an event or a general comment) + a **quote from the post** for every claim. The post is flagged `read_deep`; it is not read again.
 4. **Commodity → stock link, from the company to the commodity:** the first time a stock is researched, one web search: "Which

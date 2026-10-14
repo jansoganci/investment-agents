@@ -19,11 +19,12 @@ def _section(title: str, body: list[str]) -> list[str]:
     return ["", title] + body if body else []
 
 
-def candidates(conn) -> list[str]:
+def candidates(conn, week: str | None = None) -> list[str]:
+    """`week` (e.g. 2026-W42): only that week's scores; without it the latest week (the /candidates command)."""
     rows = conn.execute(
         "SELECT s.ticker, s.company, s.added_by, c.score, c.mentions, c.tone, c.sector_tailwind, c.news_flow, c.quick_health FROM scores c "
-        "JOIN stocks s ON s.id = c.stock_id WHERE c.week = (SELECT max(week) FROM scores) AND s.status = 'candidate' "
-        "ORDER BY c.score DESC, s.ticker LIMIT 10").fetchall()
+        "JOIN stocks s ON s.id = c.stock_id WHERE c.week = COALESCE(?, (SELECT max(week) FROM scores)) AND s.status = 'candidate' "
+        "ORDER BY c.score DESC, s.ticker LIMIT 10", (week,)).fetchall()
     return [f"- {t} {co or ''} — {sc}/10 (mentions {m} · tone {to} · tailwind {ta} · news {n} · health {h})" + (" · added by me" if by == "user" else "")
             for t, co, by, sc, m, to, ta, n, h in rows]
 
@@ -45,7 +46,8 @@ def grade_changes(conn, since: str) -> list[str]:
 
 def counter_lines(conn) -> tuple[list[str], list[str]]:
     run_at = conn.execute("SELECT max(run_at) FROM counts").fetchone()[0]
-    if run_at is None:
+    last = conn.execute("SELECT max(started_at) FROM runs WHERE job = 'counter' AND status = 'ok'").fetchone()[0]
+    if run_at is None or (last is not None and run_at < last):     # never ran, or the latest run found nothing (audit #5)
         return [], []
     bar = int((config.settings().get("counter") or {}).get("card_mention_bar", 6))
     carded = conn.execute("SELECT key, posts_7d FROM counts WHERE run_at = ? AND kind = 'stock' AND has_card = 1 AND posts_7d >= ? "
@@ -101,7 +103,8 @@ def build(conn, day: str | None = None, portfolio_text: str | None = None, analy
     lines = [f"SUNDAY SUMMARY · {day}"]
     if errors:
         lines += ["", "THINGS THAT FAILED THIS WEEK"] + [f"- {e}" for e in errors]
-    lines += _section("New candidates (a score is a ranking, not a buy):", candidates(conn))
+    year, week_no, _ = date.fromisoformat(day).isocalendar()
+    lines += _section("New candidates (a score is a ranking, not a buy):", candidates(conn, f"{year}-W{week_no:02d}"))
     lines += _section("Card changes this week:", grade_changes(conn, since))
     if analysis_text:
         lines += ["", "Agent 3 this week:", analysis_text]

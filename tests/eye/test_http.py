@@ -116,3 +116,10 @@ def test_a_body_cut_by_the_server_is_a_fetch_error(monkeypatch):
     monkeypatch.setattr(http._opener, "open", boom)
     with pytest.raises(http.FetchError):
         http.fetch("http://127.0.0.1:9/x")
+
+
+def test_a_redirect_from_https_to_plain_http_is_not_followed():
+    handler = http._SameHostRedirect()
+    req = http.urllib.request.Request("https://www.example.com/a")
+    assert handler.redirect_request(req, None, 302, "Found", {}, "http://www.example.com/b") is None
+    assert handler.redirect_request(req, None, 302, "Found", {}, "https://www.example.com/b") is not None
