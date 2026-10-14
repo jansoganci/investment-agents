@@ -159,6 +159,8 @@ Title, date, and tags are public; the rest of the post requires a member login.
     US (or an ADR) and fails the SEC name check waits for me. **Exactly (my decision, 2026-10-11):** the model says whether the
     company is **listed in the US (an ADR counts)**. Listed → the SEC check (Alibaba's ADR is checked); not listed → no check,
     no question.
+    **The SEC name check looks only at the tag's own text** (my decision, 2026-10-14, audit #20): the name the model gives for the company is not used to
+    confirm it, so a model's wrong ticker cannot confirm itself. A brand name that differs from the legal name (Google / Alphabet) waits for my `/tag`.
 16. **Login is a cookie, never a password (2026-10-11):** Ghost's sign-in has no password (an e-mail link), so there is no
     password to give the system. I never give the system my e-mail password; the only secret is the cookie header in `.env`.
 17. **`Inbox/` (my decision, 2026-10-11):** one file a day, `YYYY-MM-DD.md` (Turkey date), each pass appends its lines: title, the

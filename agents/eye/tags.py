@@ -110,7 +110,7 @@ def decide(item: dict, subsectors: set[str], seclist: SecList) -> dict:
                 row["status"], row["note"] = "waiting", "US-listed, but the model gave no ticker"
             elif found is None:
                 row["status"], row["note"] = "waiting", f"SEC does not know the ticker {ticker}"
-            elif not (names_close(item["tag"], found["name"]) or names_close(item.get("name") or "", found["name"])):
+            elif not names_close(item["tag"], found["name"]):      # only the tag's own text: the model's name for the company must not confirm itself (audit #20)
                 row["status"], row["note"] = "waiting", f"SEC names {ticker} '{found['name']}', which is not close to '{item['tag']}'"
             else:
                 row["maps_to"], row["exchange"] = found["ticker"], found["exchange"]
