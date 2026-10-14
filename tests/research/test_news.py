@@ -103,6 +103,17 @@ def test_an_important_positive_with_a_source_scores_two(db, monkeypatch):
     assert n.points == 2 and "important positive: A large new contract." in n.reason and n.events[0].status == "not_checked"
 
 
+def test_an_important_positive_older_than_90_days_is_not_counted(db, monkeypatch):
+    install(monkeypatch, model([event(**{"class": "important_positive", "serious_type": None, "date": "2026-02-18"})]))
+    n = search(db)
+    assert n.points == 1 and n.events[0].status == "not_confirmed" and "outside the last 90 days" in n.events[0].note
+
+
+def test_an_important_positive_without_a_usable_date_is_not_counted(db, monkeypatch):
+    install(monkeypatch, model([event(**{"class": "important_positive", "serious_type": None, "date": None})]))
+    assert search(db).points == 1
+
+
 def test_an_important_positive_without_a_search_source_is_not_counted(db, monkeypatch):
     install(monkeypatch, model([event(**{"class": "important_positive", "serious_type": None, "source_url": "https://made.up/x"})]))
     assert search(db).points == 1

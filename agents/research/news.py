@@ -107,6 +107,16 @@ def check_event(conn, run, ev: Event, ticker: str, company: str, sources: set[st
     if ev.klass == "important_positive" and ev.scope != "company_specific":
         ev.note = "not company-specific; not counted"
         return ev
+    if ev.klass == "important_positive":
+        max_age = int((cfg.get("research") or {}).get("positive_max_age_days", 90))
+        try:
+            happened = date.fromisoformat((ev.date or "")[:10])
+        except ValueError:
+            ev.status, ev.note = "not_confirmed", "no usable date; not counted as an important positive"
+            return ev
+        if happened < today - timedelta(days=max_age) or happened > today + timedelta(days=1):
+            ev.status, ev.note = "not_confirmed", f"the date {ev.date} is outside the last {max_age} days; not counted as an important positive"
+        return ev
     if ev.klass != "serious_negative":
         return ev
     if ev.scope != "company_specific":

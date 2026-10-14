@@ -48,6 +48,7 @@ research:                          # agent 2 (roadmap "Agent 2 rules" 8)
   web_search_uses: 5               # most searches in one news call
   commodity_search_uses: 3
   event_max_age_days: 365          # a serious negative older than this does not count
+  positive_max_age_days: 90        # an important positive older than this does not count (my decision, 2026-10-14: FCX scored 2 on an 8-month-old item)
   page_max_bytes: 2000000          # a source page is cut here before the quote is looked for
 
 # Yahoo symbols of the commodities a stock can be linked to (the model must pick from these names; roadmap "Agent 2 rules" 8)
