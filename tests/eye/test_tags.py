@@ -43,6 +43,13 @@ def test_an_adr_is_checked_like_any_us_listed_company(seclist):
     assert row["status"] == "confirmed" and row["maps_to"] == "BABA"
 
 
+def test_the_models_own_name_for_the_company_cannot_confirm_a_wrong_ticker(seclist):
+    """Audit 2026-10-14, #20: tag "Standard", the model says SMP and calls it 'Standard Motor Products Inc': the SEC name matches the
+    model's name, but not the tag's own text, so the company waits for my /tag instead of being confirmed by the model's own words."""
+    row = tags.decide(item("Standard", "company", ticker="SMP", us_listed=True, name="Standard Motor Products Inc"), set(), seclist)
+    assert row["status"] == "waiting" and "not close" in row["note"]
+
+
 @pytest.mark.parametrize("answer, why", [
     (dict(ticker="ZZZZ", us_listed=True), "SEC does not know the ticker ZZZZ"),
     (dict(ticker=None, us_listed=True), "gave no ticker"),
