@@ -59,5 +59,8 @@ def fetch_text(url: str, max_bytes: int = 2_000_000, timeout: float = 20) -> str
         raise PageError(f"HTTP {error.code}") from None
     except (urllib.error.URLError, TimeoutError, OSError) as error:
         raise PageError(str(getattr(error, "reason", error))) from None
-    text = body.decode(charset, errors="replace")
+    try:
+        text = body.decode(charset, errors="replace")
+    except LookupError:                       # an unknown charset name in a header: read it as UTF-8 rather than drop the stock's research
+        text = body.decode("utf-8", errors="replace")
     return html_to_text(text) if "<" in text[:2000] else text

@@ -89,7 +89,8 @@ def _event_from(raw: dict) -> Event | None:
     serious = raw.get("serious_type") if raw.get("serious_type") in SERIOUS else None
     if klass == "serious_negative" and serious is None:
         klass = "other"                                   # not one of the five on the list
-    return Event(summary=str(raw["summary"]).strip(), date=(str(raw.get("date")) if raw.get("date") else None),
+    # the summary is one line: it goes to the card and to Telegram as it is (audit 2026-10-14, #19)
+    return Event(summary=" ".join(str(raw["summary"]).split()), date=(str(raw.get("date")) if raw.get("date") else None),
                  source_url=(str(raw.get("source_url")).strip() if raw.get("source_url") else None),
                  quote=(str(raw.get("quote")).strip() if raw.get("quote") else None),
                  scope=raw.get("scope") if raw.get("scope") in SCOPES else None, klass=klass, serious_type=serious)

@@ -85,3 +85,12 @@ def test_a_block_stops_at_once(monkeypatch, capsys):
 def test_bad_usage_prints_usage(args, capsys):
     assert session_check.main(args, sleep=lambda s: None) == 2
     assert "usage:" in capsys.readouterr().out
+
+
+def test_the_newest_post_is_taken_only_from_the_sites_own_host(monkeypatch):
+    """Audit 2026-10-14, #13: a foreign address in a sitemap must never be fetched with the cookie."""
+    sitemap = (b'<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+               b'<url><loc>https://evil.example/steal/</loc><lastmod>2030-01-01T00:00:00Z</lastmod></url>'
+               b'<url><loc>https://www.emtiadefteri.com/mine/</loc><lastmod>2026-10-11T05:48:48Z</lastmod></url></urlset>')
+    monkeypatch.setattr(http, "fetch", lambda url, cookie=None, timeout=30: reply(sitemap))
+    assert session_check.newest_post(SITES["emtia"]) == "https://www.emtiadefteri.com/mine/"

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 
@@ -8,6 +8,7 @@ from shared.commands import builtin
 from .helpers import NOW, entry, score, stock, tag
 
 DAY = clock.today_local()
+WEEK = "%d-W%02d" % date.fromisoformat(DAY).isocalendar()[:2]          # the week the summary of DAY belongs to
 
 
 def test_an_empty_database_gives_only_the_header_the_portfolio_line_and_the_spend(db, env):
@@ -21,7 +22,7 @@ def test_an_empty_database_gives_only_the_header_the_portfolio_line_and_the_spen
 def test_candidates_of_the_latest_week_only_and_only_while_they_are_candidates(db, env):
     a, b, c = stock(db, "AAA", "candidate"), stock(db, "BBB", "candidate", added_by="user"), stock(db, "CCC", "watching")
     old = stock(db, "OLD", "candidate")
-    score(db, a, 9, "2026-W42"), score(db, b, 5, "2026-W42"), score(db, c, 8, "2026-W42"), score(db, old, 10, "2026-W41")
+    score(db, a, 9, WEEK), score(db, b, 5, WEEK), score(db, c, 8, WEEK), score(db, old, 10, "2020-W01")
     text = "\n".join(summary.build(db, DAY))
     assert "New candidates (a score is a ranking, not a buy):" in text
     assert text.index("- AAA") < text.index("- BBB") and "added by me" in text.split("- BBB")[1].splitlines()[0]
@@ -122,3 +123,19 @@ def test_status_shows_the_warnings(db, env):
 def test_without_a_drive_folder_status_has_no_backup_warning(db, monkeypatch):
     monkeypatch.delenv("DRIVE_DIR", raising=False)
     assert builtin.warnings(db, NOW) == []
+
+
+def test_candidates_of_an_older_week_are_not_shown_as_new_when_this_week_had_no_research(db, env):
+    """Audit 2026-10-14, #5: if Research gave nothing this week, last week's list must not be shown as this week's."""
+    a = stock(db, "AAA", "candidate")
+    score(db, a, 9, "2020-W01")
+    assert "AAA" not in "\n".join(summary.build(db, DAY))
+    assert summary.candidates(db) and "AAA" in summary.candidates(db)[0]               # the /candidates command still shows the latest
+
+
+def test_the_counter_lines_are_empty_when_the_latest_counter_run_found_nothing(db, env):
+    db.execute("INSERT INTO counts (run_at, kind, key, label, posts_7d, posts_30d, rank, has_card, points, created_at) "
+               "VALUES ('2026-10-05T09:00:00Z', 'stock', 'AAPL', 'Apple', 9, 9, NULL, 1, NULL, 'x')")
+    db.execute("INSERT INTO runs (job, started_at, ended_at, status) VALUES ('counter', '2026-10-12T09:00:00Z', '2026-10-12T09:00:01Z', 'ok')")
+    db.commit()
+    assert summary.counter_lines(db) == ([], [])

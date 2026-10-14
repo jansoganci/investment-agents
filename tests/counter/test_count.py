@@ -211,3 +211,17 @@ def test_show_before_any_run(env, capsys):
     dbmod.init()
     assert cli.main(["--show"]) == 0
     assert "has not run yet" in capsys.readouterr().out
+
+
+def test_a_latest_run_that_found_nothing_is_not_mistaken_for_the_run_before_it(db):
+    """Audit 2026-10-14, #5: an empty run writes no rows, so `latest` must not return an older run as if it were the newest."""
+    tag(db, "Apple", "company", maps_to="AAPL", us=1)
+    post(db, ["Apple"])
+    old = count.count(db, now=NOW)
+    assert old.of("stock") and count.latest(db).of("stock")
+    # a later successful run of the job that stored nothing (no post in the window any more)
+    later = clock.utc_iso(NOW + timedelta(days=30))
+    db.execute("INSERT INTO runs (job, started_at, ended_at, status) VALUES ('counter', ?, ?, 'ok')", (later, later))
+    db.commit()
+    got = count.latest(db)
+    assert got is not None and got.entries == [] and got.run_at == later

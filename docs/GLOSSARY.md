@@ -251,7 +251,7 @@ Bugünkü klasör adı durur. Sağ sütun, çeviride ve yeni kodda kullanılacak
 | Telegram'dan ayarlar (ör. model) | `settings` |
 | onaylı alt sektörler | `subsectors` |
 
-`tags` satırı: tür → `kind` (`company` · `commodity` · `sector`) · karşılık → `maps_to` · borsa → `exchange` · ülke → `country` · ana sektör → `sector` · alt sektör → `subsector`.
+`tags` satırı: tür → `kind` (`company` · `commodity` · `sector` · `region` · `other`; faz 4–6 adları aşağıda) · karşılık → `maps_to` · borsa → `exchange` · ülke → `country` · ana sektör → `sector` · alt sektör → `subsector`.
 
 `commodity_links`: şirket → `company` · emtia → `commodity` · rol → `role` (`producer` · `user`) · kaynak → `source`. Üretici → `producer`. Kullanıcı → `user`.
 
@@ -430,3 +430,40 @@ para sıralaması) · `block` (portföy bloğu) · `run` (haftalık çalışma v
 | SPY'nin temettüsü yeniden yatırılmış endeksi | toplam getiri endeksi (total-return index) |
 | yeni para sıralamasının 3 şartı | `below_high` · `thesis_intact` · `price_fair` |
 | `signals.detail` (yeni para) | `rank` · `would_rank` · `score` · `conditions` · `drop` · `weight` · `expensive_4_weeks` |
+
+## Kod ve veritabanı adları (faz 4–6, 2026-10-14)
+
+**Modüller:** `agents/eye` — `http` (nazik istek, çerez yalnızca kendi sitesine) · `sites` (`SITES`: `emtia`, `dragonomi`) · `sitemap` · `extract` (yazı gövdesi, kilit
+tespiti) · `store` · `run` (bir geçiş) · `sentence` (tek nötr cümle) · `inbox` · `tags` (etiket sınıflama, SEC kontrolü) · `modeltest` · `session_check` ·
+`set_cookie`. `agents/counter` — `count` · `block`. `agents/research` — `health` · `tailwind` · `score` · `reading` · `news` · `page` · `run`.
+`shared` — `summary` · `alerts` · `sunday`. Komutlar: `/tag` · `/subsector` · `/candidates` · `/summary`.
+Hermes işleri (`docs/SCHEDULE.md`): `prices` · `backup` · `eye` · `alerts` · `sunday`.
+
+**Veritabanı (sürüm 6–10):**
+- `eye_seen`: `url` · `site` (`emtia` / `dragonomi`) · `seen_at` · `how` (`baseline` ilk geçişte kaydedilen, okunmayan · `read` · `text_missing` paywall'a takılan,
+  bir daha denenmez · `glossary` sözlük yazısı · `gone` 404 / 410).
+- `tags`: `kind` (`company` · `commodity` · `sector` · `region` · `other`) · `status` (`confirmed` / `waiting` — SEC kontrolünü geçemeyen, benim `/tag`'ımı bekler) · `us_listed` (0 / 1) ·
+  `note` (neden beklediği). `subsectors.void`.
+- `counts` (Sayaç, her koşu yeni satırlar ekler): `run_at` · `kind` (`stock` · `non_us` · `commodity` · `sector`) · `key` · `label` · `posts_7d` · `posts_30d` · `rank` ·
+  `has_card` · `points` (2. ajanın `mentions` puanı). Hiç satır yazmayan koşu `runs` tablosundan anlaşılır.
+- `readings` (2. ajanın yazı okuması): `article_id` · `ticker` · `tone` (`positive` / `negative` / `neutral`) · `about` · `kind` (`event` / `general_comment`) · `quote` · `model`;
+  `articles.read_deep` · `articles.text_missing`.
+- `news_events`: `ticker` · `week` · `summary` · `event_date` · `source_url` · `quote` · `scope` (`company_specific` / `general_risk`) · `class` (`serious_negative` ·
+  `important_positive` · `other`) · `serious_type` · `status` (`confirmed` · `not_confirmed` · `not_checked`) · `note` · `audit_id`.
+- `stocks.commodity_checked` (emtia bağının aranma tarihi) · `scores` (hisse + hafta tekil) · `commodity_links` (hisse + emtia tekil; rol `producer` / `user`).
+- `alerts_sent`: `key` (`grade_drop:` · `solid:` · `drop:` · `audit:` · `spend:` + kimlik) · `sent_at` · `text` — her uyarı bir kez gider.
+
+**Ayarlar (`settings.yaml`):** `eye.skip_sites` · `counter` (`window_days` · `long_days` · `top` · `card_mention_bar` · `mention_points`) · `research` (`web_search_uses` ·
+`commodity_search_uses` · `event_max_age_days` · `positive_max_age_days` · `page_max_bytes`) · `commodity_symbols` · `warnings` · `hours` (yalnızca not).
+
+| Ne | Ad |
+|---|---|
+| Eye'ın bir sitenin ilk geçişi (adresleri görülmüş yazma) | baseline |
+| paywall'a takılan sayfa | `text_missing` |
+| üst üste 5 kilitli sayfa → "çerez bitmiş olabilir" uyarısı | `COOKIE_WARN_AFTER` (`agents/eye/run.py`) |
+| büyük sıçramadan sonra eski adresleri "görüldü" işaretleme | `skipped` (`--accept-many`) |
+| bir sitenin hiç dokunulmaması | `skip_sites` |
+| 90 günden eski olumlu haber puan vermez | `positive_max_age_days` |
+| eksik sektör / fiyat | `unclear` = 1 puan (`tailwind`) |
+| yapay zekâ çağrısı jeton sınırında kesildi | `outcome` `cut` (`AIError.only_cut`) |
+

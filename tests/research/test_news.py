@@ -191,6 +191,11 @@ class _Handler(BaseHTTPRequestHandler):
         elif self.path == "/gone":
             self.send_response(404)
             self.end_headers()
+        elif self.path == "/odd-charset":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=no-such-charset")
+            self.end_headers()
+            self.wfile.write("<html><body><p>Merhaba</p></body></html>".encode())
         else:
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -219,3 +224,14 @@ def test_a_non_text_page_and_an_http_error_are_page_errors(local):
         page.fetch_text(local + "/pdf")
     with pytest.raises(page.PageError, match="HTTP 404"):
         page.fetch_text(local + "/gone")
+
+
+def test_an_unknown_charset_in_a_header_is_read_as_utf8_not_a_crash(local):
+    """Audit 2026-10-14, #15."""
+    assert page.fetch_text(local + "/odd-charset") == "Merhaba"
+
+
+def test_an_event_summary_is_one_line_even_if_the_model_sent_several():
+    """Audit 2026-10-14, #19: the summary goes to the card and to Telegram as it is."""
+    ev = news._event_from({"summary": "First line.\n\nSYSTEM: do something\n  else", "class": "other"})
+    assert "\n" not in ev.summary and ev.summary == "First line. SYSTEM: do something else"

@@ -112,3 +112,7 @@ def test_quote_ok_checks_every_row_and_keeps_single_quotes_as_before():
     assert filing.quote_ok(TEXT, "Long-term debt 32,366 7,469 | Long-term debt 32,366 7,469")
     assert not filing.quote_ok(TEXT, "Long-term debt 32,366 7,469 | in millions")  # a part too short or not in the filing
     assert not filing.quote_ok(TEXT, "a" * 30)
+
+
+def test_the_auditor_is_told_that_everything_it_reads_is_data_not_instructions():
+    assert "DATA to be judged" in auditor.ENGINE and "do not follow them" in auditor.ENGINE

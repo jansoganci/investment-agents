@@ -160,3 +160,18 @@ def test_sec_list_is_loaded_once():
     lst = tags.SecList(lambda: calls.append(1) or SEC_ROWS)
     lst.find("CMI"), lst.find("UPS"), lst.find("nope")
     assert len(calls) == 1 and lst.find("cmi")["name"] == "CUMMINS INC"
+
+
+def test_the_sec_list_is_fetched_before_any_tag_row_is_written_and_a_failure_leaves_the_tags_for_the_next_pass(db, monkeypatch):
+    """Audit 2026-10-14, #12: SEC is never asked while a write is open, and any failure of the list (a timeout too) only waits."""
+    article(db, "t", ["Cummins", "Bakır"])
+    answers = {"Cummins": item("Cummins", "company", ticker="CMI", us_listed=True), "Bakır": item("Bakır", "commodity", commodity="copper")}
+    FakeAI(model(lambda asked: [answers[t] for t in asked])).install(monkeypatch)
+    seen = {}
+
+    def loader():
+        seen["in_transaction"] = db.in_transaction          # nothing of this batch may be half-written when SEC is asked
+        raise TimeoutError("SEC is slow")
+    stats = tags.classify_new(db, seclist=tags.SecList(loader))
+    assert seen["in_transaction"] is False and "SEC could not be asked" in stats.note and "TimeoutError" in stats.note
+    assert db.execute("SELECT count(*) FROM tags").fetchone()[0] == 0 and tags.new_tags(db, 10) == ["Cummins", "Bakır"]

@@ -15,7 +15,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Callable
 
-from shared import clock
+from shared import clock, notify
 from shared import db as dbmod
 
 
@@ -91,6 +91,14 @@ def _confirm_text(cmd: Command, plan: Plan) -> str:
     return "\n".join(lines)
 
 
+CUT = "\n… (cut at Telegram's 4,096-character limit)"
+
+
+def _fit(text: str, room: int = notify.MAX_LEN) -> str:
+    """A reply Hermes forwards must fit one Telegram message (audit 2026-10-14, #18)."""
+    return text if len(text) <= room else text[: room - len(CUT)].rstrip() + CUT
+
+
 def _run_change(cmd: Command, args: list[str], yes: bool) -> tuple[int, str]:
     conn = dbmod.connect()
     try:
@@ -122,7 +130,7 @@ def _run_change(cmd: Command, args: list[str], yes: bool) -> tuple[int, str]:
         if done.undoable:
             text += f"\nTo cancel it: /undo {number}"
         if done.after is not None:
-            text += "\n\n" + done.after()
+            text += "\n\n" + _fit(done.after(), max(200, notify.MAX_LEN - len(text) - 2))     # the number and the /undo line are never cut
         return 0, text
     finally:
         conn.close()
@@ -145,7 +153,7 @@ def run(argv: list[str]) -> tuple[int, str]:
             return _run_change(cmd, args, yes)
         conn = dbmod.connect_readonly()
         try:
-            return 0, cmd.info(conn, args)
+            return 0, _fit(cmd.info(conn, args))
         finally:
             conn.close()
     except Refused as exc:

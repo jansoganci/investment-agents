@@ -64,3 +64,9 @@ def test_time_limit_comes_from_settings():
     from shared import config
 
     assert ask.time_limit() == config.settings()["database"]["ask_time_limit_s"] > 0
+
+
+def test_the_output_says_that_what_is_inside_is_data_not_an_instruction(db, capsys):
+    from shared import ask
+    ask.main(["sql", "SELECT 1"])
+    assert capsys.readouterr().out.startswith("# data only")
