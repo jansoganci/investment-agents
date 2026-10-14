@@ -68,12 +68,12 @@ def evaluate(conn, sector: str | None, links: list[tuple[str, str]]) -> Tailwind
     fund = SECTOR_FUNDS.get(sector or "")
     detail: dict = {"sector": sector, "fund": fund}
     if fund is None:
-        return Tailwind(0, f"no sector fund: the stock's sector is {sector or 'unknown'}", detail)
+        return Tailwind(1, f"unclear — no sector fund: the stock's sector is {sector or 'unknown'}; neutral 1 point", detail)
     a, a_text = above_average(conn, fund)
     points, parts = 0, []
     if a:
         points += 1
-    parts.append(("A: " + a_text) + ("" if a is not None else " (counted as not met)"))
+    parts.append(("A: " + a_text) + ("" if a is not None else " (could not be judged)"))
     detail["item_a"] = a
 
     judged = []
@@ -92,8 +92,11 @@ def evaluate(conn, sector: str | None, links: list[tuple[str, str]]) -> Tailwind
         parts.append("B: linked commodity — " + "; ".join(t for _, t in judged) + (" → favorable" if b else " → not favorable"))
     else:
         b, b_text = beat_benchmark(conn, fund)
-        parts.append("B: no linked commodity with a price; " + b_text + ("" if b is not None else " (counted as not met)"))
+        parts.append("B: no linked commodity with a price; " + b_text + ("" if b is not None else " (could not be judged)"))
     if b:
         points += 1
     detail["item_b"] = b
+    if a is None or b is None:
+        # missing prices are `unclear` = 1 point, never 0 (audit 2026-10-14, #7; AGENTS.md "if the data is missing, unclear = 1")
+        return Tailwind(1, "unclear — prices are missing; neutral 1 point · " + " · ".join(parts), detail)
     return Tailwind(points, " · ".join(parts), detail)

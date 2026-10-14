@@ -300,6 +300,8 @@ Thresholds are starting values; they are adjusted after looking at the first wee
 - The stock's **sector fund** (the US fund for each of the 11 sectors, e.g. XLE energy, XLK technology) is **above its 40-week average** today (a general rise over the last ~9 months = wind at the back).
 - **A linked commodity is favorable for the company's role:** if it is a producer, the commodity price is above its 40-week average; if it is a user, below
   (an oil rise is good for a producer, bad for an airline). If there is no linked commodity / no price data: the sector fund beat the S&P 500 over the last 13 weeks.
+- **Missing data is `unclear` = 1 point, never 0 (my decision, 2026-10-14, audit finding #7):** if the sector is unknown (no sector fund), or the fund's or the benchmark's
+  prices are too short to judge an item, the whole criterion is 1 point with the reason `unclear — …`.
 
 **4. Serious-negative list (fixed; each such event is checked by the AI auditor — "AI auditor" below):** accounting / auditor problem · bankruptcy risk / debt restructuring · a company-specific
 official investigation · profit warning + cut outlook · sudden departure of the CEO / CFO.

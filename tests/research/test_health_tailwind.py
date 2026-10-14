@@ -149,16 +149,17 @@ def test_a_fund_below_its_average_scores_nothing_on_item_a(db):
     assert t.detail["item_a"] is False and t.detail["item_b"] is False and t.points == 0
 
 
-def test_not_enough_history_counts_as_not_met_and_says_so(db):
+def test_not_enough_history_is_unclear_one_point_and_says_so(db):
+    """Audit 2026-10-14, #7: missing data is `unclear` = 1 point, never 0."""
     add_prices(db, "XLE", rising(20))
     add_prices(db, "SPY", rising(20))
     t = tailwind.evaluate(db, "Energy", [])
-    assert t.points == 0 and "only 20 weeks of prices, 40 needed" in t.reason and "(counted as not met)" in t.reason
+    assert t.points == 1 and "only 20 weeks of prices, 40 needed" in t.reason and "unclear" in t.reason and "could not be judged" in t.reason
 
 
-def test_an_unknown_sector_has_no_fund(db):
+def test_an_unknown_sector_has_no_fund_and_is_unclear_one_point(db):
     t = tailwind.evaluate(db, None, [])
-    assert t.points == 0 and "sector is unknown" in t.reason
+    assert t.points == 1 and "sector is unknown" in t.reason and "unclear" in t.reason
 
 
 def test_a_producer_likes_a_commodity_above_its_average_and_a_user_likes_it_below(db):
