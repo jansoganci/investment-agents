@@ -11,10 +11,14 @@ from __future__ import annotations
 import sys
 import traceback
 from contextlib import contextmanager
+from datetime import timedelta
 from typing import Callable
 
 from shared import clock, notify
 from shared import db as dbmod
+
+
+ABANDONED_AFTER = timedelta(hours=3)   # longer than any job (the Hermes script timeout is 2 h): a `running` row this old belongs to a dead process
 
 
 class Run:
@@ -30,6 +34,10 @@ class Run:
 def run(job: str):
     conn = dbmod.connect()
     try:
+        # a process that died (killed, power cut) never closed its row; it would warn in `/status` for ever (audit 2026-10-14, #17)
+        conn.execute("UPDATE runs SET ended_at=?, status='error', error='abandoned: the process died before it closed this run' "
+                     "WHERE job=? AND status='running' AND started_at < ?",
+                     (clock.utc_iso(), job, clock.utc_iso(clock.now_utc() - ABANDONED_AFTER)))
         cur = conn.execute(
             "INSERT INTO runs (job, started_at, status) VALUES (?, ?, 'running')", (job, clock.utc_iso())
         )

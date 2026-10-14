@@ -90,3 +90,29 @@ def test_a_redirect_inside_the_same_host_is_followed(server):
 def test_a_dead_address_is_a_fetch_error():
     with pytest.raises(http.FetchError):
         http.fetch("http://127.0.0.1:9/", timeout=2)
+
+
+def test_a_cookie_with_a_line_break_is_refused_and_never_shown(monkeypatch):
+    secret = "ghost-members-ssr=TOPSECRET\nnext=2"
+    with pytest.raises(http.FetchError) as info:
+        http.fetch("http://127.0.0.1:9/x", cookie=secret)
+    assert "TOPSECRET" not in str(info.value) and "set_cookie" in str(info.value)
+
+
+def test_an_odd_error_of_the_http_library_never_carries_the_cookie_text(monkeypatch):
+    def boom(*a, **k):
+        raise ValueError("Invalid header value b'ghost-members-ssr=TOPSECRET'")
+    monkeypatch.setattr(http._opener, "open", boom)
+    with pytest.raises(http.FetchError) as info:
+        http.fetch("http://127.0.0.1:9/x", cookie="ghost-members-ssr=TOPSECRET")
+    assert "TOPSECRET" not in str(info.value) and "ValueError" in str(info.value)
+
+
+def test_a_body_cut_by_the_server_is_a_fetch_error(monkeypatch):
+    import http.client as stdlib_client
+
+    def boom(*a, **k):
+        raise stdlib_client.IncompleteRead(b"x")
+    monkeypatch.setattr(http._opener, "open", boom)
+    with pytest.raises(http.FetchError):
+        http.fetch("http://127.0.0.1:9/x")

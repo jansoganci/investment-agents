@@ -140,3 +140,26 @@ def test_the_model_test_shows_two_hidden_sentences_per_post_and_reveals_them(db,
 def test_the_model_test_refuses_when_too_few_posts_were_read(db, env):
     with pytest.raises(SystemExit, match="run some real passes"):
         modeltest.main(["20"])
+
+
+def test_a_post_every_model_is_cut_on_is_given_up_and_the_others_still_get_their_sentence(db, env, monkeypatch):
+    """Audit 2026-10-14, #1: one post whose answer is cut at the token limit must not stop the sentences of the posts after it."""
+    from agents.eye import extract
+    from shared.ai import ProviderError
+    web = Web()
+    first_run(db, web)
+    web.set_sitemap(EM, ["old-1", "old-2", "a", "b"])
+    web.pages[f"{EM.base}/a/"] = EMTIA_FULL.replace("Soya fasulyesi", "ZEHIRLI")
+    web.pages[f"{EM.base}/b/"] = EMTIA_FULL
+
+    def handler(job, system, prompt):
+        if "TAGS:" in prompt:
+            return []
+        if "ZEHIRLI" in prompt:
+            raise ProviderError("the answer was cut at the token limit", outcome="cut")
+        return LINE
+    FakeAI(handler).install(monkeypatch)
+    result = go(db, web, ai_stage=True, seclist=tags.SecList(lambda: []))
+    got = dict(rows(db, "SELECT url, sentence FROM articles"))
+    assert got[f"{EM.base}/a/"] == "" and got[f"{EM.base}/b/"] == LINE
+    assert "Sentences stopped" not in (result.message() or "")

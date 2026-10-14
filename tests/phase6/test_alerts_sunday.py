@@ -112,17 +112,18 @@ def chain(db, env, monkeypatch):
     monkeypatch.setattr(research, "weekly", lambda conn, sources, day, r: calls.append("research") or "RESEARCH\nNot researched — ZZZZ: SEC does not know it")
     monkeypatch.setattr(analysis, "weekly", lambda conn, sources, day, use_ai, run: calls.append("analysis") or "ANALYSIS · NVDA new 10-Q")
     monkeypatch.setattr(portfolio, "weekly", lambda conn, day: calls.append("portfolio") or "PORTFOLIO · $1,596")
+    monkeypatch.setattr(analysis, "drop_alerts", lambda conn, sources, day, run=None: calls.append("drop_alerts") or "DROP ALERT · NVDA — thesis intact: fine")
     return calls
 
 
 def test_the_chain_runs_in_the_decided_order_and_builds_one_summary(chain, db, env):
     lines = sunday.run_chain("2026-10-11")
-    assert chain == ["counter", "research", "analysis", "portfolio"]
+    assert chain == ["counter", "research", "analysis", "portfolio", "drop_alerts"]
     text = "\n".join(lines)
-    assert "PORTFOLIO · $1,596" in text and "ANALYSIS · NVDA new 10-Q" in text
+    assert "PORTFOLIO · $1,596" in text and "ANALYSIS · NVDA new 10-Q" in text and "DROP ALERT · NVDA — thesis intact" in text
     assert "- Not researched — ZZZZ: SEC does not know it" in text                    # a stock Research could not do is reported
     assert (env["drive"] / "Weekly" / "2026-10-11-summary.md").exists()
-    assert [r[0] for r in db.execute("SELECT job FROM runs ORDER BY id")] == ["counter", "research", "analysis", "portfolio"]
+    assert [r[0] for r in db.execute("SELECT job FROM runs ORDER BY id")] == ["counter", "research", "analysis", "portfolio", "drop_alerts"]
     assert {r[0] for r in db.execute("SELECT status FROM runs")} == {"ok"}
 
 
@@ -135,7 +136,7 @@ def test_a_failing_step_is_reported_and_the_next_ones_still_run(chain, db, env, 
 
     monkeypatch.setattr(research, "weekly", boom)
     lines = sunday.run_chain("2026-10-11")
-    assert chain == ["counter", "research", "analysis", "portfolio"]
+    assert chain == ["counter", "research", "analysis", "portfolio", "drop_alerts"]
     text = "\n".join(lines)
     assert "THINGS THAT FAILED THIS WEEK" in text and "- research: RuntimeError: web search is down" in text and "PORTFOLIO · $1,596" in text
     assert db.execute("SELECT status FROM runs WHERE job = 'research'").fetchone() == ("error",)
