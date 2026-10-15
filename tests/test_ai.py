@@ -220,6 +220,17 @@ def test_a_content_filter_is_a_provider_error(monkeypatch):
         backends.openai_style_backend("deepseek")({"model": "m"}, "", "p", 10)
 
 
+def test_a_reply_without_choices_is_a_provider_error(monkeypatch):
+    # production 2026-10-15: the cheap model answered with choices=None and the whole Eye pass crashed on `choices[0]`
+    for empty in (None, []):
+        stub = _OpenAI()
+        stub.create = lambda **kw: types.SimpleNamespace(choices=empty, usage=None)
+        monkeypatch.setattr(backends, "make_openai", lambda *a, s=stub: s)
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "key")
+        with pytest.raises(ProviderError, match="no choices"):
+            backends.openai_style_backend("deepseek")({"model": "m"}, "", "p", 10)
+
+
 def test_an_answer_cut_at_max_tokens_is_a_provider_error(monkeypatch):
     stub = _Anthropic(stop="max_tokens")
     monkeypatch.setattr(backends, "make_anthropic", lambda key, timeout: stub)

@@ -129,6 +129,9 @@ def openai_style_backend(provider: str):
             raise ProviderError(f"HTTP {exc.status_code}") from exc
         except openai.APIConnectionError as exc:
             raise ProviderError("could not be reached") from exc
+        if not getattr(resp, "choices", None):
+            # some providers answer HTTP 200 with an error body or no choices (overload, a provider hiccup): try the next model
+            raise ProviderError("the answer had no choices (empty reply)")
         choice = resp.choices[0]
         usage = resp.usage
         cost = getattr(usage, "cost", None) if usage is not None else None
