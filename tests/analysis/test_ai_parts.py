@@ -327,6 +327,15 @@ def test_a_borderline_flag_gets_no_why_question():
     assert f"U{len(r.flags)}" not in ids and len(ids) == len(R.flags)
 
 
+def test_a_finance_arm_flag_gets_no_why_question():
+    import copy
+    before = [i["id"] for i in parts.why_items(R)]
+    r = copy.copy(R)
+    r.flags = R.flags + [{"flag": "finance_arm", "detail": "the debt includes the finance arm"}]
+    r.codes = [f"U{i}" for i in range(1, len(r.flags) + 1)]
+    assert [i["id"] for i in parts.why_items(r)] == before     # nothing in the filing explains it: no question is asked
+
+
 def test_a_figure_claim_says_its_period_and_a_4_quarter_total_gives_its_parts():
     # GE, 2026-10-06: a correct 4-quarter operating cash (9.8 bn) was failed against the 10-Q's 6-month row (5.0 bn)
     items = {i["id"]: i for i in parts.figure_items(R)}  # NVDA with the last 4 quarters
