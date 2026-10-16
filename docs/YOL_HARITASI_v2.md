@@ -1310,3 +1310,28 @@ subscription, runs as a launchd service, its terminal powers limited to our comm
 Phase by phase, in its own document: `docs/IMPLEMENTATION_PLAN.md` — how each phase is built, audited in a separate session,
 checked on my Mac and merged into main as one commit.
 
+
+### 10.5 Later ideas from the old system (2026-10-16) — NOT built, notes only
+
+Source: the comparison with `investment-intelligence` (tag `v1-arsiv`). **My decision (2026-10-16): do not add anything more now.**
+The system has not yet shown its normal output (first automatic Sunday chain 2026-10-18); a new warning added before that makes it hard
+to tell what a result comes from. Only the `finance_arm` warning was built (rule 49). The three below wait. **Rule for all three:** a
+trial first, written down; if it fires on most cards (noise) it is dropped; at most one at a time; each only after the Sunday chain
+has run cleanly for 4 weeks.
+
+1. **Return-on-capital trend warning.** Idea: the yearly capital return (measure 4's per-year figures) fell three years in a row
+   while the capital tied up grew → one line "new money earns less than the old". Old name: `ROIIC deterioration` /
+   `persistent value-destroying reinvestment`. Uses numbers agent 3 already has; no new data. Trial: run on the 10 golden stocks
+   and the 20 acceptance stocks, count how many fire.
+2. **A hint in the first-thesis prompt.** One sentence asking that the 3 "things that would break the thesis" look at customer or
+   supplier concentration (one customer ≥ 10% of revenue), regulation, and dependence on one country or product. Old source: Stage 9
+   questions S9-M4 / M5 / M6 / M8. Trial: 2–3 stocks, a few cents; do it after the model order settles (the Anthropic credit ends
+   2026-10-19).
+3. **Reverse DCF** ("what yearly free-cash growth does today's price assume?", compared with the past growth). Not an intrinsic-value
+   calculation, so it does not break "no intrinsic value for now". Only for green-list stocks, an information line next to PEG. The old
+   numbers (discount rates, bands) are `NOT_LOCKED` and were never validated: take the idea, not the numbers.
+
+**Looked at and left out:** management incentives and succession (they live in the proxy statement, not the 10-K; heavy and
+judgement-based) · industry structure, macro and geopolitics maps (need forecasts) · the old intelligence module `ri/` (the Eye and
+the Counter do this) · the run registry (the card is already append-only and dated) · GREEN / ORANGE / RED synthesis (solid / mid /
+weak does the same job, simply) · a second price source (the old Stooq is broken).
