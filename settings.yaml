@@ -34,6 +34,10 @@ sector_overrides:
   GE: Industrials                  # SIC 3600 (electrical equipment) → the table says Information Technology
   MMM: Industrials                 # SIC 3841 (medical instruments) → the table says Health Care
 
+# Makers with their own lending arm: their debt mostly funds customers' loans, so the debt measures look too bad. The card gets
+# a `finance_arm` warning (nothing is recomputed). Add a ticker here when you meet one (roadmap rule 49).
+finance_arm: [DE, CAT, F, GM, HOG, PCAR, CNH]
+
 eye:                               # agent 1
   skip_sites: [dragonomi]          # sites the pass does not touch at all (no membership yet, 2026-10-12): no sitemap, no note, no waiting list.
                                    # Remove the name when its cookie is in .env (the posts it missed are then read; `--accept-many` if > 200).

@@ -144,6 +144,7 @@ Küçülme notu bugün `ORTA (küçülme kuralı)`. Yeni ad: `mid` ve ayrıca `s
 | veri kontrol | `data_check` | likit %50'den, borç %30'dan fazla değişti; borç adayları uyuşmuyor; bölünme Yahoo ile teyit edilmedi |
 | sınırda | `borderline` | değer eşiğe %10'dan yakın |
 | eski veri | `stale_data` | SEC'in verisi en yeni raporu henüz içermiyor: rakamlar bir önceki rapordan (yol haritası kural 43) |
+| finans kolu uyarısı | `finance_arm` | borç, şirketin müşterilere kredi veren koluyla karışık (Deere, Ford tipi); borç ölçüleri gerçekte olduğundan kötü görünebilir (yol haritası kural 49) |
 | kira ağırlıklı | `lease_heavy` | bilgi satırı: kira dahil borç |
 | satın almacı | `acquisitive` | bilgi satırı: satın almalara harcanan para |
 | borçsuz | `debt_free` | bilgi satırı: borç kalemi bildirilmedi, borç 0 sayıldı (varsayım; kullanılmayan kredi limiti borç değildir) — kart YAML'ında `debt.parts.assumed` |

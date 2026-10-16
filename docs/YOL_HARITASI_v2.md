@@ -830,6 +830,13 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     meaning next to each measure (`capital_return` — return on the capital invested in the business, not cash paid to
     shareholders; growth = per year; share count = total over 5 years). Rerun on the Air (fresh `~/uat4-data`): NVDA and KO now say
     "return on invested capital" and "share count down about 3% over 5 years".
+49. **A maker with its own lending arm gets a `finance_arm` warning (my decision, 2026-10-16; idea from the old system, SD-W2-A1).**
+    Deere, Caterpillar, Ford, GM and the like borrow mostly to lend to their customers, so the debt measures (`debt_years`,
+    `debt`) read worse than the manufacturing business is. Nothing is recomputed and no figure is split (a split cannot be made
+    honestly from the SEC tags). The tickers are a short hand-kept list, `settings.yaml` `finance_arm` (start: DE, CAT, F, GM, HOG,
+    PCAR, CNH; add one when I meet one). The card gets the warning "the debt includes the finance arm …; check the figure by
+    hand"; agent 3 asks no "why" question for it (nothing in the filing explains a list), a sell suggestion carries the "check the
+    figure before acting" line while it is open, and `/closewarning` closes it once I have looked.
 
 **When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
 cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the

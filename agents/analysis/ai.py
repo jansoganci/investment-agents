@@ -196,7 +196,7 @@ def why_items(r) -> list[dict]:
             items.append({"id": f"M:{name}", "what": f"measure {name} is weak (value {m['value']}; {m.get('note') or 'no note'})",
                           "terms": MEASURE_TERMS.get(name, [])})
     for code, f in open_flags(r):
-        if f["flag"] in ("borderline", "stale_data"):  # nothing in the filing explains these (roadmap, rule 23 and rule 43)
+        if f["flag"] in ("borderline", "stale_data", "finance_arm"):  # nothing in the filing explains these (roadmap, rules 23, 43 and 49)
             continue
         items.append({"id": code, "what": f"flag {f['flag']}: {f['detail']}", "terms": FLAG_TERMS.get(f["flag"], [])})
     return items[:MAX_ITEMS]
@@ -419,7 +419,8 @@ def run_ai(r, text: str, ctx: Context) -> AIPart:
         item = {"id": "sell", "claim": f"{sell.TRIGGERS[trig]} — " + " | ".join(evidence), "terms": ["risk", "revenue", "debt"]}
         audit("sell", [item])
         held = hold_reason(done)
-        text_out = sell.message(ctx.ticker, trig, evidence, data_check, held, ctx.filing)
+        text_out = sell.message(ctx.ticker, trig, evidence, data_check or any(f["flag"] == "finance_arm" for _, f in open_flags(r)),
+                                   held, ctx.filing)
         part.sell = {"trigger": trig, "text": text_out, "status": "held" if held else "sent", "evidence": evidence}
     return part
 

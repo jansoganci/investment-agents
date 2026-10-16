@@ -165,3 +165,22 @@ def test_sector_from_the_sic_code():
     assert run("NKE").sector == "Consumer Discretionary"
     assert run("KO").sector == "Consumer Staples"
     assert run("DOW").sector == "Materials"
+
+
+def test_a_ticker_with_a_finance_arm_gets_one_warning_and_no_other_change(monkeypatch):
+    # roadmap rule 49: a maker with its own lending arm (Deere, Caterpillar, Ford …); the card says so, nothing is recomputed
+    from shared import config
+    base = run("KO")
+    assert not [f for f in base.flags if f["flag"] == "finance_arm"]       # KO is not on the list
+    settings = dict(config.settings(), finance_arm=["ko"])                  # case does not matter
+    monkeypatch.setattr(config, "settings", lambda: settings)
+    r = run("KO")
+    arm = [f for f in r.flags if f["flag"] == "finance_arm"]
+    assert len(arm) == 1 and "finance arm" in arm[0]["detail"]
+    assert (r.grade, r.lynch_type) == (base.grade, base.lynch_type)
+    assert {k: m["value"] for k, m in r.measures.items()} == {k: m["value"] for k, m in base.measures.items()}
+
+
+def test_the_default_finance_arm_list_names_the_big_makers():
+    from shared import config
+    assert {"DE", "CAT", "F", "GM"} <= {str(t).upper() for t in config.settings()["finance_arm"]}

@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from shared import sectors
+from shared import config, sectors
 from shared.sec.facts import Facts
 
 NAMES = {1: "revenue_growth_3y", 2: "margin_stability", 3: "operating_margin", 4: "capital_return",
@@ -445,6 +445,10 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
     if last in debt_s and debt_s[last].disagree:
         flags.append({"flag": "data_check", "detail": "debt candidates disagree: "
                       + " / ".join(f"{c/1e9:.1f}" for c in debt_s[last].candidates) + " bn"})
+    if r.ticker in {str(t).upper() for t in (config.settings().get("finance_arm") or [])}:
+        # a maker with its own lending arm (Deere, Caterpillar, Ford …): the debt below mostly funds that arm, so the debt measures
+        # read worse than the manufacturing business is. Nothing is recomputed; the card only says so (settings.yaml `finance_arm`).
+        flags.append({"flag": "finance_arm", "detail": "the debt includes the finance arm that lends to customers; the debt measures may look worse than the business is; check the figure by hand"})
     if debt_last is not None and liab.get(last) and debt_last > liab[last]:
         flags.append({"flag": "data_check", "detail": "debt is larger than total liabilities"})
     for k in dec:
