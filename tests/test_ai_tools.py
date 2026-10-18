@@ -7,6 +7,8 @@ from shared.ai import __main__ as ai_main
 from shared.ai.fake import FakeAI
 from shared.auditor import testset
 
+pytestmark = pytest.mark.usefixtures("sonnet_first_models")
+
 
 def test_ping_says_which_keys_are_missing_and_never_prints_a_key(db, monkeypatch):
     FakeAI(lambda *a: "OK").install(monkeypatch)

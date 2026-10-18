@@ -9,6 +9,8 @@ from shared import db as dbmod
 from shared.ai import AIError, ProviderError, backends
 from shared.ai.fake import FakeAI
 
+pytestmark = pytest.mark.usefixtures("sonnet_first_models")
+
 
 def test_default_chain_is_my_credits_then_openrouter(db):
     assert [(e["provider"], e["model"]) for e in ai.chain("strong", db)] == [
@@ -204,13 +206,6 @@ def test_effort_reaches_openai_and_openrouter_and_not_deepseek(monkeypatch):
             assert stub.seen["extra_body"]["reasoning"] == {"effort": "high"}
         else:
             assert "reasoning_effort" not in stub.seen and "extra_body" not in stub.seen
-
-
-def test_the_strong_order_is_sonnet_then_deepseek_then_gpt():
-    from shared import config
-    strong = [(e["provider"], e["model"], e.get("effort")) for e in config.settings()["models"]["strong"]]
-    assert strong[:3] == [("anthropic", "claude-sonnet-5-5", "high"), ("deepseek", "deepseek-v4-pro", None),
-                          ("openai", "gpt-6-sol", "high")]
 
 
 def test_a_content_filter_is_a_provider_error(monkeypatch):

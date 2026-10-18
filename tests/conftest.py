@@ -35,3 +35,23 @@ def no_research_on_watch(monkeypatch):
     from shared.commands import stocks
 
     monkeypatch.setattr(stocks, "RESEARCH_ON_WATCH", False)
+
+
+@pytest.fixture
+def sonnet_first_models(monkeypatch):
+    """The AI unit tests describe how the chain WORKS with a fixed order (Sonnet, DeepSeek, GPT, then OpenRouter), so a change of the
+    live order in settings.yaml (2026-10-18) does not break them. The live order has its own test: tests/test_models_order.py."""
+    from shared import config
+    real = config.settings
+    order = [{"provider": "anthropic", "model": "claude-sonnet-5-5", "effort": "high"},
+             {"provider": "deepseek", "model": "deepseek-v4-pro"},
+             {"provider": "openai", "model": "gpt-6-sol", "effort": "high"},
+             {"provider": "openrouter", "model": "anthropic/claude-sonnet-5.5", "effort": "high"},
+             {"provider": "openrouter", "model": "deepseek/deepseek-v4-pro"},
+             {"provider": "openrouter", "model": "openai/gpt-6-sol", "effort": "high"}]
+
+    def patched():
+        data = real()
+        data["models"] = dict(data["models"], strong=[dict(e) for e in order], auditor=[dict(e) for e in order])
+        return data
+    monkeypatch.setattr(config, "settings", patched)

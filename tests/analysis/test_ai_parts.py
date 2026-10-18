@@ -306,6 +306,7 @@ def test_the_figure_audit_sees_the_balance_sheet_row_of_debt(monkeypatch):
     assert "Long-term debt 32,366 7,469" in figure_prompt  # a 27-character table row used to be dropped
 
 
+@pytest.mark.usefixtures("sonnet_first_models")
 def test_the_auditor_runs_sonnet_first_like_the_writer(monkeypatch):
     # my decision (2026-10-09): every AI part, the auditor included, is Sonnet 5.5 high first; the family rule is dropped
     fake = FakeAI(handler(check=BROKEN)).install(monkeypatch)

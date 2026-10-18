@@ -93,22 +93,22 @@ models:
     - {provider: deepseek,   model: deepseek-v4-flash}
     - {provider: openrouter, model: deepseek/deepseek-v4-flash}
   strong:       # agent 2 (tone, news flow, score reasons), agent 3 (why answers, thesis, drop-alert check)
-    # Order (my decision, 2026-10-09): Claude Sonnet 5.5 high always first, then DeepSeek V4 Pro, then GPT-6 Sol high;
-    # my API credits first, then the same three through OpenRouter. The auditor skips the writer's family on its own.
-    - {provider: anthropic,  model: claude-sonnet-5-5, effort: high}
+    # Order (my decision, 2026-10-18): the Anthropic credit ended 2026-10-19 and I do not top it up this month, so DeepSeek V4 Pro
+    # is first, GPT-6 Sol high second, Claude Sonnet 5.5 high last (a fallback again once I put 10 $ on it next month); then the
+    # same three through OpenRouter. Web search works only through Anthropic (the news step says "unclear" while it has no credit).
     - {provider: deepseek,   model: deepseek-v4-pro}
     - {provider: openai,     model: gpt-6-sol, effort: high}
-    - {provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: high}
+    - {provider: anthropic,  model: claude-sonnet-5-5, effort: high}
     - {provider: openrouter, model: deepseek/deepseek-v4-pro}
     - {provider: openrouter, model: openai/gpt-6-sol, effort: high}
-  auditor:      # agents 2 and 3. My decision (2026-10-09): the same order as the writer, Sonnet 5.5 high first — the
-                # "different family from the writer" rule is dropped (roadmap 10.1)
-    - {provider: anthropic,  model: claude-sonnet-5-5, effort: high}
+    - {provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: high}
+  auditor:      # agents 2 and 3. The same order as the writer (my decision, 2026-10-09; the order changed 2026-10-18, see above)
     - {provider: deepseek,   model: deepseek-v4-pro}
     - {provider: openai,     model: gpt-6-sol, effort: high}
-    - {provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: high}
+    - {provider: anthropic,  model: claude-sonnet-5-5, effort: high}
     - {provider: openrouter, model: deepseek/deepseek-v4-pro}
     - {provider: openrouter, model: openai/gpt-6-sol, effort: high}
+    - {provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: high}
   hermes_chat:  # set in Hermes itself, listed here for reference
     - {provider: openai-codex, model: chatgpt-subscription}
     - {provider: deepseek,     model: deepseek-v4-pro}

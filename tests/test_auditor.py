@@ -8,7 +8,7 @@ from shared import auditor
 from shared.ai.fake import FakeAI
 from tests.fixtures.loader import filing_text
 
-pytestmark = pytest.mark.usefixtures("db")  # every audit is an AI call: its cost is logged in the database
+pytestmark = pytest.mark.usefixtures("sonnet_first_models", "db")  # every audit is an AI call: its cost is logged in the database
 
 TEXT = filing_text("NVDA")["text"]
 NOTES = "As of July 26, 2026, we had $33.5 billion aggregate principal amount of senior notes outstanding."
