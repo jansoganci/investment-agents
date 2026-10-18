@@ -1226,6 +1226,13 @@ subscriptions through Hermes. Note for that talk: a subscription is not an API k
 not know Hermes (AGENTS.md); using the subscription for agent work needs a new bridge (a call through Hermes or the Codex tool) and
 a check that the subscription's terms allow automatic use. It is a design decision, not a setting.
 
+**Model trial plan (my decision, 2026-10-19).** No model change for now. Claude ran the heavy jobs and the auditor until 2026-10-18; DeepSeek V4 Pro
+runs them from now on; at home a week with Codex / ChatGPT follows, and then I choose the model per job. Cheap model (Eye sentences, tag
+classes): DeepSeek V4 Flash stays; no reason to pay for Pro there. What to watch meanwhile: the "why" sentences on the cards, the number of
+`unverified` per week, the monthly spend, the Eye tags. A note on fairness: the scheduled weeks call the heavy models rarely (few new stocks),
+so weekly outputs alone are a thin comparison; run the same 3–4 stocks side by side with `modeltest` (blind A / B). If the auditor shows
+weakness, GPT-6 Sol goes first for the auditor (one line in `settings.yaml`).
+
 **My credits (2026-10-04):** Anthropic API 90 $ (expires 2026-10-19), DeepSeek 10 $, OpenAI API 5 $. The system will not be live
 before 10-19, so the Anthropic credit is for development: the model test, agent 3's AI parts, the 20-stock acceptance test (≈ 4–5 $
 with Sonnet). It is **not** spent just to use it up. DeepSeek's 10 $ covers agent 1 for years; OpenAI's 5 $ covers the GPT tests.
