@@ -1323,6 +1323,13 @@ undo our change)**. What works today: the same words **without the slash** ("gre
 skill command with arguments, Hermes quick commands, or another bridge); nothing is changed until then. The commands themselves are fine
 (tested in isolation).
 
+**Decision (my choice, 2026-10-19): Telegram stays in plain words, nothing is built.** Hermes confirmed (Task 21) that a message without the
+slash is read as a normal message and it runs `shared.commands` through its skill `investment-agents-ops` ("analyze Nvidia", "give me the
+green list", "BES …", "gold …"). The `/` menu is not used (tapping it gives "Unknown command"); `/undo` `/model` `/status` `/help` are Hermes'
+own, so a correction is asked in words ("undo my last change"). Rules for money entries, because words can be vague: **BES is in TL** (the
+payment and the BES total), **gold needs grams and the TL price per gram and says whether it is a purchase**; every change still shows a
+preview and waits for my "yes" — read the preview before saying it.
+
 ### 10.3 Air setup — step 0 (decision: 2026-10-04)
 
 Checklist: `docs/AIR_SETUP.md` (7 phases: the Mac, tools and project, Drive, Telegram bot, Hermes, OpenRouter, tests). Key
