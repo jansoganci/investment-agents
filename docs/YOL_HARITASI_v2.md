@@ -1314,6 +1314,15 @@ Beyond these commands I can ask Hermes anything; it answers from the database an
 deleting a card entry (append-only) · buy / sell orders (the system never connects to a broker) · changing the spend limit from
 Telegram (only in the OpenRouter dashboard, for safety).
 
+**Finding (2026-10-19, from my Telegram test): our `/` commands do not reach us.** Hermes' own gateway answers every message that starts with
+`/`: `/help` shows Hermes' commands (not ours); `/green` and `/data` came back "Unknown command … resend without the leading slash to send as a
+regular message". So the BotFather menu of `docs/telegram_setcommands.txt` is misleading, and four of our names are **taken by Hermes**:
+`/help`, `/status` (its session info), `/model` (switches Hermes' own model) and **`/undo` (backs up Hermes' conversation turns — it does not
+undo our change)**. What works today: the same words **without the slash** ("green", "data TSLA 2022 marketable_securities 0.25bn", "status",
+"undo") as a normal message; Hermes' skill `investment-agents-ops` then runs `shared.commands`. A durable fix is to be chosen at home (one Hermes
+skill command with arguments, Hermes quick commands, or another bridge); nothing is changed until then. The commands themselves are fine
+(tested in isolation).
+
 ### 10.3 Air setup — step 0 (decision: 2026-10-04)
 
 Checklist: `docs/AIR_SETUP.md` (7 phases: the Mac, tools and project, Drive, Telegram bot, Hermes, OpenRouter, tests). Key
