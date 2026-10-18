@@ -9,6 +9,8 @@ from shared.commands import stocks
 from tests.analysis.test_ai_parts import handler
 from tests.fixtures.loader import FixtureSources
 
+pytestmark = pytest.mark.usefixtures("sonnet_first_models")
+
 
 @pytest.fixture(autouse=True)
 def sources(monkeypatch):

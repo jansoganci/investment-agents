@@ -1216,6 +1216,16 @@ it reached only Anthropic. Prices checked on the providers' pages the same day: 
 Flash (served by V4.1 Flash) 0.30 / 1.20 $ per million tokens at peak hours (off-peak is half; `settings.yaml` keeps the peak price,
 the cautious count); Sonnet 5.5 and GPT-6 Sol 2 / 10 $. (OpenAI points to a newer GPT-6.1 Sol at the same price; not used.)
 
+**Strong order changed again (my decision, 2026-10-18).** The Anthropic credit ended 2026-10-19 and I do not top it up this month.
+Now `strong` and `auditor`: DeepSeek V4 Pro first, GPT-6 Sol high second, Claude Sonnet 5.5 high last (it works again as a fallback
+when I put 10 $ on it next month), then the same three through OpenRouter. OpenRouter stays as it is (unused, harmless). Web search
+works only through Anthropic, so while it has no credit the news step says "unclear" (1 point). The auditor is now of the same family
+as the writer (DeepSeek), so the auditor test set is rerun on the Air; if DeepSeek as auditor misses cases, the auditor's first place
+goes to GPT-6 Sol (one line in `settings.yaml`). **To talk about when I am home (about 2026-10-23):** my ChatGPT / Codex
+subscriptions through Hermes. Note for that talk: a subscription is not an API key, and the agents run as script-only jobs that do
+not know Hermes (AGENTS.md); using the subscription for agent work needs a new bridge (a call through Hermes or the Codex tool) and
+a check that the subscription's terms allow automatic use. It is a design decision, not a setting.
+
 **My credits (2026-10-04):** Anthropic API 90 $ (expires 2026-10-19), DeepSeek 10 $, OpenAI API 5 $. The system will not be live
 before 10-19, so the Anthropic credit is for development: the model test, agent 3's AI parts, the 20-stock acceptance test (≈ 4–5 $
 with Sonnet). It is **not** spent just to use it up. DeepSeek's 10 $ covers agent 1 for years; OpenAI's 5 $ covers the GPT tests.
