@@ -105,6 +105,9 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
   throwaway database: all 9 Yahoo symbols answer with 3 months of closes; **`^TNX` is already in percent** (5.045, no scaling);
   the table printed from real data. **Not checked:** the Ministry of Finance file (the cloud session cannot reach `mof.go.jp`; the
   parser follows the file's known layout) — the Air check T4 is its first real read; if the layout differs, only `mof.parse` changes.
+  **T4, first real read (2026-10-28, Hermes):** the layout was right (the parser read the file back to 1974) but the plausibility check
+  refused Japan's negative yield of 2016 (−0.02). Fixed the same day: negative yields are real (range −5 … 30 %), and the check applies
+  only to the days we keep (the last 120), so an odd row from 1974 cannot stop the read.
 - **Check (H):** `uv run python -m shared.prices` once, then `uv run python -m shared.bulletin --market` prints the table.
 
 ### Slice 3 — gather: `shared/bulletin/gather.py` (code only)

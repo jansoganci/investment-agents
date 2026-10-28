@@ -24,6 +24,7 @@ BASE = "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/"
 CURRENT_URL = BASE + "jgbcme.csv"
 ALL_URL = BASE + "historical/jgbcme_all.csv"
 KEEP_DAYS = 120          # of the full history; enough for the 1-month change with room
+PLAUSIBLE = (-5.0, 30.0) # percent; Japan's 10Y was negative from 2016 to 2020, so below zero is real
 COLUMN = "10Y"
 USER_AGENT = "investment-agents/1.0 (personal research)"
 DATE = re.compile(r"^(\d{4})/(\d{1,2})/(\d{1,2})$")
@@ -66,8 +67,6 @@ def parse(text: str) -> list[tuple[str, float]]:
             value = float(r[at].strip())
         except ValueError:
             continue  # "-" = no figure that day
-        if not 0 < value < 30:
-            raise MofError(f"the 10Y figure {value} on {r[0].strip()} is not a plausible yield in percent")
         out.append((date(int(m[1]), int(m[2]), int(m[3])).isoformat(), value))
     return out
 
@@ -86,6 +85,8 @@ def update(conn, get_text=None, now=None) -> int:
     for day, value in rows:
         if day > today.isoformat():
             continue
+        if not PLAUSIBLE[0] < value < PLAUSIBLE[1]:   # checked on the days we keep only: the file goes back to 1974
+            raise MofError(f"the 10Y figure {value} on {day} is not a plausible yield in percent")
         cur = conn.execute("INSERT OR IGNORE INTO prices (symbol, date, close, adj_close, currency, source, created_at) "
                            "VALUES (?, ?, ?, ?, '%', 'mof', ?)", (SYMBOL, day, value, value, created))
         new += cur.rowcount
