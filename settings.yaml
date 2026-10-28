@@ -23,6 +23,7 @@ hours:                             # Turkey time; the Hermes jobs are listed in 
   eye: ["07:00", "13:00", "20:00"] # agent 1, 3 passes a day
   alerts: "every hour at :05"      # python -m shared.alerts
   sunday: "09:00"                  # the Sunday chain: Counter → Research → Analysis → Portfolio → the summary
+  bulletin: "08:15"                # the morning bulletin, weekdays only (roadmap "Morning bulletin" 1)
 
 warnings:                          # /status (phase 6)
   stuck_job_hours: 1               # a job in `running` longer than this
@@ -54,6 +55,30 @@ research:                          # agent 2 (roadmap "Agent 2 rules" 8)
   event_max_age_days: 365          # a serious negative older than this does not count
   positive_max_age_days: 90        # an important positive older than this does not count (my decision, 2026-10-14: FCX scored 2 on an 8-month-old item)
   page_max_bytes: 2000000          # a source page is cut here before the quote is looked for
+
+bulletin:                          # the morning bulletin (roadmap "Morning bulletin"; docs/BULLETIN_PLAN.md)
+  max_searches: 25                 # most DeepSeek searches in one bulletin (one per stock I hold or watch, one per interest)
+  post_chars: 3000                 # how much of one post's text goes to the model
+  market:                          # the figures table, in this order: last close, 1-month and day change (`kind: yield` → basis points)
+    - {label: "S&P 500",    symbol: "^GSPC"}
+    - {label: "Nasdaq",     symbol: "^IXIC"}
+    - {label: "ABD 10Y",    symbol: "^TNX", kind: yield}
+    - {label: "Japonya 10Y", symbol: "JP10Y", kind: yield}   # not on Yahoo: Japan's Ministry of Finance file (slice 2)
+    - {label: "Altın",      symbol: "GC=F"}
+    - {label: "Brent",      symbol: "BZ=F"}
+    - {label: "DXY",        symbol: "DX-Y.NYB"}
+    - {label: "USDJPY",     symbol: "JPY=X"}
+    - {label: "EURJPY",     symbol: "EURJPY=X"}
+    - {label: "CHFJPY",     symbol: "CHFJPY=X"}
+  interests:                       # my topics (my decision, 2026-10-28): one English search each
+    - {topic: markets and direction, query: "stock market outlook week"}
+    - {topic: oil,                   query: "Brent crude oil supply OPEC Iran"}
+    - {topic: dollar and rates,      query: "Fed Treasury yields dollar index"}
+    - {topic: japan,                 query: "Bank of Japan JGB yield yen"}
+    - {topic: ai infrastructure,     query: "AI data center capex semiconductors"}
+    - {topic: memory and hbm,        query: "HBM DRAM memory prices supply"}
+    - {topic: optical parts,         query: "optical transceiver data center market"}
+    - {topic: calendar,              query: "earnings calendar central bank meetings this week"}
 
 # Yahoo symbols of the commodities a stock can be linked to (the model must pick from these names; roadmap "Agent 2 rules" 8)
 commodity_symbols:
@@ -132,6 +157,7 @@ pricing:
   gpt-6-sol:           {input: 2.00,  output: 10.00}    # OpenAI's page, 2026-10-09
   default:             {input: 5.00,  output: 25.00}    # cautious: above every model above
   web_search_per_call: 0.01                                     # Anthropic's web search: $10 per 1,000 searches
+  deepseek_search_per_call: 0.00075                             # DeepSeek's Search API: $0.75 per 1,000 successful searches; an empty answer is free
 
 # Short names for /analyze KO opus-5.5 and /model strong gpt-6-sol (a one-off or stored override).
 model_aliases:

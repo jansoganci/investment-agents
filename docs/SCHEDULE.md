@@ -14,6 +14,7 @@ Every command is run from the production folder `~/Downloads/investment-agents` 
 | 3 | Eye | 07:00, 13:00, 20:00 | `python -m agents.eye` | the first-run baseline, pages cut by the paywall, **"the login cookie has probably expired" when the last 5 pages in a row were cut (decision 2026-10-12)**, failures, a block |
 | 4 | Alerts | every hour at :05 | `python -m shared.alerts` | only new alerts (grade drop of a holding, new solid, drop alert, auditor disagreement, OpenRouter spend) |
 | 5 | Sunday chain | Sunday 09:00 | `python -m shared.sunday` | the Sunday summary |
+| 6 | Morning bulletin (**planned**, `docs/BULLETIN_PLAN.md`) | weekdays 08:15 | `python -m shared.bulletin` | the bulletin in Turkish (several messages; how Hermes splits a long output is Air test T1) |
 
 **Lengths:** the Eye takes up to about 35 minutes (it waits 20–30 seconds between pages); the Sunday chain about 30–60 minutes (Research
 reads and searches for up to 10 stocks, agent 3 asks SEC). The Eye's 07:00 pass ends before 09:00. Do not start the chain by hand while

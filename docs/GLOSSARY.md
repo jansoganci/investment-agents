@@ -468,3 +468,21 @@ Hermes işleri (`docs/SCHEDULE.md`): `prices` · `backup` · `eye` · `alerts` �
 | eksik sektör / fiyat | `unclear` = 1 puan (`tailwind`) |
 | yapay zekâ çağrısı jeton sınırında kesildi | `outcome` `cut` (`AIError.only_cut`) |
 
+## Kod ve veritabanı adları (sabah bülteni, 2026-10-28)
+
+Kurallar: yol haritası "Morning bulletin"; yapım: `docs/BULLETIN_PLAN.md`.
+
+| Ne | Ad |
+|---|---|
+| sabah bülteni (hafta içi 08:15, Türkçe) | `bulletin` |
+| bültenin Drive klasörü (`Bulletin/YYYY-MM-DD.md`) | `Bulletin/` |
+| bültenin kod paketi · çalıştırma | `shared/bulletin` · `python -m shared.bulletin` |
+| DeepSeek web araması | `shared/search` (`search()`, `Hit`, `SearchError`) · `python -m shared.search "…"` |
+| saklanan bültenler (sürüm 11) | tablo `bulletins` |
+| bir arama `ai_calls` satırında | `job` `search` · `provider` `deepseek` · `model` `search` |
+| istendiğinde web araması (Telegram'da "ara: …") | komut `search` |
+| bir haberin kartın 3 "tezi bozan" maddesinden birine dokunması | tez etiketi (`thesis_point`) |
+| rakamı kaynakta bulunamayan madde | ⚠ (`rakam doğrulanamadı`) |
+
+**Ayarlar (`settings.yaml`):** `bulletin` (`max_searches` · `post_chars` · `market` — `label` / `symbol` / `kind: yield` · `interests` — `topic` / `query`) ·
+`hours.bulletin` · `pricing.deepseek_search_per_call`.

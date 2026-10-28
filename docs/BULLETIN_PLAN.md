@@ -63,7 +63,7 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
 
 - `GLOSSARY.md`: `bulletin` (Bülten), `Bulletin/` (Drive), table `bulletins`, `shared/bulletin`, `shared/search`, setting block
   `bulletin:`, the `search` and `bulletin` commands.
-- `settings.yaml` `bulletin:` — `hour: "08:15"`, `days: weekdays`, the market rows (name → source symbol), `interests` (topic → search
+- `settings.yaml` `hours.bulletin: "08:15"` (weekdays) and `bulletin:` — the market rows (name → source symbol), `interests` (topic → search
   query; first draft below), `max_searches: 25`, `post_chars: 3000` (how much of one post's text goes to the model).
 - `docs/SCHEDULE.md`: job 6. `docs/telegram_setcommands.txt` / roadmap 10.2: the `search` command.
 
@@ -83,7 +83,7 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
 ### Slice 1 — DeepSeek web search: `shared/search.py`
 
 - `search(query, count=5, after=None) -> list[Hit]` — `POST https://api.deepseek.com/v1/tools/search`, `DEEPSEEK_API_KEY`
-  (already in the Air's `.env`). `after` uses the query operator `after:YYYY-MM-DD`. A hit keeps `title`, `url`, `site_name`, `date`,
+  (already in the Air's `.env`). The query gets `lang:en` (English sources only) and, with `after`, `after:YYYY-MM-DD`; with its operators it is at most 128 characters. **Built 2026-10-28** (15 tests). A hit keeps `title`, `url`, `site_name`, `date`,
   `summary`, `snippet`, `rerank_score`.
 - Every call is a row in `ai_calls` (`job = search`, `provider = deepseek`, `model = search`, cost from
   `settings.yaml` `pricing.deepseek_search_per_call: 0.00075`), so `/spend` and the monthly limit count it. No new table.
