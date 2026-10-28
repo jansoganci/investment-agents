@@ -1036,6 +1036,41 @@ V4 Pro enough?"; if it misses, switch to GPT-6 Sol.
 **Big review every 6 months** (started by me, not automatic): the rules and the golden set are reviewed by one or two strong
 outside models, like the external review of 2026-10-03 (`docs/reviews/`) — the most valuable check of this round.
 
+### Morning bulletin (decision: 2026-10-28)
+
+**Why:** I want to read the news every morning, and I want a source that keeps working when the site owner travels for 2–3 weeks and
+writes nothing. Lynch's view: daily news is mostly noise, so the bulletin is **information only** — what happened, with numbers and
+sources — not a signal. How it is built: `docs/BULLETIN_PLAN.md`.
+
+1. **When:** weekdays at **08:15** (Turkey time) on Telegram. No weekend bulletin; Monday's covers the weekend (the window is "since
+   the last bulletin").
+2. **Length and form:** readable in 5 minutes, short items ("hap bilgi"), a fixed template (`BULLETIN_PLAN.md` section 2, approved by
+   me): figures → today's 3 items → calendar → macro → my stocks → interests → sources. Several Telegram messages are fine (up to 7).
+3. **Language:** all work, searches, prompts and stored text in **English** (section 10.1 stays); **only the bulletin I receive is
+   Turkish**. This is the one exception to "all system output in English".
+4. **Neutral, always:** the bulletin never adds its own view. An opinion appears only with its owner ("According to Macquarie …").
+   No price targets, analyst ratings, intraday moves or advice. A view from the model only when I ask for it (the `search` command).
+5. **Figures (last close, code only):** S&P 500, Nasdaq, US 10Y, Japan 10Y, gold, Brent, DXY, USDJPY, EURJPY, CHFJPY — each with
+   the **1-month change** (the one that matters to me) and the day change; yields in basis points.
+6. **Sources:** first what the system already has — the Eye's posts from both sites (macro, markets, companies), the cards, SEC, the
+   nightly prices; then a few **DeepSeek web searches** (one per stock I hold or watch, one per interest topic). Interests: what sets
+   the market's direction (oil, the dollar, rates, central banks, inflation) and AI with its infrastructure (semiconductors, memory /
+   HBM, optical parts, data centres, power).
+7. **Three additions (my yes, 2026-10-28):** (a) **thesis tag** — a news item that touches one of a card's 3 "things that would break
+   the thesis" is marked with that sentence; it is a match, not a judgement, and changes nothing on the card · (b) **number check** —
+   code checks that every number in an item is in its sources and that the Turkish text has the English numbers; a failure is marked
+   ⚠ · (c) **my stocks' calendar** — earnings dates (📌) and new SEC filings (10-K / 10-Q / 8-K) as one line each.
+8. **The bulletin changes nothing:** no card entry, score, signal or state. Agent 1's daily output still does not go to Telegram by
+   itself; the bulletin is the one daily message.
+9. **On demand:** I can ask for a web search at any time in plain words ("ara: …"); the answer comes with its sources.
+10. **Budget:** about 2–3 $ a month for the bulletin (DeepSeek), inside the 25–30 $ limit.
+11. **Dragonomi (same day):** it is added now; I want its macro and market posts (China, US, war, inflation), not China stocks in
+    agents 2 and 3. The cookie comes **by the login link** ("Yol B"): I ask the site for a sign-in link on my phone, do not open it,
+    and send it to Hermes; a helper opens it once on the Air and writes the cookie into `.env` without showing it. A used link is
+    worthless, so "the cookie never passes through Telegram" still holds. If the site does not sign in by a plain link: the cookie by
+    hand at home.
+12. **Fixed rule 5:** the bulletin is built before the audits of phases 4–6 are done (my exception, 2026-10-28).
+
 ### Rules that prevent spending
 
 1. Agent 3 runs on an **event**, not a calendar: once a week it asks SEC "is there a new 10-Q / 10-K?" (free); if not, it does nothing. HK / A: when I put a new PDF in the `filings/` folder.
@@ -1046,7 +1081,7 @@ outside models, like the external review of 2026-10-03 (`docs/reviews/`) — the
 
 On Telegram my only counterpart is **Hermes**; I do not talk to the 4 agents separately. Hermes runs the agents and reads the results.
 
-- **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, the portfolio block of agent 4) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`.
+- **When a message arrives:** one summary on Sunday (new candidates, what changed on cards, stocks that already have a card and were mentioned a lot this week, non-US names mentioned a lot, data still `unclear`, new subsector proposals, the portfolio block of agent 4) · **immediately:** if the grade of a stock in my portfolio drops · **immediately:** if an agent errors · a stock that comes out solid and enters the green list. Agent 1's daily output does not go to Telegram, only to `Inbox/`. · **weekdays 08:15:** the morning bulletin (decision 2026-10-28, "Morning bulletin" above).
 - **What it can do:** answer **any question I ask** (decision: 2026-10-04) — it reads the database and the cards through a **read-only** path: it can look, never change ("what does the card of XYZ say?", "what did we spend this month?") — and run a command from the **defined command list** ("watch XYZ", "I added ABC to the portfolio", "analyze XYZ now", "close warning U1 on XYZ because …"). The command list: section 10.2.
 - **How messages travel (decision: 2026-10-04):** every job writes its message as plain text output; Hermes's script-only
   scheduler delivers it to Telegram, and I talk to the bots there. This path is built and tested first, in step 0
