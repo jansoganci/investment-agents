@@ -131,17 +131,29 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
   (`pack.notes`); a dead key / empty balance / monthly limit skips the rest.
 - **Check (H):** `uv run python -m shared.bulletin --gather` prints counts and the first items (`--no-search` skips the searches).
 
-### Slice 4 — write, check, translate: `shared/bulletin/write.py`, `check.py`
+### Slice 4 — write, check, translate: `shared/bulletin/write.py`, `check.py`, `translate.py` — **built 2026-10-28** (46 tests, fake model)
 
-- One `strong` call (DeepSeek V4 Pro first, the usual order after it) with the writing rules of section 2 and all gathered pieces.
-  Answer: JSON `{"top3": [...], "calendar": [...], "macro": [...], "stocks": {"KO": [...]}, "interests": [...]}`, every item
-  `{"text": "...", "sources": ["W3", "P12"], "thesis_point": 1|2|3|null}`. A broken JSON answer is asked again once.
-- Number check (code): every number in an item (`104.6`, `7%`, `25 bp`, `3.6`, `$115`, `2030` …) must appear in the text of its cited
-  sources, after normalising (thousand separators, `bn` / `trn`, `%`). An item that fails keeps its place with `⚠ rakam doğrulanamadı`.
-- Translation: one `cheap` call (DeepSeek V4 Flash), items as JSON in, the same ids out. Section titles and fixed lines are not
-  translated by the model; they are written in Turkish in the code.
-- Translation number check (code): the numbers of each Turkish item must be the numbers of its English item (`104.6` = `104,6`).
-  On a mismatch the English item is shown with `⚠ çeviri kontrolü`.
+- **Writer** (`write.py`): one `strong` call (DeepSeek V4 Pro first, the usual order after it). It sees the window, my stocks with their
+  3 thesis breaks, and the posts and web hits (not the figures table, not the SEC lines, not my stocks' earnings dates: those are
+  code). It answers JSON: `calendar` (with `when`: today / tomorrow / week / later), `macro`, `stocks` (per ticker, with
+  `thesis_point` 1–3 or null), `interests` (group `ai_infrastructure` or `other`); every item has `sources` (piece ids) and the three
+  most important items carry `rank` 1–3 (the "today's 3 items" digest: **the digest repeats those items**, the rule "a fact once"
+  is for the sections themselves). A bad JSON answer is asked once more.
+- **What code does with the answer:** an item with no source that exists is dropped; so is one with advice, an analyst rating, an
+  upgrade / downgrade or a price target (`check.STYLE`), one over 600 characters, one for a stock that is not mine; a thesis point
+  the card does not have becomes null; a section over its limit (calendar 8, macro 8, interests 10, 3 a stock) keeps the ranked
+  items and the order. Every drop is a line in `draft.notes`.
+- **Number check** (`check.py`, code): every number of an item must be in the pieces it cites, read both ways (`104.6` = `104,6`;
+  `1.000` may be a thousand or a decimal one; years, signs, units and ordinals are ignored). An item that fails stays and carries a
+  flag (`⚠ rakam doğrulanamadı` in the render, slice 5).
+- **Translation** (`translate.py`): one `cheap` call (DeepSeek V4 Flash) for all items as JSON; the Turkish numbers must be exactly
+  the English item's (`Q3` ↔ `3. çeyrek` is fine: ordinals are words). A translation that fails the comparison, a missing one or a
+  failed call leaves the English item with a note (`çeviri kontrolü` / `çeviri eksik` / `çeviri yapılamadı`); the bulletin goes on.
+- **Not here (slice 5):** the Turkish section titles and fixed lines, the figures table, the SEC and earnings lines (`📌`), "Haber yok:
+  …" for stocks with no item, the source tags `[ED]` `[DR]` `[W]` with numbered links (each item shows its tag and link number),
+  saving and delivery.
+- **Check (H):** `uv run python -m shared.bulletin --draft` runs gather → write → check → translate and prints every item with its
+  sources, flags and Turkish text (about 0.1 $; saves and sends nothing). **The first real model run: read it and tell me what to tune.**
 
 ### Slice 5 — render, save, deliver: `shared/bulletin/__init__.py`, `__main__.py`
 

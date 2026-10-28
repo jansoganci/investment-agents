@@ -482,6 +482,10 @@ Kurallar: yol haritası "Morning bulletin"; yapım: `docs/BULLETIN_PLAN.md`.
 | Japonya 10 yıllık getiri (Maliye Bakanlığı dosyası) | `JP10Y` (`prices.source` `mof`) · `shared/prices/mof.py` |
 | rakam tablosu (son kapanış, 1 ay ve gün değişimi) | `shared/bulletin/market.py` · `python -m shared.bulletin --market` |
 | bülten malzemesi (parça numaraları) | `shared/bulletin/gather.py` · `P<n>` yazı · `W<n>` web sonucu · `F<n>` SEC başvurusu · `E<n>` bilanço tarihi · `python -m shared.bulletin --gather` |
+| bülten taslağı: madde, kaynak numaraları, bayraklar | `shared/bulletin/write.py` (`Item`, `Draft`) · `check.py` · `translate.py` · `python -m shared.bulletin --draft` |
+| bir maddenin rakamı kaynağında yok | bayrak `numbers: …` (yazıda `⚠ rakam doğrulanamadı`) |
+| Türkçe çevirinin rakamları İngilizce maddeyle uyuşmuyor | `turkish_flag` (`çeviri kontrolü` · `çeviri eksik` · `çeviri yapılamadı`) |
+| bir bir hisse maddesinin kartın "tezi bozan" maddelerinden birine dokunması | `thesis_point` 1–3 |
 | bir arama `ai_calls` satırında | `job` `search` · `provider` `deepseek` · `model` `search` |
 | istendiğinde web araması (Telegram'da "ara: …") | komut `search` |
 | bir haberin kartın 3 "tezi bozan" maddesinden birine dokunması | tez etiketi (`thesis_point`) |

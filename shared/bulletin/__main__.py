@@ -1,15 +1,28 @@
 """uv run python -m shared.bulletin --market                 the figures table (reads the database, writes nothing)
 uv run python -m shared.bulletin --gather [--no-search]     what the bulletin would be built from: counts and the first items
-                                                            (no model; the web searches cost 0.00075 $ each, --no-search skips them)"""
+                                                            (no model; the web searches cost 0.00075 $ each, --no-search skips them)
+uv run python -m shared.bulletin --draft                    gather, write, check and translate the items; prints every item with its
+                                                            sources and flags (about 0.1 $; saves nothing, sends nothing)"""
 
 from __future__ import annotations
 
 import sys
 
 from shared import db as dbmod
-from shared.bulletin import gather, market
+from shared import runlog
+from shared.bulletin import gather, market, translate, write
 
-USAGE = "usage: python -m shared.bulletin --market | --gather [--no-search]"
+USAGE = "usage: python -m shared.bulletin --market | --gather [--no-search] | --draft"
+
+
+def draft_text(run) -> str:
+    conn = dbmod.connect()
+    try:
+        pack = gather.gather(conn, run=run)
+        draft = translate.translate(write.write(pack, run=run, conn=conn), run=run, conn=conn)
+        return gather.describe(pack).split("\n", 2)[1] + "\n\n" + write.describe(draft) + f"\n\ncost: ${run.cost_usd:.4f}"
+    finally:
+        conn.close()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -32,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
         finally:
             conn.close()
         return 0
+    if argv == ["--draft"]:
+        return runlog.job_main("bulletin_draft", draft_text)
     print(USAGE)
     return 2
 
