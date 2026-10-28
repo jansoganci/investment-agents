@@ -44,8 +44,19 @@ def test_parse_refuses_a_file_it_does_not_know():
         mof.parse("<html>maintenance</html>")
     with pytest.raises(mof.MofError, match="no `10Y` column"):
         mof.parse("Date,1Y,2Y\n2026/10/27,0.9,1.2\n")
+
+
+def test_a_negative_yield_is_real_and_an_old_odd_row_does_not_stop_the_read(db):
+    # the real file goes back to 1974 and holds negative yields (2016–2020); only the days we keep are checked
+    text = "Date,10Y\n1974/9/24,99.0\n2016/2/9,-0.02\n2026/10/27,2.35\n"
+    assert mof.parse(text)[1] == ("2016-02-09", -0.02)
+    assert mof.update(db, reader({mof.ALL_URL: text}), NOW) == 1
+
+
+def test_an_implausible_figure_on_a_kept_day_is_refused(db):
     with pytest.raises(mof.MofError, match="not a plausible yield"):
-        mof.parse("Date,10Y\n2026/10/27,235\n")
+        mof.update(db, reader({mof.ALL_URL: "Date,10Y\n2026/10/27,235\n"}), NOW)
+    assert db.execute("SELECT count(*) FROM prices WHERE symbol='JP10Y'").fetchone() == (0,)
 
 
 def test_the_first_read_takes_the_whole_history_and_keeps_120_days(db):
