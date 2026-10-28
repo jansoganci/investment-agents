@@ -5,8 +5,9 @@ its own.
     uv run python -m shared.prices --ticker KO   one ticker on demand: 10 years of daily closes with splits and dividends
 
 What the nightly job fetches: the stocks I hold, the green list (watching + solid), SPY, gold (GC=F, USD per troy ounce),
-USD/TRY, the 11 sector funds and the commodities linked to stocks that have a card (`commodity_links`, symbols in
-`settings.yaml` `commodity_symbols`).
+USD/TRY, the 11 sector funds, the commodities linked to stocks that have a card (`commodity_links`, symbols in
+`settings.yaml` `commodity_symbols`) and the morning bulletin's figures (`settings.yaml` `bulletin.market`; a symbol with no
+history yet gets 3 months, the Japan 10Y yield comes from the Ministry of Finance's file, `shared/prices/mof.py`).
 History is kept: a day that is already stored is skipped, never overwritten (the database refuses it too). A day that has
 not closed yet is not stored.
 """
@@ -17,7 +18,7 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from shared import clock
-from shared.prices import yahoo
+from shared.prices import mof, yahoo
 
 BENCHMARKS = ["SPY", "GC=F", "TRY=X"]
 SECTOR_FUNDS = {"Energy": "XLE", "Materials": "XLB", "Industrials": "XLI", "Consumer Discretionary": "XLY",
@@ -35,11 +36,18 @@ def commodity_symbols(conn) -> list[str]:
     return [table[r[0].lower()] for r in rows if r[0].lower() in table]
 
 
+def market_symbols() -> list[str]:
+    """Yahoo symbols of the bulletin's figures table (the Japan 10Y yield is not one: it comes from `mof`)."""
+    from shared import config
+    rows = (config.settings().get("bulletin") or {}).get("market") or []
+    return [r["symbol"] for r in rows if r["symbol"] != mof.SYMBOL]
+
+
 def job_symbols(conn) -> list[str]:
     rows = conn.execute(
         "SELECT ticker FROM stocks WHERE in_portfolio = 'yes' OR (status = 'watching' AND grade = 'solid') ORDER BY ticker"
     ).fetchall()
-    symbols = [r[0] for r in rows] + BENCHMARKS + list(SECTOR_FUNDS.values()) + commodity_symbols(conn)
+    symbols = [r[0] for r in rows] + BENCHMARKS + list(SECTOR_FUNDS.values()) + commodity_symbols(conn) + market_symbols()
     return list(dict.fromkeys(symbols))
 
 
@@ -102,14 +110,21 @@ def fx_symbol(currency: str) -> str | None:
     return None if currency in (None, "USD") else f"{currency}USD=X"
 
 
-def run_job(conn, source=None) -> str | None:
+def run_job(conn, source=None, mof_get_text=None) -> str | None:
     """The nightly job. Returns an error message for Telegram, or None when all is well (no message)."""
     failed = []
+    market = set(market_symbols())
     for symbol in job_symbols(conn):
+        # a bulletin figure seen for the first time gets 3 months, so its 1-month change is there from the first morning
+        new_figure = symbol in market and not conn.execute("SELECT 1 FROM prices WHERE symbol = ? LIMIT 1", (symbol,)).fetchone()
         try:
-            fetch(conn, symbol, "5d", source)
+            fetch(conn, symbol, "3mo" if new_figure else "5d", source)
         except yahoo.YahooError as exc:
             failed.append(f"{symbol}: {exc}")
+    try:
+        mof.update(conn, mof_get_text)
+    except mof.MofError as exc:
+        failed.append(f"{mof.SYMBOL}: {exc}")
     if failed:
         from shared import notify
         return notify.message("PRICES — some symbols failed", failed)

@@ -24,7 +24,9 @@ Sections, in this order. Each item is one fact in at most 2 lines, with a compar
 tag `[ED]` Emtia Defteri · `[DR]` Dragonomi · `[W]` web. Links are at the end.
 
 1. `📊 RAKAMLAR (son kapanış)` — level · **1-month change** · day change. Yields in basis points. Rows: S&P 500, Nasdaq, US 10Y,
-   Japan 10Y, Gold, Brent, DXY, USDJPY, EURJPY, CHFJPY. **Code only** (no model touches these numbers).
+   Japan 10Y, Gold, Brent, DXY, USDJPY, EURJPY, CHFJPY. **Code only** (no model touches these numbers). One row per line with
+   `·` between the parts (`S&P 500 · 7.743,98 · 1 ay ▲ %0,8 · gün ▲ %0,3`): Telegram's font is not monospaced, so aligned columns
+   would not line up. A figure whose last close is older than the others' shows its date.
 2. `⚡ BUGÜNÜN 3 MADDESİ` — the three most important items of the sections below (order of importance: touches one of my stocks →
    a big market move → reported by several sources).
 3. `🗓 TAKVİM` — today / tomorrow / this week / later: earnings, central banks, data. My stocks' earnings dates (from Yahoo) are marked 📌.
@@ -99,6 +101,10 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
   day). Stored in `prices` as `JP10Y` with `source = mof`. If it cannot be read: the row shows `—` and the reason, nothing else stops.
 - `shared/bulletin/market.py`: the last close, the close 1 month earlier (the last close on or before the same date a month ago) and the
   day before; percent for prices, basis points for yields.
+- **Built 2026-10-28** (`shared/prices/mof.py`, `shared/bulletin/market.py`, 22 tests). Checked live from the cloud session with a
+  throwaway database: all 9 Yahoo symbols answer with 3 months of closes; **`^TNX` is already in percent** (5.045, no scaling);
+  the table printed from real data. **Not checked:** the Ministry of Finance file (the cloud session cannot reach `mof.go.jp`; the
+  parser follows the file's known layout) — the Air check T4 is its first real read; if the layout differs, only `mof.parse` changes.
 - **Check (H):** `uv run python -m shared.prices` once, then `uv run python -m shared.bulletin --market` prints the table.
 
 ### Slice 3 — gather: `shared/bulletin/gather.py` (code only)
