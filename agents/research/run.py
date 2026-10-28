@@ -244,7 +244,7 @@ def weekly(conn, sources=None, today: str | None = None, run=None, *, limit: int
     rows = conn.execute("SELECT key, label FROM counts WHERE run_at = ? AND kind = 'stock' AND has_card = 0 AND rank IS NOT NULL "
                         "AND rank <= ? ORDER BY rank", (last, top)).fetchall()
     notes = []
-    age = (date.fromisoformat(day) - clock.parse_utc(last).date()).days
+    age = (date.fromisoformat(day) - date.fromisoformat(clock.today_local(clock.parse_utc(last)))).days  # both in Turkey time
     if age > STALE_COUNTER_DAYS:
         notes.append(f"The latest Counter run is {age} days old ({clock.show(last)}).")
     outcomes, errors = [], []

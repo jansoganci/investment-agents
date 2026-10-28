@@ -8,7 +8,6 @@ missing - Missing figures waiting for me
 spend - This month's AI spend by provider and what is left
 model - Which job runs on which model; with arguments, changes it
 status - System health: when each job last ran, any errors
-search - A web search now: a short neutral answer with sources (Turkish)
 watch - Start watching a stock (agent 3 keeps its card)
 archive - Archive a stock: no new analysis or spend
 unarchive - Bring an archived stock back to watching
