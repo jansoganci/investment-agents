@@ -1,7 +1,7 @@
 ---
 doc: Morning bulletin — implementation plan
 date: 2026-10-28
-status: draft, waiting for my check
+status: approved (2026-10-28)
 publish: no
 ---
 
@@ -185,11 +185,13 @@ On-demand searches: about 0.01 $ each. The monthly AI limit (`budget.ai_monthly_
 - The audit: one separate session after the first week, with the usual prompt (`IMPLEMENTATION_PLAN.md` section 4).
 - `AGENTS.md` status and the project map updated.
 
-## 8. Open questions (answer before or during the build)
+## 8. Answered (my decisions, 2026-10-28)
 
-1. Number check fails → the item stays with `⚠` (my proposal) or is left out?
-2. The on-demand `search` answer: Turkish like the bulletin (my proposal) or English like the rest of the system?
-3. The `interests` table above: correct or add topics.
+1. Number check fails → the item **stays**, marked `⚠`.
+2. The on-demand `search` answer is **Turkish**, like the bulletin, asked from Telegram in plain words.
+3. The 8 `interests` topics above are right for now.
+4. Before slice 1, I ask DeepSeek itself for its Search API details (the docs could not be read from the cloud session); its answer
+   fixes the request and response fields of `shared/search.py`.
 
 ## 9. Not in this plan, on purpose
 
