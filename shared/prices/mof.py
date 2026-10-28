@@ -3,8 +3,8 @@
     mof.update(conn)      stores the new days as symbol `JP10Y` in `prices` (source `mof`, close = the yield in percent)
 
 The file is a CSV: a title line, then a header `Date,1Y,2Y,…,10Y,…` and one row a day (`2026/10/27,…`); a day without a figure
-holds `-`. The first time the whole history is read (`jgbcme_all.csv`) and the last `KEEP_DAYS` days are kept; afterwards the
-small current file is enough. A day already stored is never overwritten (the table refuses it too). Roadmap "Morning bulletin" 5;
+holds `-`. The first time the whole history (`jgbcme_all.csv`, which the Ministry updates only now and then: on 2026-10-28 it ended on
+09-30) is read together with the small current file, and the last `KEEP_DAYS` days are kept; afterwards the current file is enough. A day already stored is never overwritten (the table refuses it too). Roadmap "Morning bulletin" 5;
 docs/BULLETIN_PLAN.md slice 2. Written from the file's known layout: the first real read is the Air check (plan, T4).
 """
 
@@ -75,7 +75,9 @@ def update(conn, get_text=None, now=None) -> int:
     """Store the days that are not stored yet; returns how many were new. Raises MofError."""
     get_text = get_text or _get_text
     first = conn.execute("SELECT 1 FROM prices WHERE symbol = ? LIMIT 1", (SYMBOL,)).fetchone() is None
-    rows = parse(get_text(ALL_URL if first else CURRENT_URL))
+    rows = parse(get_text(CURRENT_URL))
+    if first:   # the history file lags the current one: both, or the days since its last update are missing
+        rows = parse(get_text(ALL_URL)) + rows
     today = date.fromisoformat(clock.today_local(now))
     if first:
         since = (today - timedelta(days=KEEP_DAYS)).isoformat()
