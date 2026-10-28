@@ -1319,6 +1319,7 @@ this, the preview gives a one-time code and `--yes` runs only with it.
 | `/spend` | this month's AI spend by provider; how much is left of the limit |
 | `/model` | which job runs on which model now |
 | `/status` | system health: when each agent last ran, any errors |
+| `search` | (2026-10-28, "Morning bulletin" 9) a DeepSeek web search now: a short neutral answer in Turkish with numbered sources; in Telegram in plain words ("ara: …") |
 
 Beyond these commands I can ask Hermes anything; it answers from the database and the cards, read-only (section 3, "Telegram and Hermes").
 

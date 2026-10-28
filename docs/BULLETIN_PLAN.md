@@ -63,7 +63,7 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
 
 - `GLOSSARY.md`: `bulletin` (Bülten), `Bulletin/` (Drive), table `bulletins`, `shared/bulletin`, `shared/search`, setting block
   `bulletin:`, the `search` and `bulletin` commands.
-- `settings.yaml` `bulletin:` — `hour: "08:15"`, `days: weekdays`, the market rows (name → source symbol), `interests` (topic → search
+- `settings.yaml` `hours.bulletin: "08:15"` (weekdays) and `bulletin:` — the market rows (name → source symbol), `interests` (topic → search
   query; first draft below), `max_searches: 25`, `post_chars: 3000` (how much of one post's text goes to the model).
 - `docs/SCHEDULE.md`: job 6. `docs/telegram_setcommands.txt` / roadmap 10.2: the `search` command.
 
