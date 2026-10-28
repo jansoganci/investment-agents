@@ -107,7 +107,9 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
   parser follows the file's known layout) — the Air check T4 is its first real read; if the layout differs, only `mof.parse` changes.
   **T4, first real read (2026-10-28, Hermes):** the layout was right (the parser read the file back to 1974) but the plausibility check
   refused Japan's negative yield of 2016 (−0.02). Fixed the same day: negative yields are real (range −5 … 30 %), and the check applies
-  only to the days we keep (the last 120), so an odd row from 1974 cannot stop the read.
+  only to the days we keep (the last 120), so an odd row from 1974 cannot stop the read. **Second T4 finding (same day):** the
+  history file ends on 09-30 (the Ministry updates it only now and then), so the first read now takes the small current file too;
+  the figures table's date marker (`(30.09)`) made the gap visible at once.
 - **Check (H):** `uv run python -m shared.prices` once, then `uv run python -m shared.bulletin --market` prints the table.
 
 ### Slice 3 — gather: `shared/bulletin/gather.py` (code only)
@@ -178,7 +180,7 @@ On-demand searches: about 0.01 $ each. The monthly AI limit (`budget.ai_monthly_
 
 | # | Step | Pass |
 |---|---|---|
-| T1 | **Delivery test, before the job is registered:** a script that prints ~9,000 characters in 6 parts. Does Hermes send it whole, split, or cut? | We know how a long output arrives. If it is cut: `--part N` prints one section, and job 6 becomes 6 short jobs 08:15–08:20 (decided after T1). |
+| T1 | **Delivery test, before the job is registered:** a throwaway script-only Hermes job (manual run, no schedule) that prints ~8,500 characters in 6 parts (`PART 1` … `PART 6`); I count the messages that arrive **in Telegram** (Hermes cannot see this: run from its terminal tool the output never reaches Telegram, learned 2026-10-28). Does it arrive whole, split, or cut? Then the job is removed. | We know how a long output arrives. If it is cut: `--part N` prints one section, and job 6 becomes 6 short jobs 08:15–08:20 (decided after T1). |
 | T2 | `git pull` · `uv run python -m shared.db upgrade` (10 → 11) · `uv run pytest -q` | all pass |
 | T3 | `uv run python -m shared.search "Brent crude oil"` | 5 hits, a cost line |
 | T4 | `uv run python -m shared.prices` · `uv run python -m shared.bulletin --market` | 10 rows; Japan 10Y has a value or a reason |

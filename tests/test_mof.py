@@ -50,25 +50,33 @@ def test_a_negative_yield_is_real_and_an_old_odd_row_does_not_stop_the_read(db):
     # the real file goes back to 1974 and holds negative yields (2016–2020); only the days we keep are checked
     text = "Date,10Y\n1974/9/24,99.0\n2016/2/9,-0.02\n2026/10/27,2.35\n"
     assert mof.parse(text)[1] == ("2016-02-09", -0.02)
-    assert mof.update(db, reader({mof.ALL_URL: text}), NOW) == 1
+    assert mof.update(db, reader({mof.ALL_URL: text, mof.CURRENT_URL: "Date,10Y\n"}), NOW) == 1
 
 
 def test_an_implausible_figure_on_a_kept_day_is_refused(db):
     with pytest.raises(mof.MofError, match="not a plausible yield"):
-        mof.update(db, reader({mof.ALL_URL: "Date,10Y\n2026/10/27,235\n"}), NOW)
+        mof.update(db, reader({mof.ALL_URL: "Date,10Y\n2026/10/27,235\n", mof.CURRENT_URL: "Date,10Y\n"}), NOW)
     assert db.execute("SELECT count(*) FROM prices WHERE symbol='JP10Y'").fetchone() == (0,)
 
 
 def test_the_first_read_takes_the_whole_history_and_keeps_120_days(db):
-    get = reader({mof.ALL_URL: HISTORY})
+    get = reader({mof.ALL_URL: HISTORY, mof.CURRENT_URL: "Date,10Y\n"})
     assert mof.update(db, get, NOW) == 2
-    assert get.asked == [mof.ALL_URL]
+    assert sorted(get.asked) == sorted([mof.ALL_URL, mof.CURRENT_URL])
     assert db.execute("SELECT date, close, currency, source FROM prices WHERE symbol='JP10Y' ORDER BY date").fetchall() == [
         ("2026-09-25", 2.0, "%", "mof"), ("2026-10-27", 2.35, "%", "mof")]
 
 
+def test_the_first_read_also_takes_the_days_the_history_file_does_not_have_yet(db):
+    # on 2026-10-28 the real history file ended on 09-30: October came only from the current file (seen on the Air, plan T4)
+    history = "Date,10Y\n2026/9/29,3.00\n2026/9/30,3.06\n"
+    current = "Date,10Y\n2026/10/1,3.05\n2026/10/27,3.04\n"
+    assert mof.update(db, reader({mof.ALL_URL: history, mof.CURRENT_URL: current}), NOW) == 4
+    assert db.execute("SELECT max(date) FROM prices WHERE symbol='JP10Y'").fetchone() == ("2026-10-27",)
+
+
 def test_later_reads_use_the_small_file_and_never_overwrite(db):
-    mof.update(db, reader({mof.ALL_URL: HISTORY}), NOW)
+    mof.update(db, reader({mof.ALL_URL: HISTORY, mof.CURRENT_URL: "Date,10Y\n"}), NOW)
     get = reader({mof.CURRENT_URL: CURRENT})
     assert mof.update(db, get, NOW) == 1                      # only 2026-10-01 is new; 10-27 is stored
     assert get.asked == [mof.CURRENT_URL]
@@ -77,7 +85,7 @@ def test_later_reads_use_the_small_file_and_never_overwrite(db):
 
 
 def test_a_future_date_is_not_stored(db):
-    get = reader({mof.ALL_URL: HISTORY + "2026/12/1,0.9,1.2,2.50,3.1\n"})
+    get = reader({mof.ALL_URL: HISTORY + "2026/12/1,0.9,1.2,2.50,3.1\n", mof.CURRENT_URL: "Date,10Y\n"})
     assert mof.update(db, get, NOW) == 2
 
 
