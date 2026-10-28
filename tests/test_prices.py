@@ -91,6 +91,27 @@ def test_job_reports_failures_and_is_silent_when_fine(db):
     assert msg.startswith("PRICES") and "SPY" in msg
 
 
+def test_the_bulletin_figures_are_in_the_job_and_start_with_three_months(db):
+    assert {"^GSPC", "^IXIC", "^TNX", "BZ=F", "DX-Y.NYB", "JPY=X", "EURJPY=X", "CHFJPY=X"} <= set(prices.job_symbols(db))
+    assert "JP10Y" not in prices.job_symbols(db)                    # Japan's yield comes from the Ministry of Finance, not Yahoo
+    first = FakeSource()
+    assert prices.run_job(db, first) is None
+    assert ("^GSPC", "3mo") in first.calls and ("SPY", "5d") in first.calls
+    second = FakeSource()
+    prices.run_job(db, second)
+    assert ("^GSPC", "5d") in second.calls and not any(r == "3mo" for _, r in second.calls)
+
+
+def test_a_failing_japan_file_is_named_in_the_message(db, monkeypatch):
+    from shared.prices import mof
+
+    def down(url, timeout=30):
+        raise mof.MofError("the Ministry of Finance file answered HTTP 503")
+    monkeypatch.setattr(mof, "_get_text", down)
+    msg = prices.run_job(db, FakeSource())
+    assert msg.startswith("PRICES") and "JP10Y: the Ministry of Finance file answered HTTP 503" in msg
+
+
 def test_market_value_is_none_when_yahoo_has_none(monkeypatch):
     monkeypatch.setattr(yahoo, "quotes", lambda s: {"KO": {"marketCap": 2.9e11, "currency": "USD"}, "NVO": {"currency": "USD"}})
     assert yahoo.market_values(["KO", "NVO", "XYZ"]) == {"KO": 2.9e11, "NVO": None, "XYZ": None}

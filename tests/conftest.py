@@ -8,6 +8,14 @@ def no_real_ai_keys(monkeypatch):
         monkeypatch.delenv(name, raising=False)
 
 
+@pytest.fixture(autouse=True)
+def no_real_mof(monkeypatch):
+    """A test never reads the Ministry of Finance's real file: an empty one (header only) stands in unless the test brings its own."""
+    from shared.prices import mof
+
+    monkeypatch.setattr(mof, "_get_text", lambda url, timeout=30: "Interest Rate\nDate,10Y\n")
+
+
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     """A clean data folder and Drive folder for each test; the real .env and database are never touched."""

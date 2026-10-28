@@ -479,6 +479,8 @@ Kurallar: yol haritası "Morning bulletin"; yapım: `docs/BULLETIN_PLAN.md`.
 | bültenin kod paketi · çalıştırma | `shared/bulletin` · `python -m shared.bulletin` |
 | DeepSeek web araması | `shared/search` (`search()`, `Hit`, `SearchError`) · `python -m shared.search "…"` |
 | saklanan bültenler (sürüm 11) | tablo `bulletins` |
+| Japonya 10 yıllık getiri (Maliye Bakanlığı dosyası) | `JP10Y` (`prices.source` `mof`) · `shared/prices/mof.py` |
+| rakam tablosu (son kapanış, 1 ay ve gün değişimi) | `shared/bulletin/market.py` · `python -m shared.bulletin --market` |
 | bir arama `ai_calls` satırında | `job` `search` · `provider` `deepseek` · `model` `search` |
 | istendiğinde web araması (Telegram'da "ara: …") | komut `search` |
 | bir haberin kartın 3 "tezi bozan" maddesinden birine dokunması | tez etiketi (`thesis_point`) |
