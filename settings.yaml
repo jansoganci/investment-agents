@@ -58,7 +58,10 @@ research:                          # agent 2 (roadmap "Agent 2 rules" 8)
 
 bulletin:                          # the morning bulletin (roadmap "Morning bulletin"; docs/BULLETIN_PLAN.md)
   max_searches: 25                 # most DeepSeek searches in one bulletin (one per stock I hold or watch, one per interest)
-  post_chars: 3000                 # how much of one post's text goes to the model
+  post_chars: 3000                 # how much of one post's text goes to the model …
+  full_posts: 40                   # … for this many posts (the ones about my stocks first, then the newest); the rest go in with title and one sentence
+  search_count: 5                  # hits asked from each web search
+  earnings_days: 45                # my stocks' earnings dates are listed this far ahead
   market:                          # the figures table, in this order: last close, 1-month and day change (`kind: yield` → basis points)
     - {label: "S&P 500",    symbol: "^GSPC"}
     - {label: "Nasdaq",     symbol: "^IXIC"}

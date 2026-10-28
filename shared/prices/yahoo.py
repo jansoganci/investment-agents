@@ -116,6 +116,13 @@ def parse_chart(raw: dict) -> dict:
             "rows": rows, "dividends": dividends, "splits": splits}
 
 
+def next_earnings(symbol: str) -> list[str]:
+    """The dates (YYYY-MM-DD, soonest first) Yahoo lists for the next earnings report of `symbol`; [] when it lists none."""
+    calendar = _call(symbol, lambda: _yf().Ticker(symbol).calendar)
+    dates = calendar.get("Earnings Date") if isinstance(calendar, dict) else None
+    return sorted({d.isoformat()[:10] if hasattr(d, "isoformat") else str(d)[:10] for d in (dates or [])})
+
+
 def quotes(symbols: list[str]) -> dict[str, dict]:
     """Yahoo's market value, currency and last price for each symbol it answers for."""
     out = {}

@@ -79,3 +79,11 @@ def test_the_command_prints_the_table(db, capsys):
     assert cli.main(["--market"]) == 0
     assert capsys.readouterr().out.startswith("📊 RAKAMLAR (son kapanış)\nS&P 500 · 7.700,00")
     assert cli.main([]) == 2
+
+
+def test_the_gather_command_describes_an_empty_database_without_searching(db, capsys):
+    from shared.bulletin import __main__ as cli
+    assert cli.main(["--gather", "--no-search"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("GATHERED · window ") and "my stocks 0 · posts 0 · web hits 0 (0 searches) · filings 0 · earnings dates 0" in out
+    assert cli.main(["--gather", "--bogus"]) == 2

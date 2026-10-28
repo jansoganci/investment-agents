@@ -112,15 +112,24 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
   the figures table's date marker (`(30.09)`) made the gap visible at once.
 - **Check (H):** `uv run python -m shared.prices` once, then `uv run python -m shared.bulletin --market` prints the table.
 
-### Slice 3 — gather: `shared/bulletin/gather.py` (code only)
+### Slice 3 — gather: `shared/bulletin/gather.py` (code only) — **built 2026-10-28** (17 tests)
 
-- Posts: `articles` published inside the window, both sites; title, tags, the one sentence, the first `post_chars` of the text.
-- My stocks: `in_portfolio = 'yes'` or `status = 'watching'`; for each, the card's 3 thesis breaks (`card.last_thesis`), its tagged posts.
-- SEC: each of my stocks' new 10-K / 10-Q / 20-F / 8-K since the last bulletin (the submissions list; 8-K items as plain words, e.g.
-  5.02 = "a director or officer left or joined", 4.01 = "the auditor changed").
-- Earnings dates of my stocks from Yahoo.
-- Web searches: one per stock (`"<company> news"`, after the window start) + one per interest; at most `max_searches`.
-- Every piece gets an id (`P12` post, `W3` web, `C2` card) so the model can cite it and the code can check it.
+- **Window:** the bulletin time (08:15) of the last weekday before today's Turkey date (Wednesday → Tuesday, Monday → Friday). Slice 5
+  replaces it with "since the last saved bulletin".
+- **Posts** (`P<articles.id>`): `articles` published since the window start, both sites. The first `full_posts` (40) — those about my
+  stocks first, then the newest — come with title, tags, the one English sentence and up to `post_chars` (3,000) of the text; the
+  rest with title, tags and the sentence only (a day has 60–150 posts; this keeps the model call at about 40k tokens). A post is "about"
+  a stock of mine when one of its tags is a **confirmed** company tag mapped to it. A post the site cut for non-members says so.
+  **For slice 4:** the post text is Turkish (numbers like `104,6`); the sentence is English.
+- **My stocks:** `in_portfolio = yes` or `status = watching`, held first; each with the 3 "things that would break the thesis"
+  parsed from its card's newest thesis (`breaks`; empty when the card has none yet).
+- **SEC filings** (`F<n>`): 10-K / 10-Q / 20-F and 8-K of my stocks **accepted** since the window start (by acceptance time, so a
+  filing is never listed twice); 8-K items in plain words (`EIGHT_K`; an 8-K with only the exhibits item 9.01 is skipped).
+- **Earnings dates** (`E<n>`): Yahoo's next date for each of my stocks, if within `earnings_days` (45).
+- **Web hits** (`W<n>`): the searches go held stocks → the 8 interest topics → watched stocks, at most `max_searches` (25); `after:` is
+  the day before the window starts; a URL appears once; a hit dated before that day is dropped. A failed search is a note
+  (`pack.notes`); a dead key / empty balance / monthly limit skips the rest.
+- **Check (H):** `uv run python -m shared.bulletin --gather` prints counts and the first items (`--no-search` skips the searches).
 
 ### Slice 4 — write, check, translate: `shared/bulletin/write.py`, `check.py`
 
