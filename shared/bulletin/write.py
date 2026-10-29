@@ -3,8 +3,8 @@
     draft = write.write(pack, run=run, conn=conn)
 
 Every item must cite pieces (`P12`, `W3`) that exist; the numbers of an item must be in the pieces it cites (else the item is kept
-and marked); advice, ratings and price targets are dropped. The model never sees the figures table, the SEC lines or the earnings
-dates of my stocks: those are code (slice 5). Roadmap "Morning bulletin" 4 and 7.
+and marked); advice, ratings and price targets are dropped. The model sees the figures table (last closes) only so that an item does not
+contradict it; it never writes the SEC lines or the earnings dates of my stocks: those are code (slice 5). Roadmap "Morning bulletin" 4 and 7.
 """
 
 from __future__ import annotations
@@ -41,6 +41,10 @@ HOW AN ITEM IS WRITTEN
   subtract or round. If a number is not in a piece, it does not go in the item.
 - Say who and what: company, country, institution, with its ticker if you know it from the piece.
 - A fact appears once inside the sections. If two pieces report the same fact, one item citing both.
+- The prompt shows FIGURES: the bulletin's own table of last closes (S&P 500, Nasdaq, US and Japan 10-year yields, gold, Brent, DXY, USDJPY,
+  EURJPY, CHFJPY). Never print the price level of these instruments in an item: the table has it, and a piece's intraday level differs from
+  the close and reads as a contradiction. Say the direction and the cause instead ("Brent rose after an attack on a Saudi refinery"). Other
+  numbers of the same story (a stock-draw, a percentage move reported by the piece, a yield change) are fine.
 - Only facts published inside the window (given below), except calendar entries. Skip glossary-like explanations and old stories.
 - If there is nothing to say for a section, return an empty list for it. Never fill a section to make it look full.
 - "sources": the ids of every piece the item rests on (at least one).
@@ -58,7 +62,7 @@ THE SECTIONS (a JSON object, JSON only, no text around it)
   three "things that would break the thesis" listed for that stock, set "thesis_point" to its number (1–3), else null. That is a
   match, not a judgement: do not say the thesis is broken.
 - interests: AI and its infrastructure (semiconductors, memory and HBM, optical parts, data centres, power for them) with group
-  "ai_infrastructure"; other company or sector stories worth a line (not about my stocks) with group "other".
+  "ai_infrastructure"; company news and other stories worth a line (not about my stocks; the bulletin prints this group as "Company news") with group "other".
 - rank: give 1, 2 and 3 to the three most important items of macro, stocks and interests together, once each (all other items null).
   The order of importance: it touches one of my stocks; a large surprise or move against what was expected; reported by several pieces.
   If fewer than three items deserve it, fewer ranks."""
@@ -103,15 +107,16 @@ def _one(piece) -> str:
     return f"{head}\n{piece.text}"
 
 
-def build_prompt(pack: Pack, now: datetime | None = None) -> str:
+def build_prompt(pack: Pack, now: datetime | None = None, market_text: str | None = None) -> str:
     now = now or clock.now_utc()
     stocks = []
     for s in pack.stocks:
         breaks = "; ".join(f"{i}. {b}" for i, b in enumerate(s.breaks, 1)) or "no thesis yet"
         stocks.append(f"- {s.ticker} — {s.company} ({'held' if s.held else 'watching'}). Things that would break the thesis: {breaks}")
     pieces = [p for p in pack.posts + pack.web]
+    figures = f"FIGURES (the table the bulletin prints; last closes):\n{market_text}\n\n" if market_text else ""
     return (f"TODAY: {clock.today_local(now)} (Turkey time). WINDOW: {clock.show(pack.window_start)} to {clock.show(pack.window_end)}.\n\n"
-            "MY STOCKS:\n" + ("\n".join(stocks) if stocks else "- none (return \"stocks\": {})") + "\n\n"
+            + figures + "MY STOCKS:\n" + ("\n".join(stocks) if stocks else "- none (return \"stocks\": {})") + "\n\n"
             f"PIECES ({len(pieces)}):\n\n" + "\n\n".join(_one(p) for p in pieces))
 
 
@@ -220,11 +225,11 @@ def check_numbers(draft: Draft, pack: Pack) -> Draft:
 
 # --- the call -----------------------------------------------------------------------------------------------------------
 
-def write(pack: Pack, *, run=None, conn=None, now: datetime | None = None) -> Draft:
+def write(pack: Pack, *, run=None, conn=None, now: datetime | None = None, market_text: str | None = None) -> Draft:
     """Gathered pieces → a checked English draft. With no post and no web hit there is nothing to write and no model is called."""
     if not (pack.posts or pack.web):
         return Draft(notes=["No post and no web result came in: nothing was written."])
-    prompt = build_prompt(pack, now)
+    prompt = build_prompt(pack, now, market_text)
     problem = None
     for _ in range(2):
         text = prompt if problem is None else prompt + f"\n\nYour previous answer could not be used ({problem}). Answer again: JSON only."

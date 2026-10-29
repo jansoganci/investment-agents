@@ -2,7 +2,7 @@
 
     rendered = render.render(pack, draft, market_text, now)
 
-Sections: figures · today's 3 items · calendar · macro · my stocks · interests · sources. The figures table, the earnings and SEC lines
+Sections: figures · today's 3 items · calendar · macro · my stocks · interests · sources. The ranked items are printed in the top 3 only (macro and interests skip them); my stocks always show all of theirs. The figures table, the earnings and SEC lines
 (📌) and the fixed words are written by code in Turkish; the items are the writer's, in the translation that passed the number
 check (else the English item with a note). Every item ends with its source tags and link numbers, `[ED1, W2]`: ED / DR = a post
 of Emtia Defteri / Dragonomi, W = the web; the numbers refer to the list at the end. The top-3 digest repeats items.
@@ -20,7 +20,7 @@ from shared.bulletin.write import Draft, Item
 MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
 DAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
 WHEN = (("today", "Bugün"), ("tomorrow", "Yarın"), ("week", "Bu hafta"), ("later", "İleride"))
-GROUPS = (("ai_infrastructure", "AI altyapısı"), ("other", "Diğer"))
+GROUPS = (("ai_infrastructure", "AI altyapısı"), ("other", "Şirket haberleri"))
 TAGS = {"emtia": "ED", "dragonomi": "DR"}
 FORMS_READ_ON_SUNDAY = ("10-K", "10-Q", "20-F", "40-F", "10-K/A", "10-Q/A", "20-F/A", "40-F/A")
 NOTE_STARTS = ("Web search", "SEC could not", "Yahoo has no", "Translation failed", "Writer failed")
@@ -140,7 +140,7 @@ def render(pack: Pack, draft: Draft, market_text: str, now: datetime | None = No
     if rows:
         blocks.append("🗓 TAKVİM\n" + "\n".join(rows))
 
-    macro = draft.of("macro")
+    macro = [i for i in draft.of("macro") if not i.rank]           # the top-3 digest already printed the ranked ones
     if macro:
         blocks.append("🌍 MAKRO\n" + "\n".join(f"• {_line(i, sources)}" for i in macro))
 
@@ -161,7 +161,7 @@ def render(pack: Pack, draft: Draft, market_text: str, now: datetime | None = No
 
     parts = []
     for key, label in GROUPS:
-        lines = [f"• {_line(i, sources)}" for i in draft.of("interests") if i.group == key]
+        lines = [f"• {_line(i, sources)}" for i in draft.of("interests") if i.group == key and not i.rank]
         if lines:
             parts.append(label + "\n" + "\n".join(lines))
     if parts:
