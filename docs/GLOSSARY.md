@@ -448,7 +448,7 @@ Hermes işleri (`docs/SCHEDULE.md`): `prices` · `backup` · `eye` · `alerts` �
 - `counts` (Sayaç, her koşu yeni satırlar ekler): `run_at` · `kind` (`stock` · `non_us` · `commodity` · `sector`) · `key` · `label` · `posts_7d` · `posts_30d` · `rank` ·
   `has_card` · `points` (2. ajanın `mentions` puanı). Hiç satır yazmayan koşu `runs` tablosundan anlaşılır.
 - `readings` (2. ajanın yazı okuması): `article_id` · `ticker` · `tone` (`positive` / `negative` / `neutral`) · `about` · `kind` (`event` / `general_comment`) · `quote` · `model`;
-  `articles.read_deep` · `articles.text_missing`.
+  `articles.read_deep` · `articles.text_missing` · `articles.companies` (JSON list of the companies found in the text; NULL = not asked, `[]` = none).
 - `news_events`: `ticker` · `week` · `summary` · `event_date` · `source_url` · `quote` · `scope` (`company_specific` / `general_risk`) · `class` (`serious_negative` ·
   `important_positive` · `other`) · `serious_type` · `status` (`confirmed` · `not_confirmed` · `not_checked`) · `note` · `audit_id`.
 - `stocks.commodity_checked` (emtia bağının aranma tarihi) · `scores` (hisse + hafta tekil) · `commodity_links` (hisse + emtia tekil; rol `producer` / `user`).

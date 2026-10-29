@@ -125,17 +125,21 @@ class Stats:
 
 
 def new_tags(conn, limit: int) -> list[str]:
+    """Names not classified yet: the posts' own tags first, then the companies found in their text (`articles.companies`)."""
     return [r[0] for r in conn.execute(
-        "SELECT DISTINCT j.value FROM articles a, json_each(a.tags) j WHERE j.value NOT IN (SELECT tag FROM tags) "
-        "ORDER BY a.id, j.key LIMIT ?", (limit,))]
+        "WITH names AS (SELECT a.id AS id, 0 AS part, j.key AS pos, j.value AS name FROM articles a, json_each(a.tags) j "
+        "UNION ALL SELECT a.id, 1, j.key, j.value FROM articles a, json_each(a.companies) j) "
+        "SELECT name FROM names WHERE name NOT IN (SELECT tag FROM tags) GROUP BY name ORDER BY min(id), min(part), min(pos) LIMIT ?", (limit,))]
 
 
 def context(conn, names: list[str]) -> list[dict]:
     """For each tag: one post title and the other tags of the posts it is on — a tag alone is often ambiguous."""
     out = []
     for name in names:
-        rows = conn.execute("SELECT a.title, a.tags FROM articles a, json_each(a.tags) j WHERE j.value = ? ORDER BY a.id DESC LIMIT 3",
-                            (name,)).fetchall()
+        rows = conn.execute(
+            "SELECT a.title, a.tags FROM articles a WHERE a.id IN (SELECT a2.id FROM articles a2, json_each(a2.tags) j WHERE j.value = ? "
+            "UNION SELECT a2.id FROM articles a2, json_each(a2.companies) j WHERE j.value = ?) ORDER BY a.id DESC LIMIT 3",
+            (name, name)).fetchall()
         together = []
         for _title, tags in rows:
             together += [t for t in json.loads(tags) if t != name and t not in together]

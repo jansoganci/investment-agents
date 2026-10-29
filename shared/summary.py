@@ -49,10 +49,14 @@ def counter_lines(conn) -> tuple[list[str], list[str]]:
     last = conn.execute("SELECT max(started_at) FROM runs WHERE job = 'counter' AND status = 'ok'").fetchone()[0]
     if run_at is None or (last is not None and run_at < last):     # never ran, or the latest run found nothing (audit #5)
         return [], []
-    bar = int((config.settings().get("counter") or {}).get("card_mention_bar", 6))
+    counter = config.settings().get("counter") or {}
+    bar = int(counter.get("card_mention_bar", 6))
+    ignore = {str(k).upper() for k in counter.get("non_us_ignore") or []}
     carded = conn.execute("SELECT key, posts_7d FROM counts WHERE run_at = ? AND kind = 'stock' AND has_card = 1 AND posts_7d >= ? "
                           "ORDER BY posts_7d DESC, key", (run_at, bar)).fetchall()
-    non_us = conn.execute("SELECT label, posts_7d FROM counts WHERE run_at = ? AND kind = 'non_us' ORDER BY rank LIMIT 5", (run_at,)).fetchall()
+    non_us = [(label, n) for label, n, key in conn.execute(
+        "SELECT label, posts_7d, key FROM counts WHERE run_at = ? AND kind = 'non_us' AND posts_7d >= ? ORDER BY rank", (run_at, bar))
+        if key.upper() not in ignore][:5]
     return ([f"- {t} ({n} posts)" for t, n in carded], [f"- {label} ({n} posts)" for label, n in non_us])
 
 
@@ -109,7 +113,8 @@ def build(conn, day: str | None = None, portfolio_text: str | None = None, analy
     if analysis_text:
         lines += ["", "Agent 3 this week:", analysis_text]
     lines += _section("Stocks with a card mentioned a lot:", carded)
-    lines += _section("Non-US names mentioned a lot:", non_us)
+    lines += _section("Non-US companies mentioned a lot (no card: the system has no filings for them). For each, please find and send "
+                      "the last annual report, the last interim report and the latest investor presentation:", non_us)
     lines += _section("Questions for you:", tag_questions(conn))
     lines += _section("Data still unclear:", unclear_data(conn))
     lines += _section("Archive reminders:", archive_reminders(conn))

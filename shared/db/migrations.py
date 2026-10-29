@@ -526,6 +526,12 @@ CREATE TRIGGER bulletins_no_delete BEFORE DELETE ON bulletins
 BEGIN SELECT RAISE(ABORT, 'bulletins is append-only: rows are never deleted'); END;
 """
 
+STEP_12 = """
+-- Companies named in a post's text (2026-10-29; roadmap "Agent 1 rules" 20). Emtia Defteri's own tags are commodities and sectors, never
+-- companies, so the Counter could not see the companies the posts talk about. NULL = not asked yet; '[]' = asked, none found.
+ALTER TABLE articles ADD COLUMN companies TEXT;
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -539,6 +545,7 @@ STEPS: list[tuple[int, str]] = [
     (9, STEP_9),
     (10, STEP_10),
     (11, STEP_11),
+    (12, STEP_12),
 ]
 
 

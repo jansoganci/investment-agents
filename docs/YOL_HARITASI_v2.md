@@ -171,6 +171,17 @@ Title, date, and tags are public; the rest of the post requires a member login.
     by the paywall, the pass message says the login cookie has probably expired and needs renewing. A valid login does not cut 5 in a row, so
     this is a signal, not a guess. It repeats at every pass (3 a day) until a page is read whole. This answers rule 16's open end: posts cut
     by an expired cookie still count in the Counter through their public tags; only the sentence and the full text are lost.
+20. **Companies named in the text (my decision, 2026-10-29; found by the first data review):** Emtia Defteri's tags are commodities and sectors, never
+    companies, so the Counter saw none of the 38 listed companies the 967 posts talk about (BHP, Rio Tinto, Shell, Aramco ...). A cheap model reads each
+    post and lists the listed companies it is **about** (not names only in passing; at most 6; usual English names). The list is saved in
+    `articles.companies` (NULL = not asked yet) and the names go through the same tag classifier as a post's own tags (company / US-listed / ticker,
+    SEC check, `waiting` for my `/tag`); the Counter counts a post once per company, whether its tag or its text named it. Off by default
+    (`settings.yaml` `eye.extract_companies`) until I have read `python -m agents.eye.companies --trial 50`; `--fill` writes the older posts.
+21. **Non-US companies (my decision, 2026-10-29; replaces "a non-US company gets no card" for the Sunday summary):** a non-US name mentioned
+    at least `counter.card_mention_bar` times in 7 days is listed in the Sunday summary with the three documents I am asked to find and send: the last annual report,
+    the last interim report and the latest investor presentation (names I do not want asked about go to `counter.non_us_ignore`). Reading those documents into a card
+    is a later step (a plan of its own: no SEC data exists for them, so a model reads the PDF and the auditor checks every figure against a quote). China's
+    stocks follow when Dragonomi is added.
 
 ### Sector list (decision: 2026-10-03)
 
