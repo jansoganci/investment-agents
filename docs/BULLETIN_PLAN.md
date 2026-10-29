@@ -196,7 +196,7 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
 - **Not known until tried:** whether this Ghost site still signs in with a plain link (some newer Ghost versions use a 6-digit code). If
   it does not work: back to "Yol A" (the cookie by hand at home).
 
-## 5. Cost (estimate, DeepSeek prices in `settings.yaml`)
+## 5. Cost (estimate; **measured 2026-10-29** below the table, DeepSeek prices in `settings.yaml`)
 
 | Part | Per bulletin | Per month (22 weekdays) |
 |---|---|---|
@@ -204,6 +204,8 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
 | Translate (V4 Flash) | ~0.01 $ | ~0.2 $ |
 | Searches (~20 × 0.00075 $) | ~0.015 $ | ~0.35 $ |
 | **Total** | **~0.10 $** | **~2–2.5 $** |
+
+**Measured (Air, `--dry`, 2026-10-29):** 3 min 16 s and 0.1047 $ — the writer 29,434 tokens in and 14,158 out (its thinking) = 0.0949 $, 8 searches 0.006 $, the translation about 0.004 $. A month of weekdays: about 2.3 $.
 
 On-demand searches: about 0.01 $ each. The monthly AI limit (`budget.ai_monthly_max_usd: 30`) counts all of it.
 

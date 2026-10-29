@@ -23,7 +23,7 @@ hours:                             # Turkey time; the Hermes jobs are listed in 
   eye: ["07:00", "13:00", "20:00"] # agent 1, 3 passes a day
   alerts: "every hour at :05"      # python -m shared.alerts
   sunday: "09:00"                  # the Sunday chain: Counter → Research → Analysis → Portfolio → the summary
-  bulletin: "08:15"                # the morning bulletin, weekdays only (roadmap "Morning bulletin" 1)
+  bulletin: "08:15"                # the morning bulletin, weekdays only: the time it should ARRIVE (roadmap "Morning bulletin" 1); the Hermes job starts at 08:10 because it runs about 3.5 minutes
 
 warnings:                          # /status (phase 6)
   stuck_job_hours: 1               # a job in `running` longer than this
