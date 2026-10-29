@@ -129,7 +129,7 @@ def test_help_lists_every_command(db):
 
 def test_menu_matches_roadmap_10_2():
     assert set(commands.MENU) == {
-        "help", "summary", "green", "candidates", "card", "portfolio", "missing", "spend", "model", "status",
+        "help", "summary", "green", "candidates", "card", "portfolio", "missing", "spend", "model", "status", "search",
         "watch", "archive", "unarchive", "bought", "sold", "gold", "bes", "analyze", "closewarning", "thesis",
         "note", "data", "tag", "subsector", "undo",
     }

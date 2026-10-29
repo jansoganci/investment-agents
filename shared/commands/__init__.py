@@ -162,4 +162,4 @@ def run(argv: list[str]) -> tuple[int, str]:
         return 1, str(exc)
 
 
-from shared.commands import builtin, aicmds, cards, stocks, portfolio, eye, research  # noqa: E402,F401 — registers the commands (each phase replaces placeholders)
+from shared.commands import builtin, aicmds, cards, stocks, portfolio, eye, research, search  # noqa: E402,F401 — registers the commands (each phase replaces placeholders)
