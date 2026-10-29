@@ -126,3 +126,9 @@ def test_the_command_prints_hits_and_the_cost(db, key, sent, capsys):
 def test_the_command_reports_a_failure_in_one_message(db, sent, capsys):
     assert search.main(["Brent"]) == 1
     assert capsys.readouterr().out.startswith("SEARCH · failed\nDEEPSEEK_API_KEY is not set")
+
+
+def test_tracking_parameters_are_cut_from_an_address():
+    assert search.clean_url("https://a.example/x?utm_source=a&id=7&UTM_medium=b&srnd=c") == "https://a.example/x?id=7"
+    assert search.clean_url("https://a.example/x") == "https://a.example/x"
+    assert search.clean_url("https://a.example/x?utm_source=a") == "https://a.example/x"

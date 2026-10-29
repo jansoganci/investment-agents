@@ -26,7 +26,7 @@ MAX_WEB = 10
 MAX_POSTS = 5
 POST_DAYS = 60
 POST_CHARS = 700
-MAX_SHOWN = 6
+MAX_SHOWN = 10
 SITES = {"emtia": "Emtia Defteri", "dragonomi": "Dragonomi"}
 TAGS = {"emtia": "ED", "dragonomi": "DR"}
 CITATION = re.compile(r"\[\d+(?:\s*,\s*\d+)*\]")
@@ -45,7 +45,8 @@ ANSWER_SYSTEM = """You answer one investor's question in Turkish, from the numbe
   or advice of your own, never tell the investor to buy or sell, and do not call news good or bad.
 - COPY numbers exactly as the source prints them (the same value; a decimal comma is fine). Do not add, subtract, convert or round.
 - Put the numbers of the sources behind each fact, like [1] or [2, 5]. Use only numbers that exist in the list.
-- At most eight short lines, about 1,200 characters. Plain words.
+- Plain text only: no markdown, no asterisks, no headings. Four to six short lines, about 900 characters in all, one fact to a line.
+- Say who says what, but do not comment on the sources themselves.
 - Say plainly what the sources do not say, and when they disagree. If they do not answer the question, say that in one sentence.
 - If OPINION is yes, end with one line that starts "Modelin görüşü (bilgi, tavsiye değil):" and gives a view marked as the model's own.
   If OPINION is no, give no view.
@@ -113,8 +114,8 @@ def sources_text(web: list, posts: list) -> tuple[str, list]:
 def shown_sources(answer: str, items: list) -> list[str]:
     cited = {int(n) for c in CITATION.findall(answer) for n in re.findall(r"\d+", c)}
     chosen = [s for s in items if s["n"] in cited][:MAX_SHOWN] or items[:3]
-    return [f"{s['n']}. [{s['tag']}] {s['label']}: {s['title'][:80]}" + (f" — {s['url']}" if s["url"] and "..." not in s["url"] else "")
-            for s in chosen]
+    return [f"{s['n']}. [{s['tag']}] {s['label']}: {s['title'][:80]}"
+            + (f" — {search.clean_url(s['url'])}" if s["url"] and "..." not in s["url"] else "") for s in chosen]
 
 
 def ask(question: str, conn, now=None) -> str:

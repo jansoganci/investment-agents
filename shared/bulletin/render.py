@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
-from shared import clock
+from shared import clock, search
 from shared.bulletin.gather import Pack
 from shared.bulletin.write import Draft, Item
 
@@ -73,7 +73,7 @@ class Sources:
             site = "" if p.kind == "post" else f"{p.site}: "
             # DeepSeek shortens some addresses with "..." (seen 2026-10-29: pcmag, digitaltoday): such a link does not open, so none is shown
             url = "" if "..." in (p.url or "") or "…" in (p.url or "") else (p.url or "")
-            out.append({"n": n, "tag": self.tag(p), "title": f"{site}{p.title}"[:90], "site": p.site, "url": url})
+            out.append({"n": n, "tag": self.tag(p), "title": f"{site}{p.title}"[:90], "site": p.site, "url": search.clean_url(url) if url else ""})
         return out
 
 

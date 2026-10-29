@@ -125,3 +125,15 @@ def test_the_command_checks_its_input_and_costs_are_logged(world, monkeypatch):
 def test_shortened_links_are_not_printed(world):
     items = [{"n": 1, "tag": "W", "label": "PCMag", "title": "Sold out", "url": "https://pcmag.com/news/sk-hyn...2029"}]
     assert cmd.shown_sources("Sold out [1].", items) == ["1. [W] PCMag: Sold out"]
+
+
+def test_every_cited_source_is_listed_and_tracking_parameters_are_cut():
+    items = [{"n": n, "tag": "W", "label": "Site", "title": f"Title {n}",
+              "url": f"https://x.example/{n}?utm_source=briefed&utm_medium=referral&id={n}&srnd=phx"} for n in range(1, 10)]
+    shown = cmd.shown_sources("A [1, 2, 3]. B [4]. C [7, 8, 9].", items)
+    assert [s.split(".")[0] for s in shown] == ["1", "2", "3", "4", "7", "8", "9"]
+    assert shown[0] == "1. [W] Site: Title 1 — https://x.example/1?id=1"
+
+
+def test_the_answer_prompt_asks_for_plain_short_text():
+    assert "no markdown" in cmd.ANSWER_SYSTEM and "Four to six short lines" in cmd.ANSWER_SYSTEM

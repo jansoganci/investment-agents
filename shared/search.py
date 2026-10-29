@@ -16,6 +16,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
@@ -45,6 +46,13 @@ class Hit:
     summary: str              # ~600–800 characters, for a model
     score: float | None       # `rerank_score`, 0–3; 1.5 or more = a good match
     authority: int | None     # 0–4, -1 unknown; 3 or more = an authoritative source
+
+
+def clean_url(url: str) -> str:
+    """The address without tracking parameters (`utm_source=…`, `srnd=…`): shorter and as good."""
+    parts = urllib.parse.urlsplit(url)
+    query = [(k, v) for k, v in urllib.parse.parse_qsl(parts.query, keep_blank_values=True) if not k.lower().startswith(("utm_", "srnd"))]
+    return urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(query)))
 
 
 def build_query(query: str, after: str | None = None, english: bool = True) -> str:
