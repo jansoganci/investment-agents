@@ -5,7 +5,7 @@ It is a prompt for a Claude Code session on a **copy** of the database. It produ
 
 ## Where to run it
 
-1. On the Air, make a copy: `sqlite3 ~/investment-agents-data/<db file> ".backup '/tmp/review.db'"` (the real database is never opened by the review).
+1. On the Air, make a copy: `sqlite3 ~/investment-agents-data/investment-agents.sqlite ".backup '/tmp/review.db'"` (the real database is never opened by the review).
 2. Copy `review.db` to the main Mac (AirDrop / Drive, not Telegram). Never copy `.env`.
 3. On the Mac, open Claude Code in this repository and paste the prompt below. Put the copy's path where the prompt says `<PATH>`.
 
