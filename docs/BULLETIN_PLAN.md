@@ -232,14 +232,16 @@ On-demand searches: about 0.01 $ each. The monthly AI limit (`budget.ai_monthly_
 | T3 | `uv run python -m shared.search "Brent crude oil"` | 5 hits, a cost line |
 | T4 | `uv run python -m shared.prices` · `uv run python -m shared.bulletin --market` | 10 rows; Japan 10Y has a value or a reason |
 | T5 | `uv run python -m shared.bulletin --dry` | the bulletin; **I read it** |
-| T6 | Register job 6: weekdays 08:15, `uv run python -m shared.bulletin` | the next morning's bulletin arrives |
+| T6 | Register job 6: weekdays 08:10 (arrives about 08:14), `uv run python -m shared.bulletin` | the next morning's bulletin arrives |
 | T7 | Dragonomi (slice 7): I ask Dragonomi for a login link, send it to Hermes; H runs `magic_link`, then `session_check dragonomi` | "not gated", text found |
+
+**Results so far (2026-10-29):** T1 passed · T2 passed (production at `6414bcb`, database 10 → 11) · T3 passed · T4 passed (10 figures; Japan 10Y with its date marker) · T5 passed (`--dry` read and approved by me) · T6 done: Hermes job 6 `bulletin` registered (id `42a55c482478`, script-only, Telegram, `10 8 * * 1-5`). **Not yet seen:** the first scheduled bulletin (2026-10-29 08:10) and T7 (no Dragonomi membership yet).
 
 **Two weeks after T6:** a 10-minute look together: which section helps, which does not (the template may change then).
 
 ## 7. Done when
 
-- All tests pass (the 677 existing ones and the new ones); T1–T6 passed; three bulletins in a row arrived on time and I read them.
+- All tests pass (830 on 2026-10-29); T1–T6 passed (done); **three bulletins in a row arrived on time and I read them (open)**.
 - The audit: one separate session after the first week, with the usual prompt (`IMPLEMENTATION_PLAN.md` section 4).
 - `AGENTS.md` status and the project map updated.
 
@@ -257,3 +259,18 @@ On-demand searches: about 0.01 $ each. The monthly AI limit (`budget.ai_monthly_
 - A like / dislike button on items (the two-week look replaces it for now).
 - China / HK stocks in agents 2 and 3 (Dragonomi's company names only appear in the bulletin as information).
 - Weekend bulletins.
+
+## 10. Where we stopped (2026-10-29) and what is left
+
+**Done and merged into `main` (slices 0–7, 830 tests):** the figures (10 rows, Japan 10Y from the Ministry of Finance) · gather · write / check / translate · render, save (`bulletins` table, Drive `Bulletin/`) · job 6 registered on the Air · the `search` command (first real answer read: good, then fixed: plain text, short, every cited source listed, tracking parameters cut) · the Dragonomi sign-in helper `magic_link` (written, **not tried on the real site**). Cost measured: 0.105 $ and 3 min 16 s a bulletin, about 2.3 $ a month; the whole system about 21 $ a month with the two annual memberships.
+
+**Left, in this order:**
+
+1. **The first scheduled bulletin (2026-10-29 08:10, then each weekday).** I send Claude the Telegram text; check the `bulletins` row, the `Bulletin/` file, the `runs` row and the cost. Three on-time bulletins in a row = "Done when" met.
+2. **Production update to the latest `main`** (`ebe1bb8` search fixes and `9edaffb` `magic_link` were merged after production's `6414bcb`): `git pull` in `~/Downloads/investment-agents`, then ask one `search` question again. Hermes must know the `search` command (its standing rule is saved).
+3. **Gold's 1-month change** shows "—": `uv run python -m shared.prices --ticker GC=F` once on the Air.
+4. **My stocks section is empty** ("İzleme listesi boş"): choose stocks to `watch` through Hermes (NVDA, PLTR or the abi's picks) so the section and the thesis tags work.
+5. **Tuning after a few real bulletins:** run `--draft` once, alone (it takes over 3 minutes: in the background, Hermes' tool limit is 300 s), read the "NOT USED" list (in the first run only 5 of 40 posts were cited and 9 of 15 items came from web hits: prefer the newsletters' own reporting); the two-week look (which section helps, which does not); translating the thesis-break sentences; searches in parallel if a run goes over 5 minutes.
+6. **Dragonomi (T7), after my card statement on 2026-11-05:** buy Emtia Defteri and Dragonomi on annual plans (about 135 $ in one payment, about 11.25 $ a month). Change the Emtia plan without logging out. If Dragonomi has a free member account, test the sign-in earlier. Then the steps in slice 7: link from the phone without tapping it → to Hermes → `magic_link dragonomi '<link>'` → `session_check dragonomi` → Claude removes `dragonomi` from `eye.skip_sites` → Air `git pull` → `python -m agents.eye --accept-many` once. Unknown until tried: link or code in the e-mail.
+7. **Audit:** one separate session after the first week (usual prompt, `IMPLEMENTATION_PLAN.md` section 4).
+8. **Decisions kept for later (not built):** Agent 2's news step on DeepSeek search (`news_flow` stays `unclear` without Anthropic credit) · weekend bulletins · like / dislike buttons.
