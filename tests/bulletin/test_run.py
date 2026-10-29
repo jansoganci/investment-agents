@@ -108,5 +108,5 @@ def test_the_commands_show_and_dry_work_on_an_empty_database(db, capsys, monkeyp
     assert capsys.readouterr().out.strip() == "No bulletin has been saved yet."
     assert cli.main(["--dry"]) == 0                                 # no key, no stocks: only the figures, a note and the empty-day line
     out = capsys.readouterr().out
-    assert out.startswith("☀️ SABAH BÜLTENİ") and "Kaynaklardan yeni bir haber gelmedi." in out and "ℹ️ 1 kaynak ya da adım alınamadı" in out
+    assert out.startswith("☀️ SABAH BÜLTENİ") and "Kaynaklardan yeni bir haber gelmedi." in out and "(dry run: " in out and "ℹ️ 1 kaynak ya da adım alınamadı" in out
     assert cli.main(["--nonsense"]) == 2
