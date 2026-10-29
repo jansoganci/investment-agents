@@ -115,7 +115,7 @@ def shown_sources(answer: str, items: list) -> list[str]:
     cited = {int(n) for c in CITATION.findall(answer) for n in re.findall(r"\d+", c)}
     chosen = [s for s in items if s["n"] in cited][:MAX_SHOWN] or items[:3]
     return [f"{s['n']}. [{s['tag']}] {s['label']}: {s['title'][:80]}"
-            + (f" — {search.clean_url(s['url'])}" if s["url"] and "..." not in s["url"] else "") for s in chosen]
+            + (f" — {search.clean_url(s['url'])}" if search.usable_url(s["url"]) else "") for s in chosen]
 
 
 def ask(question: str, conn, now=None) -> str:

@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -53,6 +54,15 @@ def clean_url(url: str) -> str:
     parts = urllib.parse.urlsplit(url)
     query = [(k, v) for k, v in urllib.parse.parse_qsl(parts.query, keep_blank_values=True) if not k.lower().startswith(("utm_", "srnd"))]
     return urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(query)))
+
+
+_PLAIN_URL = re.compile(r"^https?://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+$")
+
+
+def usable_url(url: str | None) -> bool:
+    """False for an address that cannot be opened: empty, not plain ASCII, or shortened by the search ("...", "…", a dot-leader look-alike).
+    DeepSeek shortens some addresses (seen 2026-10-29); a strict check catches every look-alike of the dots."""
+    return bool(url) and bool(_PLAIN_URL.match(url)) and ".." not in url
 
 
 def build_query(query: str, after: str | None = None, english: bool = True) -> str:
