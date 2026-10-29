@@ -490,6 +490,7 @@ Kurallar: yol haritası "Morning bulletin"; yapım: `docs/BULLETIN_PLAN.md`.
 | bülten işi: kur, kaydet, bas | `shared/bulletin/run.py` · `python -m shared.bulletin [--force \| --dry \| --show]` · tablo `bulletins` (`void` = yeniden kurulduğunda eskisi) · Drive `Bulletin/YYYY-MM-DD.md` |
 | yazıcı başarısız olursa | bülten rakamlar ve kod satırlarıyla gider, kaydedilmez; bir sonraki koşu aynı pencereyi yeniden kapsar |
 | istendiğinde arama + Türkçe cevap | komut `search` · `shared/commands/search.py` · kaynak etiketleri `W` `ED` `DR` · Telegram'da "ara: …" |
+| Dragonomi'ye giriş bağlantısı (tek kullanımlık) ile çerez | `agents/eye/magic_link.py` · `python -m agents.eye.magic_link dragonomi '<bağlantı>'` · `DRAGONOMI_COOKIE` |
 | bir arama `ai_calls` satırında | `job` `search` · `provider` `deepseek` · `model` `search` |
 | istendiğinde web araması (Telegram'da "ara: …") | komut `search` |
 | bir haberin kartın 3 "tezi bozan" maddesinden birine dokunması | tez etiketi (`thesis_point`) |

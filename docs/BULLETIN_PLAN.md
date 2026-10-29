@@ -191,19 +191,24 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
 - **In Telegram:** Hermes must know the command (see the note I give it); then "ara: Pop Mart neden düştü" or "NVDA ile ilgili haberler" in
   plain words. The reply fits one Telegram message.
 
-### Slice 7 — Dragonomi by the login link: `agents/eye/magic_link.py`
+### Slice 7 — Dragonomi by the login link: `agents/eye/magic_link.py` — **built 2026-10-29** (9 tests; not yet tried on the real site)
 
-- `uv run python -m agents.eye.magic_link dragonomi '<link from the e-mail>'` — checks that the link is the site's own sign-in link
-  (`https://<dragonomi host>/members/?token=…`), opens it **once** without following the redirect, takes the `ghost-members-ssr` and
-  `ghost-members-ssr.sig` cookies from the answer and writes `DRAGONOMI_COOKIE` into `.env` with `set_cookie`'s writer. It never prints
-  the cookie or the token. A used or expired link → "the link was already used or is too old; ask for a new one".
-- Why it is safe enough (my decision, 2026-10-28, "Yol B"): what passes through Telegram is a **one-time** link, worthless once the Air
-  has used it; the long-lived cookie never leaves the Air.
-- Then: `session_check dragonomi` (H) → if the body is not found, Claude fixes the selector in `sites.py` → Claude removes `dragonomi`
-  from `eye.skip_sites` → the next pass finds about 1,000+ waiting addresses → `uv run python -m agents.eye --accept-many` once (reads the
-  newest, marks the older ones as seen).
-- **Not known until tried:** whether this Ghost site still signs in with a plain link (some newer Ghost versions use a 6-digit code). If
-  it does not work: back to "Yol A" (the cookie by hand at home).
+- `uv run python -m agents.eye.magic_link dragonomi '<link from the e-mail>'` (or `--stdin`). Only a link of the site's own address
+  (`https://www.dragonomi.com/members/?token=…`; a look-alike host, `user@host`, plain http and any other path are refused before any
+  request) is opened, **once**, without following redirects. It takes the `ghost-members-ssr` and `ghost-members-ssr.sig` cookies from the
+  answer, writes `DRAGONOMI_COOKIE` into `.env` (the same writer as `set_cookie`: backup `.env.bak`, mode 600) and prints only the
+  name, the length and the site's own expiry date. **The token and the cookie are never printed or put in an error.**
+- Why it is safe enough (my decision, 2026-10-28, "Yol B"): what passes through Telegram is a one-time link, worthless once the Air has used
+  it; the long-lived cookie never leaves the Air. A used or old link gives "already used or is too old; ask the site for a new one".
+- **Steps (T7), when I have an account (a paid one, or a free member account to test the flow first):** (1) on my phone, open the site's
+  sign-in page, type my e-mail, and in the e-mail **press and hold** the sign-in button/link and copy it — do not tap it; (2) send it to
+  Hermes with the sign-in prompt; (3) `python -m agents.eye.session_check dragonomi` (a free account is signed in but the text stays
+  cut: that proves the cookie, not the paid text); (4) Claude takes `dragonomi` out of `eye.skip_sites`; the Air pulls; (5) the Eye's next
+  pass finds more than 200 new addresses since the 2026-10-12 baseline: run `python -m agents.eye --accept-many` once (it reads the newest
+  and marks the older ones as seen).
+- **Not known until tried:** whether the e-mail holds a link (Ghost up to 5.x) or a code (some newer versions). If a code: tell Claude;
+  the helper is not for that. The cookie lasts about six months by Ghost's default; the Eye already warns on Telegram when pages come back
+  cut ("the login cookie has probably expired"), then the same steps again.
 
 ## 5. Cost (estimate; **measured 2026-10-29** below the table, DeepSeek prices in `settings.yaml`)
 
