@@ -489,6 +489,7 @@ Kurallar: yol haritası "Morning bulletin"; yapım: `docs/BULLETIN_PLAN.md`.
 | bülten metni (şablon) | `shared/bulletin/render.py` · kaynak etiketleri `ED` (Emtia Defteri) · `DR` (Dragonomi) · `W` (web) + bağlantı numarası, ör. `[ED2, W1]` |
 | bülten işi: kur, kaydet, bas | `shared/bulletin/run.py` · `python -m shared.bulletin [--force \| --dry \| --show]` · tablo `bulletins` (`void` = yeniden kurulduğunda eskisi) · Drive `Bulletin/YYYY-MM-DD.md` |
 | yazıcı başarısız olursa | bülten rakamlar ve kod satırlarıyla gider, kaydedilmez; bir sonraki koşu aynı pencereyi yeniden kapsar |
+| istendiğinde arama + Türkçe cevap | komut `search` · `shared/commands/search.py` · kaynak etiketleri `W` `ED` `DR` · Telegram'da "ara: …" |
 | bir arama `ai_calls` satırında | `job` `search` · `provider` `deepseek` · `model` `search` |
 | istendiğinde web araması (Telegram'da "ara: …") | komut `search` |
 | bir haberin kartın 3 "tezi bozan" maddesinden birine dokunması | tez etiketi (`thesis_point`) |

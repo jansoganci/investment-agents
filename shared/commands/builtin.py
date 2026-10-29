@@ -148,6 +148,7 @@ _MENU = [
     Command("model", "Which job runs on which model; with arguments, changes it", "/model · /model strong gpt-6-sol",
             phase=2),
     Command("status", "System health: when each job last ran, any errors", "/status", info=_status),
+    Command("search", "A web search now: a short neutral answer in Turkish with sources", "/search Pop Mart neden düştü", phase=6),
     # B. Actions
     Command("watch", "Start watching a stock (agent 3 keeps its card)", "/watch KO", changes=True, phase=1),
     Command("archive", "Archive a stock: no new analysis or spend", "/archive KO", changes=True, phase=1),

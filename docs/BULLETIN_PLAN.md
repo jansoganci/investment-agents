@@ -175,12 +175,21 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
   next run covers that window again. `--dry` builds and prints without saving; `--show` prints the last saved one.
 - **Check (H):** `--dry` on the copy of the production database (the text I would receive), then job 6 is registered (T6). **T5c (2026-10-29) read:** the first real bulletin; the figures table was empty on the copy because production had not run the new price job; DeepSeek shortens some result addresses with "..." (shown without a link); Hermes' terminal tool stops a command at 300 s, so long checks run one per call or in the background (a scheduled job has no such limit).
 
-### Slice 6 — the on-demand search: command `search`
+### Slice 6 — the on-demand search: command `search` — **built 2026-10-29** (9 tests)
 
-- `uv run python -m shared.commands search "why did Pop Mart fall"` — an information command (no confirmation, nothing changes):
-  DeepSeek search (5 hits) → one `cheap` call writes a short, neutral answer with numbered sources. Cost about 0.01 $.
-- In Telegram in plain words ("ara: Pop Mart neden düştü"), like the other commands since 2026-10-19.
-- If I ask for an opinion in the question, the answer may give one, marked as the model's view.
+- `uv run python -m shared.commands search "Pop Mart neden düştü"` (`shared/commands/search.py`; in the menu after `status`). An information
+  command: it changes nothing in the system; its spend is logged in `ai_calls` like every call. About 0.01 $.
+- **Steps:** (1) the `cheap` model turns the question (Turkish or English) into 1–2 English web queries, up to 4 names to look for in the
+  newsletters' posts, how far back the news should reach (3 / 14 / 60 days or none) and whether the question asks for an opinion; a
+  broken answer falls back to searching the question itself. (2) DeepSeek's web search for those queries (`lang:en`, `after:` the chosen
+  days; if the recent search finds nothing, once more without the date). (3) The Eye's posts of the last 60 days whose title, one
+  sentence or tags contain a name (both sites, up to 5). (4) The `cheap` model writes a short neutral Turkish answer from those numbered
+  sources only, with the source numbers behind each fact; a view of its own only when the question asked for one, marked "Modelin
+  görüşü (bilgi, tavsiye değil)", never buy or sell advice. (5) Code checks that the answer's numbers are in the sources (else
+  `⚠ rakam doğrulanamadı (…)`), lists the cited sources (`[W]` web, `[ED]` / `[DR]` posts; a shortened link is shown without a link).
+- No source found → one line saying so, no answer is written. A failed web search → a plain refusal with the reason.
+- **In Telegram:** Hermes must know the command (see the note I give it); then "ara: Pop Mart neden düştü" or "NVDA ile ilgili haberler" in
+  plain words. The reply fits one Telegram message.
 
 ### Slice 7 — Dragonomi by the login link: `agents/eye/magic_link.py`
 
