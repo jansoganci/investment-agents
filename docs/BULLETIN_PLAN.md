@@ -155,15 +155,25 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
 - **Check (H):** `uv run python -m shared.bulletin --draft` runs gather → write → check → translate and prints every item with its
   sources, flags and Turkish text (about 0.1 $; saves and sends nothing). **The first real model run: read it and tell me what to tune.**
 
-### Slice 5 — render, save, deliver: `shared/bulletin/__init__.py`, `__main__.py`
+### Slice 5 — render, save, deliver: `shared/bulletin/render.py`, `run.py` — **built 2026-10-29** (16 tests)
 
-- `uv run python -m shared.bulletin` — build, save, print. `--dry` builds and prints but saves nothing. `--show` prints the last
-  saved bulletin. `--market` prints only the table.
-- Database **version 11**: table `bulletins` (`day` unique, `window_start`, `english` JSON, `turkish` text, `sources` JSON,
-  `cost_usd`, `created_at`). The run is a `runs` row (`job = bulletin`) as for every job.
-- Drive: `Bulletin/YYYY-MM-DD.md` (Turkish, with the links).
-- A second run on the same day prints the saved bulletin again and spends nothing (`--force` builds a new one).
-- No posts and no web results at all → a short bulletin with the numbers and the line "Kaynaklardan yeni bir şey gelmedi."
+- **Render** (`render.py`, code only): the approved template in Turkish — header with the date, the figures table, "Bugünün 3 maddesi"
+  (the ranked items, repeated), calendar (Bugün / Yarın / Bu hafta / İleride, then "Yeni başvurular"), macro, my stocks, interests
+  (AI altyapısı / Diğer), sources. Empty sections are left out, except my stocks ("İzleme listesi boş…" when I hold or watch none).
+  The earnings dates of my stocks and their new SEC filings are code lines in Turkish with `📌` (a 10-K / 10-Q says "3. ajan Pazar günü
+  okuyacak"; an 8-K says what it reports, from SEC's item numbers). A stock with no item is named in "Haber yok: …". A thesis point puts
+  the card's own sentence under the item (`↳ Tez bozucu 2 ile ilgili: "…"`, in the card's language, English).
+- **Source tags:** each item ends with `[ED1, W2]`: ED / DR = a post of Emtia Defteri / Dragonomi, W = the web; the number is the
+  position in the list "🔗 KAYNAKLAR" at the end (numbered by first use; title and link; at most 40).
+- **Warnings in the text:** `⚠ rakam doğrulanamadı` (a number no cited piece has) · `⚠ çeviri kontrolü: rakamlar uyuşmuyor` (the English item
+  is shown) · a footer `ℹ️ N kaynak ya da adım alınamadı` when searches, SEC, Yahoo or the translation failed (details in `bulletins.notes`).
+- **Job** (`run.py`, `python -m shared.bulletin`): gather → write → check → translate → render → save → print. Database **version 11**:
+  table `bulletins` (a row per bulletin: day, window, the English items, the Turkish text, sources, notes, cost; `--force` marks the old
+  row void, nothing is deleted). Drive: `Bulletin/YYYY-MM-DD.md` (Turkish, `publish: no`). A second run the same day prints the saved
+  text and spends nothing. **The window** of a bulletin starts where the previous saved one ended (at most 4 days back; the very first:
+  the last weekday's 08:15). **A failed writer** still sends the figures and the code lines with a warning, and is **not saved**, so the
+  next run covers that window again. `--dry` builds and prints without saving; `--show` prints the last saved one.
+- **Check (H):** `--dry` on the copy of the production database (the text I would receive), then job 6 is registered (T6).
 
 ### Slice 6 — the on-demand search: command `search`
 

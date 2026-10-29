@@ -1,8 +1,12 @@
-"""uv run python -m shared.bulletin --market                 the figures table (reads the database, writes nothing)
-uv run python -m shared.bulletin --gather [--no-search]     what the bulletin would be built from: counts and the first items
-                                                            (no model; the web searches cost 0.00075 $ each, --no-search skips them)
-uv run python -m shared.bulletin --draft                    gather, write, check and translate the items; prints every item with its
-                                                            sources and flags (about 0.1 $; saves nothing, sends nothing)"""
+"""uv run python -m shared.bulletin                         today's bulletin: build, save, print (the Hermes job, weekdays 08:15)
+uv run python -m shared.bulletin --force                 build it again; the saved one of today is marked void
+uv run python -m shared.bulletin --dry                   build and print, save nothing (about 0.1 $)
+uv run python -m shared.bulletin --show                  the last saved bulletin again, no cost
+uv run python -m shared.bulletin --market                the figures table (reads the database, writes nothing)
+uv run python -m shared.bulletin --gather [--no-search]  what the bulletin would be built from: counts and the first items (no model;
+                                                         the web searches cost 0.00075 $ each, --no-search skips them)
+uv run python -m shared.bulletin --draft                 gather, write, check and translate the items; every item with its sources and
+                                                         flags (about 0.1 $; saves nothing)"""
 
 from __future__ import annotations
 
@@ -10,9 +14,9 @@ import sys
 
 from shared import db as dbmod
 from shared import runlog
-from shared.bulletin import gather, market, translate, write
+from shared.bulletin import gather, market, run as bulletin_run, translate, write
 
-USAGE = "usage: python -m shared.bulletin --market | --gather [--no-search] | --draft"
+USAGE = "usage: python -m shared.bulletin [--force | --dry | --show | --market | --gather [--no-search] | --draft]"
 
 
 def draft_text(run) -> str:
@@ -28,8 +32,31 @@ def draft_text(run) -> str:
         conn.close()
 
 
+def job(name: str, **options):
+    def work(run):
+        conn = dbmod.connect()
+        try:
+            return bulletin_run.build(conn, run, **options)
+        finally:
+            conn.close()
+    return runlog.job_main(name, work)
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
+    if argv == []:
+        return job("bulletin")
+    if argv == ["--force"]:
+        return job("bulletin", force=True)
+    if argv == ["--dry"]:
+        return job("bulletin_dry", dry=True)
+    if argv == ["--show"]:
+        conn = dbmod.connect_readonly()
+        try:
+            print(bulletin_run.last_saved(conn) or "No bulletin has been saved yet.")
+        finally:
+            conn.close()
+        return 0
     if argv == ["--market"]:
         conn = dbmod.connect_readonly()
         try:

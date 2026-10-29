@@ -50,6 +50,7 @@ class Piece:
     url: str | None = None
     topic: str = ""               # web: the stock or interest this search was for
     tickers: tuple = ()           # my stocks this piece is about
+    data: dict = field(default_factory=dict)   # filing: form, filed, items · earnings: date — the render writes its Turkish lines from this
 
 
 @dataclass(frozen=True)
@@ -201,9 +202,10 @@ def filings(stocks: list[StockInfo], ciks: dict[str, str], since: str, submissio
             else:
                 continue
             url = sec.filing_url(cik, accession, document) if accession and document else None
+            kept = [x.strip() for x in (items or "").split(",") if x.strip() and x.strip() != "9.01"] if form == "8-K" else []
             pieces.append(Piece("", "filing", f"{s.ticker} {form}", text, "sec", moment + "Z" if moment else filed, url,
-                                tickers=(s.ticker,)))
-    return [Piece(f"F{n}", p.kind, p.title, p.text, p.site, p.when, p.url, tickers=p.tickers)
+                                tickers=(s.ticker,), data={"form": form, "filed": filed, "items": kept}))
+    return [Piece(f"F{n}", p.kind, p.title, p.text, p.site, p.when, p.url, tickers=p.tickers, data=p.data)
             for n, p in enumerate(pieces, 1)], notes
 
 
@@ -220,7 +222,7 @@ def earnings(stocks: list[StockInfo], today: str, days: int, fetch=None) -> tupl
             continue
         if dates:
             pieces.append(Piece(f"E{len(pieces) + 1}", "earnings", f"{s.ticker} earnings", f"{s.ticker} reports earnings on {dates[0]} (Yahoo).",
-                                "yahoo", dates[0], tickers=(s.ticker,)))
+                                "yahoo", dates[0], tickers=(s.ticker,), data={"date": dates[0]}))
     return pieces, notes
 
 
