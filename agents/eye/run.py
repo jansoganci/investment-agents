@@ -11,10 +11,10 @@ import random
 import time
 from dataclasses import dataclass, field
 
-from agents.eye import http, inbox, sentence, sitemap, store, tags
+from agents.eye import companies, http, inbox, sentence, sitemap, store, tags
 from agents.eye.extract import is_glossary, parse_post
 from agents.eye.sites import SITES, Site
-from shared import ai, notify
+from shared import ai, config, notify
 
 CAP = 80                   # pages per pass (Agent 1 rule 4)
 GUARD = 200                # more new addresses than this in one pass → read none (my decision, 2026-10-11)
@@ -48,6 +48,7 @@ class Result:
     tally: dict = field(default_factory=dict)
     notes: list = field(default_factory=list)      # the AI stage: a problem worth a message
     sentences: int = 0
+    companies_asked: int = 0
     tags_classified: int = 0
     tags_waiting: int = 0
 
@@ -211,6 +212,11 @@ def after_reading(conn, result: Result, *, run=None, seclist: tags.SecList | Non
         if line:
             written.append({"site": site, "title": title, "sentence": line, "url": url})
     result.sentences = len(written)
+    if (config.settings().get("eye") or {}).get("extract_companies"):      # off until I have read a trial (roadmap Agent 1 rule 20)
+        found = companies.fill(conn, run)
+        result.companies_asked = found.asked
+        if found.note:
+            result.notes.append(found.note)
     stats = tags.classify_new(conn, run, seclist=seclist)
     result.tags_classified, result.tags_waiting = stats.classified, stats.waiting
     if stats.note:

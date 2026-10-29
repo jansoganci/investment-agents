@@ -1,4 +1,5 @@
-"""The counting (roadmap, Agent 1B rules 1–6). Reads `articles` (their tags) and `tags` (what each tag is), writes `counts`.
+"""The counting (roadmap, Agent 1B rules 1–6). Reads `articles` (their tags and the companies found in their text) and `tags` (what each
+name is), writes `counts`.
 
 A post is counted once for an entity however many of its tags point to it. Only `confirmed` tags count; waiting and unclassified
 tags are only counted for the note. The 7 days are counted on the post's published date."""
@@ -83,9 +84,11 @@ def count(conn, now: datetime | None = None, write: bool = True) -> Result:
     posts30: dict = defaultdict(set)
     names: dict = defaultdict(Counter)
     waiting, unclassified, window_posts = set(), set(), set()
-    rows = conn.execute(
+    rows = conn.execute(          # a post's own tags and the companies found in its text count the same way
         "SELECT a.id, COALESCE(a.published_at, a.created_at) AS day, j.value FROM articles a, json_each(a.tags) j "
-        "WHERE COALESCE(a.published_at, a.created_at) >= ?", (since30,))
+        "WHERE COALESCE(a.published_at, a.created_at) >= ? "
+        "UNION ALL SELECT a.id, COALESCE(a.published_at, a.created_at), j.value FROM articles a, json_each(a.companies) j "
+        "WHERE COALESCE(a.published_at, a.created_at) >= ?", (since30, since30))
     for article_id, day, name in rows:
         recent = day >= since7
         if recent:

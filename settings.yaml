@@ -40,6 +40,7 @@ sector_overrides:
 finance_arm: [DE, CAT, F, GM, HOG, PCAR, CNH]
 
 eye:                               # agent 1
+  extract_companies: false         # a cheap model lists the companies a post is about (roadmap Agent 1 rule 20); true after I have read `python -m agents.eye.companies --trial`
   skip_sites: [dragonomi]          # sites the pass does not touch at all (no membership yet, 2026-10-12): no sitemap, no note, no waiting list.
                                    # Remove the name when its cookie is in .env (the posts it missed are then read; `--accept-many` if > 200).
 counter:                           # 1B (roadmap "Agent 1B rules" 6): starting values, adjusted after the first weeks
@@ -47,6 +48,7 @@ counter:                           # 1B (roadmap "Agent 1B rules" 6): starting v
   long_days: 30
   top: 10                          # stocks shown / handed to agent 2
   card_mention_bar: 6              # a stock that already has a card is "mentioned a lot" at this many posts in the window
+  non_us_ignore: []                # non-US names the Sunday summary must not ask documents for (the `key` of the Counter row, e.g. 2222.SR)
   mention_points: [3, 6]           # `mentions` score: below the first = 0, from the first = 1, from the second = 2
 
 research:                          # agent 2 (roadmap "Agent 2 rules" 8)

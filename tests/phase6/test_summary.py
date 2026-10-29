@@ -45,7 +45,8 @@ def test_counter_notes_tag_questions_unclear_data_and_archive_reminders(db, env)
     run_at = clock.utc_iso()
     db.execute("INSERT INTO counts (run_at, kind, key, label, posts_7d, posts_30d, rank, has_card, points, created_at) VALUES "
                "(?, 'stock', 'KO', 'Coca-Cola', 8, 9, NULL, 1, NULL, ?), (?, 'stock', 'PEP', 'Pepsi', 3, 4, NULL, 1, NULL, ?), "
-               "(?, 'non_us', 'Tencent', 'Tencent', 5, 9, 1, 0, NULL, ?)", (run_at, run_at) * 3)
+               "(?, 'non_us', 'Tencent', 'Tencent', 8, 9, 1, 0, NULL, ?), (?, 'non_us', 'Aramco', 'Aramco', 3, 4, 2, 0, NULL, ?)",
+               (run_at, run_at) * 4)
     tag(db, "Standard Oil", status="waiting")
     tag(db, "Uranyum", "sector", subsector="other")
     xx = stock(db, "XX", grade="unclear")
@@ -57,7 +58,8 @@ def test_counter_notes_tag_questions_unclear_data_and_archive_reminders(db, env)
     db.execute("INSERT INTO missing_data (stock_id, figure, status, created_at) VALUES (?, 'interest', 'open', 'x')", (xx,))
     db.commit()
     text = "\n".join(summary.build(db, DAY))
-    assert "- KO (8 posts)" in text and "PEP" not in text and "- Tencent (5 posts)" in text
+    assert "- KO (8 posts)" in text and "PEP" not in text and "- Tencent (8 posts)" in text
+    assert "last annual report, the last interim report and the latest investor presentation" in text and "Aramco" not in text    # 3 posts: below the bar
     assert "1 tag(s) wait for you" in text and "Standard Oil" in text and "fit no approved subsector: Uranyum" in text
     assert "- grade unclear: XX" in text and "1 missing figure(s) are still open" in text
     assert "- ZZ: not solid on its last two cards (mid → weak) — archive it? /archive ZZ" in text and "KEEP" not in text.split("Archive reminders:")[1]
@@ -139,3 +141,16 @@ def test_the_counter_lines_are_empty_when_the_latest_counter_run_found_nothing(d
     db.execute("INSERT INTO runs (job, started_at, ended_at, status) VALUES ('counter', '2026-10-12T09:00:00Z', '2026-10-12T09:00:01Z', 'ok')")
     db.commit()
     assert summary.counter_lines(db) == ([], [])
+
+
+def test_a_non_us_name_in_the_ignore_list_is_not_asked_for(db, env, monkeypatch):
+    run_at = clock.utc_iso()
+    db.execute("INSERT INTO counts (run_at, kind, key, label, posts_7d, posts_30d, rank, has_card, points, created_at) VALUES "
+               "(?, 'non_us', '2222.SR', 'Aramco', 18, 20, 1, 0, NULL, ?), (?, 'non_us', '0700.HK', 'Tencent', 9, 9, 2, 0, NULL, ?)",
+               (run_at, run_at) * 2)
+    db.commit()
+    from shared import config
+    settings = dict(config.settings(), counter=dict(config.settings().get("counter") or {}, non_us_ignore=["2222.sr"]))
+    monkeypatch.setattr(config, "settings", lambda: settings)
+    text = "\n".join(summary.build(db, DAY))
+    assert "- Tencent (9 posts)" in text and "Aramco" not in text
