@@ -50,6 +50,14 @@ def test_an_ordinal_is_a_word_not_a_number():
     assert not check.same_numbers("Revenue 104.6.", "Ciro 104,6. 5 yeni ürün.")        # a sentence that ends in a number is not an ordinal
 
 
+def test_a_tenor_is_a_name_not_a_number():
+    # seen in the first real draft: "2-year" was flagged although the 2-year yield was in the source ("2yr")
+    item = "10-year Treasury yield rose to 5.036% from 5.020% and the 2-year fell to 4.702% from 4.770%."
+    assert check.missing_in_sources(item, ["10yr 5.036% (5.020%), 2yr 4.702% (4.770%)"]) == []
+    assert check.same_numbers(item, "10 yıllık Treasury getirisi %5,020'den %5,036'ya, 2 yıllık getiri %4,770'ten %4,702'ye.")
+    assert check.missing_in_sources("Rates stay for 12 months.", ["Rates stay for 6 months."]) == ["12"]   # a plain count is still checked
+
+
 @pytest.mark.parametrize("text, found", [
     ("Goldman upgraded NVDA to buy.", "upgraded"), ("Morgan Stanley set a price target of $200.", "price target"),
     ("You should buy the dip.", "you should"), ("Analysts expected revenue of 98.6 trillion won.", None),

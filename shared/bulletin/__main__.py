@@ -20,7 +20,10 @@ def draft_text(run) -> str:
     try:
         pack = gather.gather(conn, run=run)
         draft = translate.translate(write.write(pack, run=run, conn=conn), run=run, conn=conn)
-        return gather.describe(pack).split("\n", 2)[1] + "\n\n" + write.describe(draft) + f"\n\ncost: ${run.cost_usd:.4f}"
+        cited = {s for i in draft.items for s in i.sources}
+        left = [f"  {p.id} · {p.site} · {p.title[:80]}" for p in pack.posts + pack.web if p.id not in cited]
+        return (gather.describe(pack).split("\n", 2)[1] + "\n\n" + write.describe(draft)
+                + f"\n\nNOT USED ({len(left)} of {len(pack.posts) + len(pack.web)} pieces):\n" + "\n".join(left) + f"\n\ncost: ${run.cost_usd:.4f}")
     finally:
         conn.close()
 
