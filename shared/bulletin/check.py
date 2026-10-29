@@ -6,7 +6,7 @@
 
 A number is read in both the English (`7,743.98`, `3.6%`) and the Turkish (`7.743,98`, `%3,6`) way. A token such as `1.000` may be
 a thousand or a decimal one, so a token stands for a set of values; two numbers match when their sets share a value. Plain years
-(1900–2100) are not checked against sources; units, signs and ordinals ("3rd", "3. çeyrek") are ignored.
+(1900–2100) are not checked against sources; units, signs, ordinals ("3rd", "3. çeyrek") and tenors ("2-year", "10 yıllık") are ignored.
 """
 
 from __future__ import annotations
@@ -17,6 +17,9 @@ TOKEN = re.compile(r"(?<![\w.,])\d[\d.,]*\d|(?<![\w.,])\d")
 YEAR = re.compile(r"^(19|20)\d\d$")
 # ordinals are words, not figures: "3rd quarter" and the Turkish "3. çeyrek" (a dot and a lower-case word after it) carry no number
 ORDINAL = re.compile(r"(?<![\w.,])\d{1,2}(?:st|nd|rd|th)\b|(?<![\w.,])\d{1,2}\.(?=\s+[a-zçğıöşü])")
+
+# a tenor is a name, not a figure: "10-year", "2-year", "3-month" and the Turkish "10 yıllık", "3 aylık" (two digits at most, hyphen or "Y")
+TENOR = re.compile(r"(?<![\w.,])\d{1,2}(?:-(?:year|yr|month|week|day)s?\b|\s?(?:yıllık|aylık|haftalık|günlük)\b|(?:Y|yr)\b)", re.IGNORECASE)
 
 # analyst ratings, targets and advice are not what the bulletin is for
 STYLE = re.compile(r"\b(price targets?|target price|upgraded|downgraded|downgrades?|upgrades?|buy rating|sell rating|"
@@ -47,7 +50,7 @@ def candidates(token: str) -> frozenset:
 
 def numbers(text: str, skip_years: bool = False) -> list[tuple[str, frozenset]]:
     out = []
-    for m in TOKEN.finditer(ORDINAL.sub(" ", text or "")):
+    for m in TOKEN.finditer(TENOR.sub(" ", ORDINAL.sub(" ", text or ""))):
         token = m.group(0)
         if skip_years and YEAR.match(token):
             continue
