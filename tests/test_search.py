@@ -132,3 +132,10 @@ def test_tracking_parameters_are_cut_from_an_address():
     assert search.clean_url("https://a.example/x?utm_source=a&id=7&UTM_medium=b&srnd=c") == "https://a.example/x?id=7"
     assert search.clean_url("https://a.example/x") == "https://a.example/x"
     assert search.clean_url("https://a.example/x?utm_source=a") == "https://a.example/x"
+
+
+def test_an_address_the_search_shortened_is_not_usable_in_any_spelling():
+    assert search.usable_url("https://www.reuters.com/markets/oil-rises-2026-10-29/")
+    for broken in ("https://www.digitaltoday.co.kr/en/view/120703/sk-hyn...2029", "https://x.example/a…b",
+                   "https://x.example/a\u2024\u2024\u2024b", "https://x.example/a\u2025b", "https://x.example/a。。。b", "", None, "not a link"):
+        assert not search.usable_url(broken), broken

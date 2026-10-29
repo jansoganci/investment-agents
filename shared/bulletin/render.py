@@ -72,7 +72,7 @@ class Sources:
             p = self.pieces[pid]
             site = "" if p.kind == "post" else f"{p.site}: "
             # DeepSeek shortens some addresses with "..." (seen 2026-10-29: pcmag, digitaltoday): such a link does not open, so none is shown
-            url = "" if "..." in (p.url or "") or "…" in (p.url or "") else (p.url or "")
+            url = p.url if search.usable_url(p.url) else ""
             out.append({"n": n, "tag": self.tag(p), "title": f"{site}{p.title}"[:90], "site": p.site, "url": search.clean_url(url) if url else ""})
         return out
 
