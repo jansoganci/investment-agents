@@ -71,7 +71,9 @@ class Sources:
         for pid, n in sorted(self.order.items(), key=lambda kv: kv[1])[:MAX_SOURCES]:
             p = self.pieces[pid]
             site = "" if p.kind == "post" else f"{p.site}: "
-            out.append({"n": n, "tag": self.tag(p), "title": f"{site}{p.title}"[:90], "site": p.site, "url": p.url or ""})
+            # DeepSeek shortens some addresses with "..." (seen 2026-10-29: pcmag, digitaltoday): such a link does not open, so none is shown
+            url = "" if "..." in (p.url or "") or "…" in (p.url or "") else (p.url or "")
+            out.append({"n": n, "tag": self.tag(p), "title": f"{site}{p.title}"[:90], "site": p.site, "url": url})
         return out
 
 
@@ -81,7 +83,8 @@ def _shown(item: Item) -> str:
         text = item.turkish
     else:
         text = item.text + (f" ⚠ {item.turkish_flag}" if item.turkish_flag else "")
-    return text + (" ⚠ rakam doğrulanamadı" if any(f.startswith("numbers") for f in item.flags) else "")
+    numbers = [n.strip() for f in item.flags if f.startswith("numbers:") for n in f.split(":", 1)[1].split(",")]
+    return text + (f" ⚠ rakam doğrulanamadı ({', '.join(numbers)})" if numbers else "")
 
 
 def _line(item: Item, sources: Sources) -> str:

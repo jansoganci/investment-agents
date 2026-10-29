@@ -173,7 +173,7 @@ Each slice: tests first, then code, one commit; all tests pass before the next o
   text and spends nothing. **The window** of a bulletin starts where the previous saved one ended (at most 4 days back; the very first:
   the last weekday's 08:15). **A failed writer** still sends the figures and the code lines with a warning, and is **not saved**, so the
   next run covers that window again. `--dry` builds and prints without saving; `--show` prints the last saved one.
-- **Check (H):** `--dry` on the copy of the production database (the text I would receive), then job 6 is registered (T6).
+- **Check (H):** `--dry` on the copy of the production database (the text I would receive), then job 6 is registered (T6). **T5c (2026-10-29) read:** the first real bulletin; the figures table was empty on the copy because production had not run the new price job; DeepSeek shortens some result addresses with "..." (shown without a link); Hermes' terminal tool stops a command at 300 s, so long checks run one per call or in the background (a scheduled job has no such limit).
 
 ### Slice 6 — the on-demand search: command `search`
 

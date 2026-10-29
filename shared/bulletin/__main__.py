@@ -11,6 +11,7 @@ uv run python -m shared.bulletin --draft                 gather, write, check an
 from __future__ import annotations
 
 import sys
+import time
 
 from shared import db as dbmod
 from shared import runlog
@@ -20,6 +21,7 @@ USAGE = "usage: python -m shared.bulletin [--force | --dry | --show | --market |
 
 
 def draft_text(run) -> str:
+    started = time.monotonic()
     conn = dbmod.connect()
     try:
         pack = gather.gather(conn, run=run)
@@ -27,18 +29,21 @@ def draft_text(run) -> str:
         cited = {s for i in draft.items for s in i.sources}
         left = [f"  {p.id} · {p.site} · {p.title[:80]}" for p in pack.posts + pack.web if p.id not in cited]
         return (gather.describe(pack).split("\n", 2)[1] + "\n\n" + write.describe(draft)
-                + f"\n\nNOT USED ({len(left)} of {len(pack.posts) + len(pack.web)} pieces):\n" + "\n".join(left) + f"\n\ncost: ${run.cost_usd:.4f}")
+                + f"\n\nNOT USED ({len(left)} of {len(pack.posts) + len(pack.web)} pieces):\n" + "\n".join(left) + f"\n\ncost: ${run.cost_usd:.4f} · {time.monotonic() - started:.0f} s")
     finally:
         conn.close()
 
 
 def job(name: str, **options):
     def work(run):
+        started = time.monotonic()
         conn = dbmod.connect()
         try:
-            return bulletin_run.build(conn, run, **options)
+            text = bulletin_run.build(conn, run, **options)
         finally:
             conn.close()
+        # a dry run is for looking at: it says how long it took and what it cost; the real job prints the bulletin and nothing else
+        return text + (f"\n\n(dry run: {time.monotonic() - started:.0f} s, ${run.cost_usd:.4f})" if options.get("dry") else "")
     return runlog.job_main(name, work)
 
 

@@ -89,7 +89,7 @@ def test_a_translation_that_failed_shows_the_english_item_with_the_reason():
     d.items[3].flags.append("numbers: 100")
     text = render.render(pack(), d, MARKET, NOW).text
     assert "• Brent at $115.47. ⚠ çeviri kontrolü: rakamlar uyuşmuyor [W1, ED2]" in text
-    assert "• Gaz 100 euroya çıktı. ⚠ rakam doğrulanamadı [ED2]" in text
+    assert "• Gaz 100 euroya çıktı. ⚠ rakam doğrulanamadı (100) [ED2]" in text
 
 
 def test_no_stocks_an_empty_day_a_failed_writer_and_missing_sources():
@@ -104,6 +104,15 @@ def test_no_stocks_an_empty_day_a_failed_writer_and_missing_sources():
     d = draft()
     d.notes = ["Translation failed (ValueError: x): the English items are shown.", "macro: 2 item(s) over the limit of 8 were left out"]
     assert render.render(p, d, MARKET, NOW).text.endswith("ℹ️ 3 kaynak ya da adım alınamadı (ayrıntı veritabanında).")
+
+
+def test_a_shortened_address_is_not_shown_as_a_link():
+    # DeepSeek's search returned "https://www.pcmag.com/news/sk-hyn...2029": it does not open, so the list shows the title only
+    p = pack()
+    p.posts[0] = Piece("P1", "post", "SK Hynix", "x", "emtia", "2026-10-28T03:00:00Z", "https://www.pcmag.com/news/sk-hyn...2029")
+    r = render.render(p, draft(), MARKET, NOW)
+    assert "2. [ED] SK Hynix\n" in r.text and "sk-hyn...2029" not in r.text
+    assert [s["url"] for s in r.sources if s["n"] == 2] == [""]
 
 
 def test_dates_in_turkish():
