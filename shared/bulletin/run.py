@@ -65,13 +65,14 @@ def build(conn, run, *, now: datetime | None = None, force: bool = False, dry: b
         return text
     pack = gather.gather(conn, now, since=window_start(conn, now, day), run=run, **(gather_kwargs or {}))
     failed = None
+    market_text = market.render(market.rows(conn))
     try:
-        draft = write.write(pack, run=run, conn=conn, now=now)
+        draft = write.write(pack, run=run, conn=conn, now=now, market_text=market_text)
     except (AIError, ValueError) as exc:
         failed = f"{type(exc).__name__}: {exc}"
         draft = write.Draft(notes=[f"Writer failed ({failed[:200]})"])
     translate.translate(draft, run=run, conn=conn)
-    rendered = render.render(pack, draft, market.render(market.rows(conn)), now, failed)
+    rendered = render.render(pack, draft, market_text, now, failed)
     if not dry and not failed:
         save(conn, day, pack, draft, rendered, run.cost_usd, now)
     return rendered.text

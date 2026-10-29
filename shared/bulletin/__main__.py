@@ -25,7 +25,7 @@ def draft_text(run) -> str:
     conn = dbmod.connect()
     try:
         pack = gather.gather(conn, run=run)
-        draft = translate.translate(write.write(pack, run=run, conn=conn), run=run, conn=conn)
+        draft = translate.translate(write.write(pack, run=run, conn=conn, market_text=market.render(market.rows(conn))), run=run, conn=conn)
         cited = {s for i in draft.items for s in i.sources}
         left = [f"  {p.id} · {p.site} · {p.title[:80]}" for p in pack.posts + pack.web if p.id not in cited]
         return (gather.describe(pack).split("\n", 2)[1] + "\n\n" + write.describe(draft)

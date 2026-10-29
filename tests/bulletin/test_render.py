@@ -77,7 +77,7 @@ def test_a_thesis_point_the_card_does_not_have_is_not_shown():
 
 def test_interests_are_grouped_and_sources_are_numbered_in_order_of_first_use():
     r = render.render(pack(), draft(), MARKET, NOW)
-    assert "🔭 İLGİ KONULARI\nAI altyapısı\n• HBM 2029'a kadar tükendi. [DR3]\nDiğer\n• Phillips 66 kârı arttı. [DR3]" in r.text
+    assert "🔭 İLGİ KONULARI\nŞirket haberleri\n• Phillips 66 kârı arttı. [DR3]" in r.text
     assert r.text.endswith("🔗 KAYNAKLAR\n1. [W] Reuters: Brent tops $115 — https://reuters.example/brent\n"
                            "2. [ED] SK Hynix — https://emtia.example/p1\n3. [DR] Çin verileri — https://dragonomi.example/p2")
     assert [(s["n"], s["tag"]) for s in r.sources] == [(1, "W"), (2, "ED"), (3, "DR")]
@@ -88,7 +88,7 @@ def test_a_translation_that_failed_shows_the_english_item_with_the_reason():
     d.items[2].turkish, d.items[2].turkish_flag = None, "çeviri kontrolü: rakamlar uyuşmuyor"
     d.items[3].flags.append("numbers: 100")
     text = render.render(pack(), d, MARKET, NOW).text
-    assert "• Brent at $115.47. ⚠ çeviri kontrolü: rakamlar uyuşmuyor [W1, ED2]" in text
+    assert "1. Brent at $115.47. ⚠ çeviri kontrolü: rakamlar uyuşmuyor [W1, ED2]" in text
     assert "• Gaz 100 euroya çıktı. ⚠ rakam doğrulanamadı (100) [ED2]" in text
 
 
@@ -119,3 +119,11 @@ def test_dates_in_turkish():
     from datetime import date
     assert render.date_tr(date(2026, 1, 5)) == "5 Ocak" and render.date_tr(date(2026, 8, 31)) == "31 Ağustos"
     assert render.header(datetime(2026, 11, 2, 5, 0, tzinfo=timezone.utc)) == "☀️ SABAH BÜLTENİ · 2 Kasım 2026, Pazartesi"
+
+
+def test_ranked_items_are_printed_in_the_top_three_only_except_for_my_stocks():
+    text = render.render(pack(), draft(), MARKET, NOW).text
+    assert text.count("Brent 115,47 $.") == 1                                         # macro skips the ranked item
+    assert "• Gaz 100 euroya çıktı." in text                                          # an unranked macro item stays
+    assert text.count("HBM 2029'a kadar tükendi.") == 1 and "AI altyapısı" not in text   # interests skip it too; an empty group has no heading
+    assert text.count("KO fiyatları %4 artırdı.") == 2                                # my stocks show all of theirs

@@ -45,6 +45,13 @@ def test_the_prompt_has_the_day_my_stocks_and_only_posts_and_web_hits():
     assert 'none (return "stocks": {})' in write.build_prompt(pack(stocks=False), NOW)
 
 
+def test_the_prompt_shows_the_figures_table_so_an_item_does_not_contradict_it():
+    text = write.build_prompt(pack(), NOW, "S&P 500 · 7.743,98 · gün ▲ %0,3")
+    assert "FIGURES" in text and "S&P 500 · 7.743,98" in text and text.index("FIGURES") < text.index("MY STOCKS")
+    assert "FIGURES" not in write.build_prompt(pack(), NOW)
+    assert "Never print the price level" in write.SYSTEM
+
+
 def test_a_good_answer_becomes_items_with_their_fields():
     draft = write.parse(GOOD, pack())
     assert draft.notes == []

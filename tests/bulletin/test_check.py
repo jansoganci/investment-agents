@@ -15,7 +15,7 @@ def test_a_token_stands_for_the_values_it_can_mean(token, values):
 
 def test_numbers_are_found_with_signs_units_and_words_around_them():
     tokens = [t for t, _v in check.numbers("Brent rose 3,1% to $115.20; S&P 500 at 7.743,98; Q3 and GPT-6; 08:15")]
-    assert tokens == ["3,1", "115.20", "500", "7.743,98", "6", "08", "15"]       # Q3 is a name, not a number
+    assert tokens == ["3,1", "115.20", "500", "7.743,98", "6"]       # Q3 is a name and 08:15 a time, not numbers
 
 
 def test_a_number_the_sources_have_passes_in_either_notation():
@@ -56,6 +56,13 @@ def test_a_tenor_is_a_name_not_a_number():
     assert check.missing_in_sources(item, ["10yr 5.036% (5.020%), 2yr 4.702% (4.770%)"]) == []
     assert check.same_numbers(item, "10 yıllık Treasury getirisi %5,020'den %5,036'ya, 2 yıllık getiri %4,770'ten %4,702'ye.")
     assert check.missing_in_sources("Rates stay for 12 months.", ["Rates stay for 6 months."]) == ["12"]   # a plain count is still checked
+
+
+def test_a_time_of_day_is_not_a_figure():
+    # seen in the first scheduled bulletin: "TSİ 15:30" was flagged as the numbers 15 and 30
+    assert check.missing_in_sources("US PCE data comes out at 15:30 Turkey time.", ["PCE is due today."]) == []
+    assert check.same_numbers("PCE at 12:30 GMT.", "PCE TSİ 15:30'da.")
+    assert check.missing_in_sources("Inflation was 3.6%.", ["Inflation was 3.2%."]) == ["3.6"]     # a decimal figure is still checked
 
 
 @pytest.mark.parametrize("text, found", [
