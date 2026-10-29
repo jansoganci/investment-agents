@@ -69,6 +69,21 @@ def rewrite(env_text: str, name: str, value: str) -> tuple[str, int]:
     return "\n".join(kept) + "\n", dropped
 
 
+def save(name: str, value: str) -> int:
+    """Write `NAME='value'` into `.env` (the old line replaced, a backup kept as `.env.bak`, mode 600). Returns how many broken lines were dropped."""
+    check(value)
+    path = env_path()
+    old = path.read_text() if path.exists() else ""
+    if path.exists():
+        backup = path.with_name(".env.bak")
+        shutil.copyfile(path, backup)
+        os.chmod(backup, 0o600)
+    new, dropped = rewrite(old, name, value)
+    path.write_text(new)
+    os.chmod(path, 0o600)
+    return dropped
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     use_stdin = "--stdin" in argv
@@ -91,15 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as error:
         print(error)
         return 1
-    path = env_path()
-    old = path.read_text() if path.exists() else ""
-    if path.exists():
-        backup = path.with_name(".env.bak")
-        shutil.copyfile(path, backup)
-        os.chmod(backup, 0o600)
-    new, dropped = rewrite(old, name, value)
-    path.write_text(new)
-    os.chmod(path, 0o600)
+    dropped = save(name, value)
     if not use_stdin:
         subprocess.run(["pbcopy"], input=b" ", check=False)  # an empty input would leave the old clipboard as it is
     tail = "The clipboard is empty." if not use_stdin else ""
