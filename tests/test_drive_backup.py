@@ -46,7 +46,7 @@ def test_drive_test_script_writes_a_dated_file_and_prints(db, env, capsys):
 
 def test_drive_folders_are_created(env):
     drive.ensure_folders()
-    for name in ("Inbox", "Weekly", "Backup", "Stocks"):
+    for name in ("Inbox", "Weekly", "Bulletin", "Backup", "Stocks"):
         assert (env["drive"] / name).is_dir()
 
 

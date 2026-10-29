@@ -3,6 +3,7 @@
 Investing/
 ├── Inbox/      agent 1's daily list
 ├── Weekly/     weekly summaries
+├── Bulletin/   the morning bulletin of each day (Turkish)
 ├── Backup/     nightly SQLite copies
 └── Stocks/<TICKER> - <Company name>/card.md
 """
@@ -14,7 +15,7 @@ from pathlib import Path
 
 from shared import config
 
-FOLDERS = ("Inbox", "Weekly", "Backup", "Stocks")
+FOLDERS = ("Inbox", "Weekly", "Bulletin", "Backup", "Stocks")
 
 
 def root() -> Path:
@@ -27,6 +28,10 @@ def inbox() -> Path:
 
 def weekly() -> Path:
     return root() / "Weekly"
+
+
+def bulletin() -> Path:
+    return root() / "Bulletin"
 
 
 def backup_dir() -> Path:

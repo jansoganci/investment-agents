@@ -504,6 +504,28 @@ CREATE TABLE alerts_sent (
 );
 """
 
+STEP_11 = """
+-- The morning bulletin (2026-10-28; roadmap "Morning bulletin", docs/BULLETIN_PLAN.md slice 5). One row per bulletin sent: the English
+-- items the writer produced, the Turkish text I received, its numbered sources and notes, what it cost. A rebuild of the same day
+-- (`--force`) marks the old row void; nothing is deleted.
+CREATE TABLE bulletins (
+    id            INTEGER PRIMARY KEY,
+    day           TEXT NOT NULL,                  -- the Turkey date of the bulletin
+    window_start  TEXT NOT NULL,                  -- UTC: what it covers
+    window_end    TEXT NOT NULL,                  -- UTC: the next bulletin starts here
+    english       TEXT NOT NULL,                  -- JSON: the writer's items, with sources and flags
+    turkish       TEXT NOT NULL,                  -- the text as it was delivered
+    sources       TEXT NOT NULL,                  -- JSON: the numbered links under the text
+    notes         TEXT,                           -- JSON list: what was dropped, flagged or could not be fetched
+    cost_usd      REAL,
+    void          INTEGER NOT NULL DEFAULT 0 CHECK (void IN (0, 1)),
+    created_at    TEXT NOT NULL
+);
+CREATE UNIQUE INDEX bulletins_day ON bulletins (day) WHERE void = 0;
+CREATE TRIGGER bulletins_no_delete BEFORE DELETE ON bulletins
+BEGIN SELECT RAISE(ABORT, 'bulletins is append-only: rows are never deleted'); END;
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -516,6 +538,7 @@ STEPS: list[tuple[int, str]] = [
     (8, STEP_8),
     (9, STEP_9),
     (10, STEP_10),
+    (11, STEP_11),
 ]
 
 

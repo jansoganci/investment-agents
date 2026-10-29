@@ -78,7 +78,7 @@ def test_the_command_prints_the_table(db, capsys):
     put(db, "^GSPC", ("2026-10-26", 7600.0), ("2026-10-27", 7700.0))
     assert cli.main(["--market"]) == 0
     assert capsys.readouterr().out.startswith("📊 RAKAMLAR (son kapanış)\nS&P 500 · 7.700,00")
-    assert cli.main([]) == 2
+    assert cli.main(["--bogus"]) == 2
 
 
 def test_the_gather_command_describes_an_empty_database_without_searching(db, capsys):
