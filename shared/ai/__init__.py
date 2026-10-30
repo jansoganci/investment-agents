@@ -15,7 +15,7 @@ import json
 from dataclasses import dataclass, replace
 from typing import Callable
 
-from shared import clock, config
+from shared import clock, config, redact
 from shared import db as dbmod
 
 
@@ -241,7 +241,7 @@ def call(job: str, prompt: str, *, system: str = "", max_tokens: int | None = No
             reply = replace(reply, job=job)
             _log(conn, run, reply, stock_id)
             return reply
-        raise AIError(f"no model answered the job '{job}': " + " | ".join(errors), outcomes=tuple(outcomes))
+        raise AIError(redact.clean(f"no model answered the job '{job}': " + " | ".join(errors)), outcomes=tuple(outcomes))
     finally:
         if own:
             conn.close()

@@ -74,6 +74,7 @@ def count(conn, now: datetime | None = None, write: bool = True) -> Result:
     now = now or clock.now_utc()
     since7 = clock.utc_iso(now - timedelta(days=c["window_days"]))
     since30 = clock.utc_iso(now - timedelta(days=c["long_days"]))
+    until = clock.utc_iso(now + timedelta(hours=1))          # a post dated in the future (a wrong date on the page) is not counted
     result = Result(run_at=clock.utc_iso(now), to_day=clock.today_local(now))
 
     cur = conn.execute("SELECT tag, kind, maps_to, us_listed, status FROM tags")
@@ -86,9 +87,9 @@ def count(conn, now: datetime | None = None, write: bool = True) -> Result:
     waiting, unclassified, window_posts = set(), set(), set()
     rows = conn.execute(          # a post's own tags and the companies found in its text count the same way
         "SELECT a.id, COALESCE(a.published_at, a.created_at) AS day, j.value FROM articles a, json_each(a.tags) j "
-        "WHERE COALESCE(a.published_at, a.created_at) >= ? "
+        "WHERE COALESCE(a.published_at, a.created_at) BETWEEN ? AND ? "
         "UNION ALL SELECT a.id, COALESCE(a.published_at, a.created_at), j.value FROM articles a, json_each(a.companies) j "
-        "WHERE COALESCE(a.published_at, a.created_at) >= ?", (since30, since30))
+        "WHERE COALESCE(a.published_at, a.created_at) BETWEEN ? AND ?", (since30, until, since30, until))
     for article_id, day, name in rows:
         recent = day >= since7
         if recent:

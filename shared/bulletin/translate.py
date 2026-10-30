@@ -45,6 +45,9 @@ def translate(draft: Draft, *, run=None, conn=None) -> Draft:
         text = data.get(str(n))
         if not isinstance(text, str) or not text.strip():
             item.turkish_flag = "çeviri eksik"
+        elif check.style_problem(text):
+            item.turkish_flag = "çeviri kontrolü: tavsiye ifadesi"
+            draft.notes.append(f"Translation of item {n} gave advice ({check.style_problem(text)}): {item.text[:60]}")
         elif not check.same_numbers(item.text, text):
             item.turkish_flag = "çeviri kontrolü: rakamlar uyuşmuyor"
             draft.notes.append(f"Translation of item {n} changed its numbers: {item.text[:60]}")

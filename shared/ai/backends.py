@@ -10,7 +10,7 @@ import os
 import anthropic
 import openai
 
-from shared import config
+from shared import config, redact
 from shared.ai import BACKENDS, ProviderError, Reply
 
 KEYS = {"anthropic": "ANTHROPIC_API_KEY", "deepseek": "DEEPSEEK_API_KEY", "openai": "OPENAI_API_KEY",
@@ -83,7 +83,7 @@ def anthropic_backend(entry: dict, system: str, prompt: str, max_tokens: int) ->
         try:
             msg = client.messages.create(messages=messages, **kwargs)
         except anthropic.APIStatusError as exc:
-            raise ProviderError(f"HTTP {exc.status_code}: {exc.message}") from exc
+            raise ProviderError(f"HTTP {exc.status_code}: {redact.clean(exc.message)}") from exc
         except anthropic.APIConnectionError as exc:
             raise ProviderError("could not be reached") from exc
         n_in += msg.usage.input_tokens

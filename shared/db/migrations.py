@@ -532,6 +532,17 @@ STEP_12 = """
 ALTER TABLE articles ADD COLUMN companies TEXT;
 """
 
+STEP_13 = """
+-- Nothing is deleted (fixed rule; codex test of 2026-10-30 found that articles, tags and counts could still lose rows). `UPDATE` stays
+-- possible: a tag is corrected with /tag, an article gets its sentence and its companies later. A mistaken row is marked, not removed.
+CREATE TRIGGER articles_no_delete BEFORE DELETE ON articles
+BEGIN SELECT RAISE(ABORT, 'articles is append-only: rows are never deleted'); END;
+CREATE TRIGGER tags_no_delete BEFORE DELETE ON tags
+BEGIN SELECT RAISE(ABORT, 'tags is append-only: rows are never deleted'); END;
+CREATE TRIGGER counts_no_delete BEFORE DELETE ON counts
+BEGIN SELECT RAISE(ABORT, 'counts is append-only: rows are never deleted'); END;
+"""
+
 # (number, SQL). Append new steps at the end; never edit a merged step.
 STEPS: list[tuple[int, str]] = [
     (1, STEP_1),
@@ -546,6 +557,7 @@ STEPS: list[tuple[int, str]] = [
     (10, STEP_10),
     (11, STEP_11),
     (12, STEP_12),
+    (13, STEP_13),
 ]
 
 

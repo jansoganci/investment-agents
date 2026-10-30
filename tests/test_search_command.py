@@ -137,3 +137,21 @@ def test_every_cited_source_is_listed_and_tracking_parameters_are_cut():
 
 def test_the_answer_prompt_asks_for_plain_short_text():
     assert "no markdown" in cmd.ANSWER_SYSTEM and "Four to six short lines" in cmd.ANSWER_SYSTEM
+
+
+def test_verify_checks_each_line_against_the_sources_it_cites():
+    items = [{"n": 1, "text": "Pop Mart fell 5% on Monday.", "title": "a"}, {"n": 2, "text": "Revenue was 99 million.", "title": "b"}]
+    text, warnings = cmd.verify("Pop Mart %5 düştü [1]\nCiro 99 milyon oldu [1]", items)             # 99 is in source 2, but the line cites 1
+    assert "Ciro 99 milyon" in text and warnings == ["⚠ rakam doğrulanamadı (99)"]
+    text, warnings = cmd.verify("Pop Mart %5 düştü [1]\nCiro 99 milyon oldu [2]", items)
+    assert warnings == []
+
+
+def test_verify_drops_advice_removes_markdown_flags_missing_citations_and_cuts_long_answers():
+    items = [{"n": 1, "text": "Pop Mart fell.", "title": "a"}]
+    text, warnings = cmd.verify("**Pop Mart düştü** [1]\nPop Mart satın alın [1]\nBilinmeyen [99]", items)
+    assert "*" not in text and "satın al" not in text and "Bilinmeyen" in text
+    assert "⚠ tavsiye içeren bir satır çıkarıldı" in warnings and "⚠ olmayan kaynak numarası: [99]" in warnings
+    long = "\n".join(["Pop Mart düştü [1]" + " x" * 40] * 30)
+    cut, warnings = cmd.verify(long, items)
+    assert len(cut) <= cmd.MAX_ANSWER_CHARS and "ℹ cevap uzun olduğu için kısaltıldı" in warnings

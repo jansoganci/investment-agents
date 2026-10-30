@@ -225,3 +225,10 @@ def test_a_latest_run_that_found_nothing_is_not_mistaken_for_the_run_before_it(d
     db.commit()
     got = count.latest(db)
     assert got is not None and got.entries == [] and got.run_at == later
+
+
+def test_a_post_dated_in_the_future_is_not_counted(db):
+    tag(db, "Fortum", "company", "FORTUM.HE", 0)
+    post(db, ["Fortum"], days_ago=1)
+    post(db, ["Fortum"], days_ago=-30)                     # a wrong date on the page: 30 days ahead
+    assert {e.key: e.posts_7d for e in count.count(db, NOW, write=False).of("non_us")} == {"FORTUM.HE": 1}

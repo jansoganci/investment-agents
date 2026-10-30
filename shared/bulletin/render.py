@@ -24,7 +24,7 @@ GROUPS = (("ai_infrastructure", "AI altyapısı"), ("other", "Şirket haberleri"
 TAGS = {"emtia": "ED", "dragonomi": "DR"}
 FORMS_READ_ON_SUNDAY = ("10-K", "10-Q", "20-F", "40-F", "10-K/A", "10-Q/A", "20-F/A", "40-F/A")
 NOTE_STARTS = ("Web search", "SEC could not", "Yahoo has no", "Translation failed", "Writer failed")
-MAX_SOURCES = 40
+MAX_SOURCES = 100             # more than the writer can cite: every cited source is listed (codex test: W41 was cited, 40 links were listed)
 
 TR_8K = {"1.01": "önemli bir sözleşme yaptı", "1.02": "önemli bir sözleşmeyi bitirdi", "1.03": "iflas ya da kayyum", "2.01": "bir satın alma ya da varlık satışını tamamladı",
          "2.02": "sonuçlarını açıkladı", "2.03": "yeni bir mali yükümlülük üstlendi", "2.04": "bir borç vadesinden önce muaccel oldu",

@@ -96,7 +96,7 @@ def test_one_post_that_cannot_be_answered_does_not_stop_the_others(db, monkeypat
     FakeAI(lambda *x: next(answers)).install(monkeypatch)
     stats = companies.fill(db)
     got = dict(db.execute("SELECT id, companies FROM articles").fetchall())
-    assert stats.asked == 2 and sorted(got.values()) == ['["BHP"]', "[]"]
+    assert stats.asked == 1 and stats.failed == 1 and sorted(v for v in got.values() if v) == ['["BHP"]']      # the unusable one stays NULL
 
 
 def test_no_budget_stops_the_run_and_leaves_the_rest_for_next_time(db, monkeypatch):
@@ -183,3 +183,20 @@ def test_refresh_classifies_then_counts(monkeypatch):
     monkeypatch.setattr(companies, "classify", lambda rounds=10: order.append("classify") or 0)
     monkeypatch.setattr(counter_cli, "main", lambda argv=None: order.append(("count", argv)) or 0)
     assert companies.main(["--refresh"]) == 0 and order == ["classify", ("count", [])]
+
+
+def test_the_codex_cases_curly_apostrophe_joined_names_and_look_alike_names():
+    # codex test of 2026-10-30: "Glencore’un" (a curly apostrophe) and "ExxonMobil" were missed; Tata Motors / Rio de Janeiro passed wrongly
+    yes = [("Glencore", "Glencore’un üretimi arttı"), ("Glencore", "Glencore'un üretimi arttı"), ("Exxon Mobil", "ExxonMobil kârı arttı"),
+           ("Tata Steel", "Tata Steel fiyatları artırdı"), ("Rio Tinto", "Rio Tinto sevkiyatı arttı"), ("Saudi Aramco", "Aramco'nun kârı"),
+           ("Kyushu Electric Power", "Kyushu Electric 12 LNG kargosu alacak"), ("Fortum", "Fortum’un nükleer geliri"), ("Anglo American", "Anglo American üretimi")]
+    no = [("Tata Steel", "Tata Motors satışları arttı"), ("Rio Tinto", "Rio de Janeiro limanı"), ("Rio Tinto", "Tinto Group'un geliri"),
+          ("Meta", "metal fiyatları"), ("Anglo American", "American Airlines yükseldi"), ("Glencore", "Antamina durdu")]
+    for name, text in yes:
+        assert companies.named_in(name, "t", text), (name, text)
+    for name, text in no:
+        assert not companies.named_in(name, "t", text), (name, text)
+
+
+def test_the_prompt_leaves_out_companies_named_only_in_a_price_quote():
+    assert "Platts window" in companies.SYSTEM and "named in passing" in companies.SYSTEM
