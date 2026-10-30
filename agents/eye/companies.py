@@ -8,6 +8,7 @@ classifier decides company / US-listed / ticker with the SEC check, and the Coun
     uv run python -m agents.eye.companies --trial 50     read 50 random posts, print what the model finds, save nothing
     uv run python -m agents.eye.companies --fill [N]     save the companies of the N newest posts that were not asked yet (all, if no N)
     uv run python -m agents.eye.companies --classify     classify the names found so far (company / US-listed / ticker, SEC check), 200 per round
+    uv run python -m agents.eye.companies --refresh      --classify, then count (agents.counter) and print the ranking: one command for the whole chain
 
 The scheduled Eye pass does the same for new posts only when `eye.extract_companies` is true in settings.yaml."""
 
@@ -185,9 +186,13 @@ def classify(rounds: int = 10) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    usage = "usage: python -m agents.eye.companies --trial [N] | --fill [N] | --classify"
+    usage = "usage: python -m agents.eye.companies --trial [N] | --fill [N] | --classify | --refresh"
     if argv == ["--classify"]:
         return classify()
+    if argv == ["--refresh"]:
+        from agents.counter import __main__ as counter_cli
+        classify()
+        return counter_cli.main([])
     if not argv or argv[0] not in ("--trial", "--fill") or len(argv) > 2 or (len(argv) == 2 and not argv[1].isdigit()):
         print(usage)
         return 2
