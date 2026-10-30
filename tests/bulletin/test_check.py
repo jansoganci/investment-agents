@@ -96,3 +96,16 @@ def test_an_order_to_trade_and_turkish_advice_are_not_news():
         assert check.style_problem(text), text
     for text in ("Brent rose 3% on Tuesday.", "Apple reported results and the CEO said the buyback continues.", "The post says sellers returned."):
         assert check.style_problem(text) is None, text
+
+
+def test_a_sign_after_the_currency_sign_is_read_and_the_currency_is_kept():
+    # codex test, round 3 (2026-10-31): "$-5 million" and "$+5 million" matched, and the currency was lost
+    sign = lambda text: [(n.sign, n.cur) for n in check.facts(text)]
+    assert sign("$-5 million") == [(-1, "$")] and sign("-$5 million") == [(-1, "$")] and sign("($-5 million)") == [(-1, "$")]
+    assert sign("£+3 million") == [(1, "£")] and sign("+£3 million") == [(1, "£")] and sign("¥−3 million") == [(-1, "¥")]
+    for a, b in (("$-5 million", "$+5 million"), ("$-5 million", "€-5 million"), ("$-5 million", "$-5 billion"), ("¥−3 million", "¥+3 million")):
+        assert not check.same_numbers(a, b), (a, b)
+    for a, b in (("($-5 million)", "-$5 million"), ("£+3 million", "+£3 million"), ("$+5 million", "+$5 million"), ("fell $5 million", "$-5 million")):
+        assert check.same_numbers(a, b), (a, b)
+    for text in ("3.75%-4.00%", "3.75-4%", "2026-10-29", "Fed - 5%", "$3-$5", "$3-5"):          # a range, a date and a dash are not signs
+        assert all(s == 0 for s, _ in sign(text)), text

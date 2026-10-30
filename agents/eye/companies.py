@@ -63,7 +63,8 @@ def clean(data) -> list[str]:
 
 GENERIC = {"steel", "energy", "energies", "power", "electric", "oil", "gas", "resources", "mining", "mines", "metals", "copper", "gold",
            "silver", "coal", "motors", "motor", "petroleum", "international", "national", "global", "united", "american", "china", "chinese",
-           "saudi", "royal", "new", "first", "bank", "capital", "industries", "industrial", "materials", "chemicals", "technologies"}
+           "saudi", "royal", "new", "first", "bank", "capital", "industries", "industrial", "materials", "chemicals", "technologies",
+           "general"}
 RARE_LEN = 6               # a single telling word this long ("glencore", "fortescue", "aramco") names the company by itself
 
 
@@ -75,6 +76,20 @@ def _fold(s: str) -> str:
     return " " + re.sub(r"[^a-z0-9]+", " ", plain) + " "
 
 
+def _written_as_words(body_words: list[str], joined: str) -> bool:
+    """Do whole words of the text, one after the other, spell the name? ("exxon" + "mobil" = "exxonmobil"; "exxon" + "mobilizer" is not.)
+    A bare substring search would also accept "Broad commodity" for Broadcom (codex test, 2026-10-30), so only whole words count."""
+    for i in range(len(body_words)):
+        spelled = ""
+        for word in body_words[i:i + 6]:
+            spelled += word
+            if spelled == joined:
+                return True
+            if not joined.startswith(spelled):
+                break
+    return False
+
+
 def named_in(name: str, title: str | None, text: str) -> bool:
     """Does the post itself print the company's name? The name's telling words (not a legal or a generic word such as "steel" or
     "resources") are looked for as whole words in the title or text; a Turkish ending after an apostrophe is fine ("Fortum'un"), "Meta" is
@@ -83,16 +98,18 @@ def named_in(name: str, title: str | None, text: str) -> bool:
     a parent company) fails and is dropped (trial of 2026-10-30)."""
     kept = tags.tokens(name)                                              # a set: the order of the name is taken from the name itself
     words = [w for w in _fold(name).split() if w in kept]
-    telling = [w for w in words if w not in GENERIC] or list(words)
-    body = _fold(f"{title or ''} {text}")
     if not words:
         return False
-    if len(words) > 1 and f" {''.join(words)} " in body:                  # "exxonmobil"
+    body = _fold(f"{title or ''} {text}")
+    if _written_as_words(body.split(), "".join(words)):                   # "ExxonMobil" = "Exxon Mobil", "BlackRock" = "Black Rock"
         return True
+    telling = [w for w in words if w not in GENERIC]
     present = [w for w in words if f" {w} " in body]
+    if not telling:                                                       # every word is a common one ("General Electric"): all of them are needed
+        return len(present) == len(words)
     if any(len(w) >= RARE_LEN and w in telling for w in present):
         return True
-    return len(present) >= min(2, len(words)) and bool([w for w in present if w in telling])
+    return len(present) >= min(2, len(words)) and any(w in telling for w in present)
 
 
 def ask(title: str | None, text: str, *, run=None, conn=None) -> list[str]:

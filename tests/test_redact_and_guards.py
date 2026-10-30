@@ -48,3 +48,22 @@ def test_articles_tags_and_counts_cannot_lose_rows(db):
             db.execute(f"DELETE FROM {table}")
     db.execute("UPDATE tags SET kind = 'company' WHERE tag = 't'")          # a correction stays possible
     assert db.execute("SELECT kind FROM tags").fetchone()[0] == "company"
+
+
+@pytest.mark.parametrize("link", ["https://www.dragonomi.com:FAKE_SECRET/members/?token=FAKE", "https://[FAKE_SECRET]/members/?token=FAKE",
+                                  "https://www.dragonomi.com：FAKE_SECRET/members/?token=FAKE", "https://www.dragonomi.com:65536/members/?token=FAKE"])
+def test_a_broken_link_never_puts_a_piece_of_itself_in_the_output(link, capsys):
+    # codex test, round 3 (2026-10-31): the port error of urlsplit carried the text after the colon into the message
+    assert magic_link.main(["dragonomi", link]) == 1
+    out = capsys.readouterr().out
+    assert "FAKE_SECRET" not in out and "65536" not in out
+    assert magic_link.SAFE in out or "not a link of www.dragonomi.com" in out
+
+
+def test_valid_links_are_still_accepted_after_the_error_handling_change():
+    for link in ("<https://www.dragonomi.com/members/?token=abc&action=signin>", "https://www.dragonomi.com:443/members/?token=abc",
+                 "https://WWW.DRAGONOMI.COM/members?token=abc", "https://www.dragonomi.com/members/?token=abc"):
+        assert magic_link.target_of(SITES["dragonomi"], link)[0] == "www.dragonomi.com"
+    for link in ("https://www.dragonomi.com:8443/members/?token=abc", "http://www.dragonomi.com/members/?token=abc", "https://www.dragonomi.com/members/?token="):
+        with pytest.raises(magic_link.LinkError):
+            magic_link.target_of(SITES["dragonomi"], link)

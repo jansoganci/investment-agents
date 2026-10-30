@@ -196,3 +196,16 @@ def test_the_codex_cases_curly_apostrophe_joined_names_and_look_alike_names():
         assert companies.named_in(name, "t", text), (name, text)
     for name, text in no:
         assert not companies.named_in(name, "t", text), (name, text)
+
+
+def test_a_name_is_spelled_by_whole_words_of_the_text_and_common_words_need_each_other():
+    # codex test, round 3 (2026-10-31): a bare "no spaces" search would accept Broadcom in "Broad commodity"; "general" alone named two companies
+    yes = [("ExxonMobil", "Exxon Mobil"), ("Exxon Mobil", "ExxonMobil kârı"), ("BlackRock", "Black Rock"), ("Panasonic", "Pana sonic"),
+           ("Volkswagen", "Volks wagen"), ("Microsoft", "Micro soft"), ("General Electric", "General Electric earnings")]
+    no = [("Broadcom", "Broad commodity demand rose."), ("BlackRock", "black rocket engine"), ("Nintendo", "NintendoSwitch sales rose."),
+          ("ExxonMobil", "Exxon Mobilizer"), ("General Electric", "General Motors"), ("General Motors", "General Electric"),
+          ("General Electric", "General"), ("Tata Steel", "Tata Motors"), ("Rio Tinto", "Rio de Janeiro")]
+    for name, text in yes:
+        assert companies.named_in(name, "t", text), (name, text)
+    for name, text in no:
+        assert not companies.named_in(name, "t", text), (name, text)
