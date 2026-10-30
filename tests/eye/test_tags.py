@@ -3,6 +3,7 @@ import json
 import pytest
 
 from agents.eye import tags
+from shared import ai
 from shared.ai.fake import FakeAI
 
 SEC_ROWS = [
@@ -135,7 +136,7 @@ def test_tags_go_in_batches_and_a_bad_answer_is_asked_once_more(db, monkeypatch,
 
     fake = FakeAI(handler).install(monkeypatch)
     stats = tags.classify_new(db, seclist=seclist)
-    assert stats.classified == 25 and len(fake.calls) == 3             # batch 1 twice (the first answer was unusable), batch 2 once
+    assert stats.classified == 25 and len(fake.calls) == 5             # 25 names in batches of 8 = 4 batches; batch 1 twice (the first answer was unusable)
     assert "could not be used" in fake.calls[1][2]
 
 
@@ -175,3 +176,19 @@ def test_the_sec_list_is_fetched_before_any_tag_row_is_written_and_a_failure_lea
     stats = tags.classify_new(db, seclist=tags.SecList(loader))
     assert seen["in_transaction"] is False and "SEC could not be asked" in stats.note and "TimeoutError" in stats.note
     assert db.execute("SELECT count(*) FROM tags").fetchone()[0] == 0 and tags.new_tags(db, 10) == ["Cummins", "Bakır"]
+
+
+def test_a_batch_cut_at_the_token_limit_is_skipped_and_the_next_one_goes_on(db, monkeypatch, seclist):
+    article(db, "t", [f"tag{i}" for i in range(12)])
+    first = [True]
+
+    def handler(job, system, prompt):
+        if first[0]:
+            first[0] = False
+            raise ai.AIError("cut", outcomes=("cut",))
+        return [item(t, "other") for t in asked_tags(prompt)]
+
+    monkeypatch.setattr(ai, "call", lambda job, prompt, **k: type("R", (), {"text": json.dumps(handler(job, k.get("system"), prompt))})())
+    stats = tags.classify_new(db, seclist=seclist)
+    assert stats.classified == 4 and "not classified now" in stats.note              # batch 1 (8 names) skipped, batch 2 (4 names) done
+    assert len(tags.new_tags(db, 50)) == 8

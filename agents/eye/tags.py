@@ -18,7 +18,8 @@ from shared.sectors import GICS
 KINDS = ("company", "commodity", "sector", "region", "other")
 NAME_NOISE = {"the", "inc", "incorporated", "corp", "corporation", "co", "company", "companies", "ltd", "limited", "plc", "sa",
               "ag", "nv", "se", "llc", "lp", "holdings", "holding", "group", "adr", "ads", "class", "a", "b"}
-BATCH = 20
+BATCH = 8                  # names per model call: the cheap reasoning model spends tokens thinking about each company (20 at a time was cut at 8,000 on 2026-10-30)
+TAG_TOKENS = 16000
 PER_PASS = 200
 
 SYSTEM = f"""You classify tags of a Turkish-language commodity and equity newsletter. A tag is the label the editors put on a post.
@@ -160,7 +161,7 @@ def classify_new(conn, run=None, *, seclist: SecList | None = None, limit: int =
         try:
             for _ in range(2):
                 text = prompt if problem is None else prompt + f"\n\nYour previous answer could not be used ({problem}). JSON list only."
-                reply = ai.call("cheap", text, system=SYSTEM, run=run, conn=conn, max_tokens=8000)
+                reply = ai.call("cheap", text, system=SYSTEM, run=run, conn=conn, max_tokens=TAG_TOKENS)
                 try:
                     answers = check_answer(ai.parse_json(reply.text), batch)
                     break
@@ -168,6 +169,8 @@ def classify_new(conn, run=None, *, seclist: SecList | None = None, limit: int =
                     problem = str(error)
         except ai.AIError as error:
             stats.note = f"tags are not classified now: {error}"
+            if error.only_cut:          # these names were too much for every model; the next batch may be fine, these are tried again next pass
+                continue
             return stats
         if any(a.get("kind") == "company" and a.get("us_listed") for a in answers):
             try:
