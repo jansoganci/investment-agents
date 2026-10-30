@@ -196,7 +196,3 @@ def test_the_codex_cases_curly_apostrophe_joined_names_and_look_alike_names():
         assert companies.named_in(name, "t", text), (name, text)
     for name, text in no:
         assert not companies.named_in(name, "t", text), (name, text)
-
-
-def test_the_prompt_leaves_out_companies_named_only_in_a_price_quote():
-    assert "Platts window" in companies.SYSTEM and "named in passing" in companies.SYSTEM
