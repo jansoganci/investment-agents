@@ -7,6 +7,7 @@ classifier decides company / US-listed / ticker with the SEC check, and the Coun
 
     uv run python -m agents.eye.companies --trial 50     read 50 random posts, print what the model finds, save nothing
     uv run python -m agents.eye.companies --fill [N]     save the companies of the N newest posts that were not asked yet (all, if no N)
+    uv run python -m agents.eye.companies --classify     classify the names found so far (company / US-listed / ticker, SEC check), 200 per round
 
 The scheduled Eye pass does the same for new posts only when `eye.extract_companies` is true in settings.yaml."""
 
@@ -157,9 +158,36 @@ def trial(conn, count: int, run=None) -> str:
     return "\n".join(out)
 
 
+def classify(rounds: int = 10) -> int:
+    """The names in `articles.companies` that the tag table does not know yet, classified like a post's own tags (the scheduled pass does
+    200 a pass; this catches up after `--fill`). Stops when nothing is new, a round classifies nothing, or `rounds` rounds are done."""
+    conn = dbmod.connect()
+    try:
+        with runlog.run("eye-companies") as run:
+            total = waiting = 0
+            for _ in range(rounds):
+                before = len(tags.new_tags(conn, tags.PER_PASS))
+                if not before:
+                    break
+                stats = tags.classify_new(conn, run)
+                total, waiting = total + stats.classified, waiting + stats.waiting
+                if stats.note:
+                    print(stats.note)
+                    break
+                if not stats.classified:
+                    break
+            left = len(tags.new_tags(conn, 10000))
+            print(f"{total} names classified, {waiting} of them wait for your /tag; {left} not classified yet.")
+    finally:
+        conn.close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    usage = "usage: python -m agents.eye.companies --trial [N] | --fill [N]"
+    usage = "usage: python -m agents.eye.companies --trial [N] | --fill [N] | --classify"
+    if argv == ["--classify"]:
+        return classify()
     if not argv or argv[0] not in ("--trial", "--fill") or len(argv) > 2 or (len(argv) == 2 and not argv[1].isdigit()):
         print(usage)
         return 2

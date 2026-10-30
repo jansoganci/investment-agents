@@ -157,3 +157,21 @@ def test_the_pass_asks_for_companies_only_when_the_setting_is_on(db, monkeypatch
     run.after_reading(db, result, seclist=tags.SecList(lambda: [[1, "BHP Group Ltd", "BHP", "NYSE"]]))
     assert result.companies_asked == 1 and db.execute("SELECT companies FROM articles").fetchone()[0] == '["BHP", "Rio Tinto"]'
     assert db.execute("SELECT count(*) FROM tags WHERE tag IN ('BHP', 'Rio Tinto')").fetchone()[0] == 2     # classified in the same pass
+
+
+def test_classify_catches_up_the_names_found_by_fill(db, monkeypatch, capsys):
+    for i in range(3):
+        article(db, f"p{i}", companies_=["BHP", "Saudi Aramco"])
+    model(monkeypatch)
+    from shared import db as dbmod
+
+    class Keep:                                     # the command closes its connection; the test database must stay open
+        def __getattr__(self, name):
+            return (lambda: None) if name == "close" else getattr(db, name)
+
+    real = tags.SecList
+    monkeypatch.setattr(dbmod, "connect", lambda *a, **k: Keep())
+    monkeypatch.setattr(tags, "SecList", lambda *a, **k: real(lambda: [[1, "BHP Group Ltd", "BHP", "NYSE"]]))
+    assert companies.classify() == 0
+    assert "3 names classified" in capsys.readouterr().out
+    assert db.execute("SELECT count(*) FROM tags WHERE tag IN ('BHP', 'Saudi Aramco')").fetchone()[0] == 2
