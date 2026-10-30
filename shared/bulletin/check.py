@@ -96,9 +96,12 @@ def facts(text: str, skip_years: bool = False) -> list[Num]:
         marks = before[len(stripped):]
         sign = 0
         if stripped and stripped[-1] in SIGNS:
-            head = stripped[:-1].rstrip("%")
+            # "-$5" (the sign, then the marks) and "$-5" / "%-5" (the marks, then the sign): in both the sign is read, and so is the currency
+            head_raw = stripped[:-1]
+            head = head_raw.rstrip(CURRENCIES + "%")
             if not head or head[-1] in " (\n\t":
                 sign = -1 if stripped[-1] in "-−–" else 1
+                marks = head_raw[len(head):] + marks
         cur = next((c for c in reversed(marks) if c in CURRENCIES), "")
         unit = "pct" if ("%" in marks or PERCENT_BEFORE.search(before) or PERCENT_AFTER.match(after)) else "bp" if BASIS.match(after) else ""
         scale = SCALE_WORDS.get((SCALE.match(after) or [None, ""])[1].lower(), 0) if SCALE.match(after) else 0

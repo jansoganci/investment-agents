@@ -30,17 +30,25 @@ COOKIE_NAMES = ("ghost-members-ssr", "ghost-members-ssr.sig")
 TIMEOUT_S = 30
 
 
+SAFE = "that is not a valid sign-in link; nothing was opened"
+
+
 class LinkError(ValueError):
     """Why nothing was done. The message never holds the link, the token or the cookie."""
 
 
 def target_of(site: Site, link: str) -> tuple[str, str]:
     """(host, path?query) of a sign-in link of this site; anything else is refused before any request."""
-    parts = urlsplit(link.strip().strip("<>\"'` \n"))
     host = urlsplit(site.base).hostname
-    if parts.scheme != "https" or parts.hostname != host or parts.username or parts.password or parts.port not in (None, 443):
+    try:                                    # every way of reading a broken link can fail with a message that holds a piece of it
+        parts = urlsplit(link.strip().strip("<>\"'` \n"))
+        scheme, hostname, username, password, port = parts.scheme, parts.hostname, parts.username, parts.password, parts.port
+        query = parse_qs(parts.query)
+    except ValueError:
+        raise LinkError(SAFE) from None
+    if scheme != "https" or hostname != host or username or password or port not in (None, 443):
         raise LinkError(f"that is not a link of {host}; nothing was opened")
-    if not (parts.path == "/members" or parts.path.startswith("/members/")) or not parse_qs(parts.query).get("token"):
+    if not (parts.path == "/members" or parts.path.startswith("/members/")) or not query.get("token"):
         raise LinkError(f"that is a {host} link but not a sign-in link (it should look like https://{host}/members/?token=…); nothing was opened")
     return host, parts.path + ("?" + parts.query if parts.query else "")
 
@@ -110,8 +118,15 @@ def main(argv: list[str] | None = None) -> int:
     link = sys.stdin.read() if use_stdin else args[1]
     try:
         value, expiry = sign_in(site, link)
+    except LinkError as exc:
+        print(f"SIGN-IN · failed\n{exc}")
+        return 1
+    except ValueError:                      # any other parsing error: its text may hold a piece of the link
+        print(f"SIGN-IN · failed\n{SAFE}")
+        return 1
+    try:
         dropped = set_cookie.save(site.cookie_env, value)
-    except (LinkError, ValueError) as exc:
+    except ValueError as exc:
         print(f"SIGN-IN · failed\n{exc}")
         return 1
     until = f"valid until {expiry.astimezone(timezone.utc):%Y-%m-%d} (the site's own date)" if expiry else "the site gave no expiry date"
