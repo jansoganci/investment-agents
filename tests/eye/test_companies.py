@@ -175,3 +175,11 @@ def test_classify_catches_up_the_names_found_by_fill(db, monkeypatch, capsys):
     assert companies.classify() == 0
     assert "3 names classified" in capsys.readouterr().out
     assert db.execute("SELECT count(*) FROM tags WHERE tag IN ('BHP', 'Saudi Aramco')").fetchone()[0] == 2
+
+
+def test_refresh_classifies_then_counts(monkeypatch):
+    from agents.counter import __main__ as counter_cli
+    order = []
+    monkeypatch.setattr(companies, "classify", lambda rounds=10: order.append("classify") or 0)
+    monkeypatch.setattr(counter_cli, "main", lambda argv=None: order.append(("count", argv)) or 0)
+    assert companies.main(["--refresh"]) == 0 and order == ["classify", ("count", [])]
