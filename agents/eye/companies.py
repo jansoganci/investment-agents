@@ -65,6 +65,7 @@ GENERIC = {"steel", "energy", "energies", "power", "electric", "oil", "gas", "re
            "silver", "coal", "motors", "motor", "petroleum", "international", "national", "global", "united", "american", "china", "chinese",
            "saudi", "royal", "new", "first", "bank", "capital", "industries", "industrial", "materials", "chemicals", "technologies",
            "general"}
+LINKING = {"of", "and", "de", "del", "der", "di", "du", "la", "le", "van", "von", "the", "y", "et"}      # joining words of a name, never telling
 RARE_LEN = 6               # a single telling word this long ("glencore", "fortescue", "aramco") names the company by itself
 
 
@@ -97,7 +98,7 @@ def named_in(name: str, title: str | None, text: str) -> bool:
     two of them ("Tata Steel" is not "Tata Motors", "Rio Tinto" is not "Rio de Janeiro"). A name the model only inferred (a mine's owner,
     a parent company) fails and is dropped (trial of 2026-10-30)."""
     kept = tags.tokens(name)                                              # a set: the order of the name is taken from the name itself
-    words = [w for w in _fold(name).split() if w in kept]
+    words = [w for w in _fold(name).split() if w in kept and w not in LINKING]       # "Bank of America": "of" must not tell it from "Bank of China"
     if not words:
         return False
     body = _fold(f"{title or ''} {text}")

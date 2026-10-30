@@ -209,3 +209,12 @@ def test_a_name_is_spelled_by_whole_words_of_the_text_and_common_words_need_each
         assert companies.named_in(name, "t", text), (name, text)
     for name, text in no:
         assert not companies.named_in(name, "t", text), (name, text)
+
+
+def test_a_joining_word_does_not_tell_one_bank_from_another():
+    # codex test, round 4 (2026-10-31): "of" counted as a telling word, so a post about Bank of China named Bank of America
+    assert not companies.named_in("Bank of America", "t", "Bank of China earnings rose")
+    assert companies.named_in("Bank of America", "t", "Bank of America earnings rose")
+    assert companies.named_in("Bank of America", "t", "BofA ve Bank America sonuç açıkladı") is True
+    assert not companies.named_in("Bank of China", "t", "Bank of America earnings rose")
+    assert companies.named_in("Rio Tinto", "t", "Rio Tinto sevkiyatı arttı") and not companies.named_in("Rio Tinto", "t", "Rio de Janeiro limanı")
