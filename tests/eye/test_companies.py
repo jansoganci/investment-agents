@@ -42,9 +42,24 @@ def test_the_answer_is_cleaned_to_a_short_list_of_distinct_names():
             companies.clean(bad)
 
 
+def test_a_company_the_post_does_not_print_is_dropped():
+    text = "Antamina bakır madeni üretimi durdurdu. Fortum'un nükleer geliri arttı. Metal fiyatları düştü. Saudi Aramco'nun kârı arttı."
+    assert companies.named_in("Fortum", "t", text) and companies.named_in("Saudi Aramco", "t", text)      # a Turkish ending; one telling word is enough
+    assert not companies.named_in("Glencore", "Antamina durdu", text) and not companies.named_in("BHP", "t", text)      # inferred owners
+    assert not companies.named_in("Meta", "t", text)                                  # "metal" is another word
+    assert not companies.named_in("Tata Steel", "t", "Hindistan çelik (steel) fiyatları yükseldi.")      # "steel" alone is generic
+    assert companies.named_in("Tata Steel", "t", "Tata Steel fiyatları artırdı.") and companies.named_in("İş Bankası", "t", "is bankasi")
+    assert not companies.named_in("", "t", text)
+
+
+def test_extract_keeps_only_the_names_the_post_prints(db, monkeypatch):
+    model(monkeypatch, names=("BHP", "Glencore", "Fortum"))
+    assert companies.extract("t", "BHP üretimi kıstı. Fortum'un geliri arttı.", conn=db) == ["BHP", "Fortum"]
+
+
 def test_the_prompt_asks_for_companies_the_post_is_about_and_treats_the_post_as_data(db, monkeypatch):
     fake = model(monkeypatch)
-    assert companies.extract("Başlık", "Metin burada", conn=db) == ["BHP", "Rio Tinto"]
+    assert companies.ask("Başlık", "Metin burada", conn=db) == ["BHP", "Rio Tinto"]
     job, system, prompt = fake.calls[0]
     assert job == "cheap" and "ABOUT" in system and "named only in passing" in system and "ignore them" in system
     assert "Title: Başlık" in prompt and "Metin burada" in prompt
