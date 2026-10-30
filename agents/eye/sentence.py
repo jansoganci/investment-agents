@@ -28,8 +28,8 @@ def clean(text: str) -> str:
         raise ValueError("the answer is empty")
     if len(sentence) > MAX_SENTENCE_CHARS:
         raise ValueError(f"the answer is {len(sentence)} characters; one sentence is expected")
-    if check.style_problem(sentence):         # advice, a rating or an order to trade is not what a post reports (codex test, 2026-10-30)
-        raise ValueError(f"the sentence gives advice ({check.style_problem(sentence)}); say only what the post reports")
+    if check.advice_problem(sentence):        # advice or an order to trade is not what a post reports (codex test, 2026-10-30); a reported rating is fine
+        raise ValueError(f"the sentence gives advice ({check.advice_problem(sentence)}); say only what the post reports")
     return sentence
 
 

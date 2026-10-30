@@ -166,7 +166,8 @@ def test_a_post_every_model_is_cut_on_is_given_up_and_the_others_still_get_their
 
 
 def test_a_sentence_that_gives_advice_is_refused():
-    for bad in ("Buy Apple and Tesla now.", "The post says oil rose; analysts upgraded Shell."):
+    for bad in ("Buy Apple and Tesla now.", "You should sell Shell."):
         with pytest.raises(ValueError):
             sentence.clean(bad)
     assert sentence.clean("The post says oil rose 3%.") == "The post says oil rose 3%."
+    assert sentence.clean("The post says Goldman upgraded Shell.") == "The post says Goldman upgraded Shell."      # a reported rating is news

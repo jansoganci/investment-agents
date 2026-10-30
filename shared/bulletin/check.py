@@ -141,6 +141,17 @@ def same_numbers(english: str, turkish: str) -> bool:
     return all(_found(n, index_b) for n in a) and all(_found(n, index_a) for n in b)
 
 
+ADVICE = re.compile(r"\b(you should|should (?:buy|sell)|we recommend|i recommend|buy now|sell now|strong (?:buy|sell)|"
+                    r"satın al(?:ın|ınız)|hemen (?:al|sat)(?:ın|ınız)?)\b", re.IGNORECASE)
+
+
+def advice_problem(text: str) -> str | None:
+    """Plain advice or an order to trade. Narrower than `style_problem`: a post that REPORTS a rating ("Goldman upgraded Shell") may be
+    summarised by the Eye; only the bulletin keeps ratings out."""
+    found = ADVICE.search(text or "") or ORDER.search(text or "")
+    return found.group(0).strip(" .!?").lower() if found else None
+
+
 def style_problem(text: str) -> str | None:
     found = STYLE.search(text or "")
     if found:
