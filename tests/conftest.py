@@ -16,6 +16,15 @@ def no_real_mof(monkeypatch):
     monkeypatch.setattr(mof, "_get_text", lambda url, timeout=30: "Interest Rate\nDate,10Y\n")
 
 
+@pytest.fixture(autouse=True)
+def no_company_step(monkeypatch):
+    """The production setting `eye.extract_companies` must not change what an Eye test asks the model; a test that wants the step sets it itself."""
+    from shared import config
+
+    real = config.settings
+    monkeypatch.setattr(config, "settings", lambda: {**real(), "eye": {**(real().get("eye") or {}), "extract_companies": False}})
+
+
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     """A clean data folder and Drive folder for each test; the real .env and database are never touched."""
