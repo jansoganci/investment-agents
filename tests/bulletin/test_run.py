@@ -110,3 +110,11 @@ def test_the_commands_show_and_dry_work_on_an_empty_database(db, capsys, monkeyp
     out = capsys.readouterr().out
     assert out.startswith("☀️ SABAH BÜLTENİ") and "Kaynaklardan yeni bir haber gelmedi." in out and "(dry run: " in out and "ℹ️ 1 kaynak ya da adım alınamadı" in out
     assert cli.main(["--nonsense"]) == 2
+
+
+def test_a_missing_drive_file_is_written_again_on_the_next_run(world):
+    text = build(world)
+    path = drive.bulletin() / "2026-10-29.md"
+    path.unlink()                                          # the Drive write failed the first time
+    calls = len(world["fake"].calls)
+    assert build(world) == text and path.exists() and len(world["fake"].calls) == calls

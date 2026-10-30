@@ -118,6 +118,38 @@ def shown_sources(answer: str, items: list) -> list[str]:
             + (f" — {search.clean_url(s['url'])}" if search.usable_url(s["url"]) else "") for s in chosen]
 
 
+MAX_ANSWER_CHARS = 1400
+
+
+def verify(answer: str, items: list) -> tuple[str, list[str]]:
+    """The model's answer, checked line by line against the sources each line cites (codex test, 2026-10-30: the first version checked every
+    number against ALL sources, so a number of source [2] passed under [1]). Returns the text to show and the warning lines.
+    A line that gives advice is dropped; markdown signs are removed; a number nobody cited is a warning; a citation that does not exist is
+    a warning; a long answer is cut at a line."""
+    by_n = {s["n"]: s["text"] + " " + s["title"] for s in items}
+    warnings, unverified, lines, size = [], [], [], 0
+    for raw in re.sub(r"[*`]+|^#+\s*", "", answer, flags=re.MULTILINE).splitlines():
+        line = raw.rstrip()
+        if not line.strip():
+            continue
+        cited = sorted({int(n) for c in CITATION.findall(line) for n in re.findall(r"\d+", c)})
+        if (gone := [n for n in cited if n not in by_n]):
+            warnings.append("⚠ olmayan kaynak numarası: " + ", ".join(f"[{n}]" for n in gone))
+        if check.style_problem(line):
+            warnings.append("⚠ tavsiye içeren bir satır çıkarıldı")
+            continue
+        sources = [by_n[n] for n in cited if n in by_n] or list(by_n.values())          # a line with no citation: any source
+        unverified += check.missing_in_sources(CITATION.sub(" ", line), sources)
+        if size + len(line) > MAX_ANSWER_CHARS:
+            warnings.append("ℹ cevap uzun olduğu için kısaltıldı")
+            break
+        lines.append(line)
+        size += len(line) + 1
+    if unverified:
+        warnings.insert(0, f"⚠ rakam doğrulanamadı ({', '.join(dict.fromkeys(unverified))})")
+    return "\n".join(lines), list(dict.fromkeys(warnings))
+
+
 def ask(question: str, conn, now=None) -> str:
     now = now or clock.now_utc()
     plan = plan_search(question)
@@ -134,8 +166,8 @@ def ask(question: str, conn, now=None) -> str:
         answer = ai.call("cheap", prompt, system=ANSWER_SYSTEM, conn=conn).text.strip()
     except AIError as exc:
         raise Refused(f"SEARCH · failed\nThe answer could not be written: {exc}") from exc
-    missing = check.missing_in_sources(CITATION.sub(" ", answer), [s["text"] + " " + s["title"] for s in items])
-    warn = f"\n⚠ rakam doğrulanamadı ({', '.join(missing)})" if missing else ""
+    answer, warnings = verify(answer, items)
+    warn = "".join(f"\n{w}" for w in warnings)
     return f"🔎 ARA · {question}\n\n{answer}{warn}\n\nKaynaklar\n" + "\n".join(shown_sources(answer, items))
 
 

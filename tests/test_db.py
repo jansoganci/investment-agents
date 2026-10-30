@@ -261,7 +261,7 @@ def test_card_entries_lynch_type_uses_the_glossary_values(db):
 
 
 def test_the_airs_upgrade_from_version_5_to_the_latest_keeps_every_row(env):
-    """The Air is at version 5 with real rows (stocks, tags, subsectors, scores …); steps 6–12 must leave them whole."""
+    """The Air is at version 5 with real rows (stocks, tags, subsectors, scores …); steps 6–13 must leave them whole."""
     from shared import config
 
     path = config.db_path()
@@ -283,7 +283,7 @@ def test_the_airs_upgrade_from_version_5_to_the_latest_keeps_every_row(env):
     """)
     conn.commit()
     done = dbmod.upgrade(conn)
-    assert done == [6, 7, 8, 9, 10, 11, 12] and dbmod.version(conn) == 12
+    assert done == [6, 7, 8, 9, 10, 11, 12, 13] and dbmod.version(conn) == 13
     assert conn.execute("SELECT tag, kind, maps_to, exchange, sector, source, status, us_listed, note FROM tags ORDER BY id").fetchall() == [
         ("Coca-Cola", "company", "KO", "NYSE", "Consumer Staples", "ai", "confirmed", None, None),
         ("Bakır", "commodity", "copper", None, None, "user", "confirmed", None, None)]

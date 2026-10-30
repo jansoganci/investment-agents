@@ -21,7 +21,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
-from shared import ai, clock, config
+from shared import ai, clock, config, redact
 from shared import db as dbmod
 
 URL = "https://api.deepseek.com/v1/tools/search"
@@ -96,7 +96,7 @@ def _error_text(status: int, raw: bytes) -> str:
         message = (json.loads(raw).get("error") or {}).get("message")
     except (ValueError, AttributeError):
         message = None
-    return f"DeepSeek search: HTTP {status}, {reason}" + (f" ({str(message)[:200]})" if message else "")
+    return f"DeepSeek search: HTTP {status}, {reason}" + (f" ({redact.clean(str(message))[:200]})" if message else "")
 
 
 def _hit(item: dict) -> Hit | None:

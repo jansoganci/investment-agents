@@ -127,3 +127,11 @@ def test_ranked_items_are_printed_in_the_top_three_only_except_for_my_stocks():
     assert "• Gaz 100 euroya çıktı." in text                                          # an unranked macro item stays
     assert text.count("HBM 2029'a kadar tükendi.") == 1 and "AI altyapısı" not in text   # interests skip it too; an empty group has no heading
     assert text.count("KO fiyatları %4 artırdı.") == 2                                # my stocks show all of theirs
+
+
+def test_every_cited_source_is_listed_even_past_forty():
+    p = pack()
+    p.web = [Piece(f"W{i}", "web", f"t{i}", "x", "Reuters", "2026-10-28T01:00:00Z", f"https://reuters.example/{i}", topic="oil") for i in range(1, 46)]
+    d = Draft(items=[Item("macro", f"Item {i}.", (f"W{i}",), turkish=f"Madde {i}.") for i in range(1, 46)])
+    r = render.render(p, d, MARKET, NOW)
+    assert len(r.sources) == 45 and "45. [W]" in r.text

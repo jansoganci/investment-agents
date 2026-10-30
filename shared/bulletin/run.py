@@ -52,9 +52,13 @@ def save(conn, day: str, pack, draft, rendered, cost: float, now: datetime) -> N
                  (day, pack.window_start, pack.window_end, json.dumps(english, ensure_ascii=False), rendered.text,
                   json.dumps(rendered.sources, ensure_ascii=False), json.dumps(notes, ensure_ascii=False), cost, clock.utc_iso(now)))
     conn.commit()
+    write_file(day, rendered.text)
+
+
+def write_file(day: str, text: str) -> None:
     folder = drive.bulletin()
     folder.mkdir(parents=True, exist_ok=True)
-    (folder / f"{day}.md").write_text(f"---\nbulletin: {day}\npublish: no\n---\n\n{rendered.text}\n", encoding="utf-8")
+    (folder / f"{day}.md").write_text(f"---\nbulletin: {day}\npublish: no\n---\n\n{text}\n", encoding="utf-8")
 
 
 def build(conn, run, *, now: datetime | None = None, force: bool = False, dry: bool = False, gather_kwargs: dict | None = None) -> str:
@@ -62,6 +66,11 @@ def build(conn, run, *, now: datetime | None = None, force: bool = False, dry: b
     now = now or clock.now_utc()
     day = clock.today_local(now)
     if not force and not dry and (text := saved(conn, day)) is not None:
+        try:                                    # the row was saved but the Drive write failed earlier: write the file now (codex test, 2026-10-30)
+            if not (drive.bulletin() / f"{day}.md").exists():
+                write_file(day, text)
+        except OSError:
+            pass
         return text
     pack = gather.gather(conn, now, since=window_start(conn, now, day), run=run, **(gather_kwargs or {}))
     failed = None

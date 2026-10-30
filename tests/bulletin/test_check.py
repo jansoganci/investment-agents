@@ -71,3 +71,28 @@ def test_a_time_of_day_is_not_a_figure():
     ("The bank cut its outlook.", None)])
 def test_advice_ratings_and_targets_are_found(text, found):
     assert check.style_problem(text) == found
+
+
+def test_a_sign_a_scale_a_unit_or_a_currency_that_contradicts_is_a_different_number():
+    # codex test of 2026-10-30: the first version accepted every one of these
+    assert check.missing_in_sources("Oil fell -5% to $80.", ["Oil rose +5% to $80."]) == ["5"]
+    assert check.missing_in_sources("Profit $100 million.", ["Profit $100 billion."]) == ["100"]
+    assert check.missing_in_sources("The yield rose 10 bps.", ["The yield rose 10%."]) == ["10"]
+    assert check.missing_in_sources("Sales €100.", ["Sales $100."]) == ["100"]
+    assert check.missing_in_sources("Fed held at 3.75%-4.00%.", ["Fed funds 3.75%-4.00%"]) == []            # a range is not a sign
+    assert check.missing_in_sources("Oil fell 5%.", ["Oil -5% today"]) == []                                  # a missing sign is no contradiction
+    assert check.missing_in_sources("Rose 100 million.", ["rose 100 million"]) == []
+
+
+def test_the_turkish_item_keeps_sign_scale_and_unit():
+    assert check.same_numbers("Revenue 104.6 trillion won.", "Ciro 104,6 trilyon won.")
+    assert check.same_numbers("Fell -3.6%.", "%-3,6 düştü.") and check.same_numbers("Fell 3.6%.", "%3,6 düştü.")
+    assert not check.same_numbers("Profit $100 million.", "Kâr 100 milyar $.")
+    assert not check.same_numbers("Fell -5%.", "%+5 yükseldi.")
+
+
+def test_an_order_to_trade_and_turkish_advice_are_not_news():
+    for text in ("Buy Apple now.", "Brent rose. Sell Tesla.", "Apple satın alın.", "Hemen alın.", "Analistler alım tavsiyesi verdi.", "We recommend gold."):
+        assert check.style_problem(text), text
+    for text in ("Brent rose 3% on Tuesday.", "Apple reported results and the CEO said the buyback continues.", "The post says sellers returned."):
+        assert check.style_problem(text) is None, text

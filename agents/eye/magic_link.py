@@ -38,9 +38,9 @@ def target_of(site: Site, link: str) -> tuple[str, str]:
     """(host, path?query) of a sign-in link of this site; anything else is refused before any request."""
     parts = urlsplit(link.strip().strip("<>\"'` \n"))
     host = urlsplit(site.base).hostname
-    if parts.scheme != "https" or parts.hostname != host:
+    if parts.scheme != "https" or parts.hostname != host or parts.username or parts.password or parts.port not in (None, 443):
         raise LinkError(f"that is not a link of {host}; nothing was opened")
-    if not parts.path.startswith("/members") or not parse_qs(parts.query).get("token"):
+    if not (parts.path == "/members" or parts.path.startswith("/members/")) or not parse_qs(parts.query).get("token"):
         raise LinkError(f"that is a {host} link but not a sign-in link (it should look like https://{host}/members/?token=…); nothing was opened")
     return host, parts.path + ("?" + parts.query if parts.query else "")
 

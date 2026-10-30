@@ -52,3 +52,13 @@ def test_an_empty_draft_calls_nothing(db, monkeypatch):
     fake = FakeAI(lambda *a: {}).install(monkeypatch)
     translate.translate(Draft(), conn=db)
     assert fake.calls == []
+
+
+def test_a_turkish_translation_that_adds_advice_is_not_shown(db, monkeypatch):
+    from shared.ai.fake import FakeAI
+    from shared.bulletin.write import Draft, Item
+    import json
+    draft = Draft(items=[Item("macro", "Apple reported results.", ("W1",))])
+    FakeAI(lambda *a: json.dumps({"0": "Apple sonuç açıkladı. Apple satın alın."})).install(monkeypatch)
+    translate.translate(draft, conn=db)
+    assert draft.items[0].turkish is None and "tavsiye" in draft.items[0].turkish_flag
