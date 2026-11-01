@@ -848,6 +848,15 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     PCAR, CNH; add one when I meet one). The card gets the warning "the debt includes the finance arm …; check the figure by
     hand"; agent 3 asks no "why" question for it (nothing in the filing explains a list), a sell suggestion carries the "check the
     figure before acting" line while it is open, and `/closewarning` closes it once I have looked.
+50. **A balance-sheet line named only `Cash` counts as cash (2026-11-01).** The Sunday summary of 2026-11-01 asked me for five
+    Schlumberger (SLB) cash figures (2021–2024 and the last 4 quarters) that SEC does have: SLB tags its line as the bare `Cash`
+    (its short-term investments are a line of their own). `Cash` is now the last name of the `cash` list, tried only when the two
+    names before it are missing, so no company that has them changes. On SLB's real data: liquid assets 2024 = 4.669 bn (Cash
+    3.544 + short-term investments 1.125), grade `unclear` → `mid`. Checked the same day and **not** a gap of ours: SLB stopped
+    reporting an operating-income line after Q1 2024; ConocoPhillips' capex after 2022 and Valero's after 2024 are under their own
+    company tags, which SEC's standard data does not carry; COP's and VLO's quarterly reports do not tag stock pay. Those requests
+    stay (a figure SEC's data does not have is asked from me, never counted as zero). An open request closes by itself at the next
+    analysis that finds the figure.
 
 **When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
 cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the
