@@ -184,3 +184,19 @@ def test_a_ticker_with_a_finance_arm_gets_one_warning_and_no_other_change(monkey
 def test_the_default_finance_arm_list_names_the_big_makers():
     from shared import config
     assert {"DE", "CAT", "F", "GM"} <= {str(t).upper() for t in config.settings()["finance_arm"]}
+
+
+def test_an_approximate_operating_profit_is_not_asked_a_missing_one_is():
+    # 2026-11-01: the Sunday summary asked me for SLB's 2024 operating income although the card had it as "approximate".
+    # Dow reports no operating line; the approximation (pre-tax − interest income + interest expense) covers every year. Take
+    # its interest income out of the last 4 quarters: that period has no value and is asked; the other years are not.
+    raw = copy.deepcopy(sec_facts("DOW"))
+    f0 = Facts(copy.deepcopy(raw), sec_submissions("DOW"))
+    rows = raw["facts"]["us-gaap"]["InterestIncomeOther"]["units"]["USD"]
+    raw["facts"]["us-gaap"]["InterestIncomeOther"]["units"]["USD"] = [r for r in rows if r["end"] != f0.ttm_end]
+    f = Facts(raw, sec_submissions("DOW"))
+    r = analyse(f, "DOW", Market())
+    asked = {m["year"] for m in r.missing if m["figure"] == "operating"}
+    assert asked == {f.year_label(f.ttm_end)}
+    full = analyse(Facts(sec_facts("DOW"), sec_submissions("DOW")), "DOW", Market())
+    assert not [m for m in full.missing if m["figure"] == "operating"]      # nothing is asked when every year is covered
