@@ -33,6 +33,17 @@ def test_ko_liquid_assets_add_the_parts():
     assert set(liq.parts) == {"CashAndCashEquivalentsAtCarryingValue", "OtherShortTermInvestments", "MarketableSecurities"}
 
 
+def test_a_balance_sheet_line_named_only_cash_is_found():
+    # Schlumberger (2026-11-01): its cash line is the bare `Cash`; the Sunday summary asked me for 5 cash figures SEC does have
+    raw = sec_facts("KO")
+    gaap = raw["facts"]["us-gaap"]
+    gaap["Cash"] = gaap.pop("CashAndCashEquivalentsAtCarryingValue")
+    gaap.pop("CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", None)
+    before = facts("KO", quarters=False).liquid()["2025-12-31"]
+    after = Facts(raw, sec_submissions("KO"), quarters=False).liquid()["2025-12-31"]
+    assert "Cash" in after.parts and after.value == pytest.approx(before.value)
+
+
 def test_marketable_securities_with_a_noncurrent_line_is_not_current():
     raw = sec_facts("KO")
     rows = raw["facts"]["us-gaap"]["MarketableSecurities"]["units"]["USD"]

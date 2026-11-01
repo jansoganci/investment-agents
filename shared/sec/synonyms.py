@@ -31,7 +31,9 @@ SYNONYMS: dict[str, dict[str, list[str]]] = {
                          "GainLossOnDispositionOfAssets"],
         "acquisitions": ["PaymentsToAcquireBusinessesNetOfCashAcquired"],
         # instant (balance sheet)
-        "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
+        # `Cash` last: Schlumberger (SLB) names its balance-sheet line only "Cash" (2021 on; its short-term investments are a line of their own).
+        # Tried only when the two names before it are missing, so no company that already has them changes.
+        "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", "Cash"],
         "short_term_investments": ["ShortTermInvestments", "OtherShortTermInvestments"],
         # `MarketableSecurities` only counts when no `MarketableSecuritiesNoncurrent` is reported that year (then it is the
         # current line; Coca-Cola renamed its line in 2021). `DebtSecuritiesCurrent`: Nvidia from its July 2026 10-Q
