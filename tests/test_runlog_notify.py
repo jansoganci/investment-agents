@@ -76,3 +76,9 @@ def test_a_row_left_running_by_a_dead_process_is_closed_by_the_next_run_of_that_
     assert rows[1][2] == "running"                                      # a recent one may be a live run: left alone
     assert rows[2][2] == "running"                                      # another job's row is not touched
     assert rows[3][0] == "eye" and rows[3][2] == "ok"
+
+
+def test_a_message_can_be_asked_not_to_be_cut():
+    long = [("x" * 80)] * 80
+    assert len(notify.message("T", long)) <= notify.MAX_LEN and len(notify.message("T", long, cut=False)) > notify.MAX_LEN
+    assert "cut" not in notify.message("T", long, cut=False)

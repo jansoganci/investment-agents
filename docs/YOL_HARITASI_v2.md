@@ -863,6 +863,16 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     although its approximate 6.01 bn was on the card). Now only the years with no value are asked. Checked on 34 stocks with live
     SEC data before merging: only SLB changes (the 2024 question goes; the last-4-quarters question stays, SLB's 10-Qs tag no
     interest income); no grade or measure changes.
+52. **The Wednesday message: open items (my approval of the sample, 2026-11-01).** The Sunday summary was too long and was cut. Now: Sunday
+    = the analysis, with one line "Open items: N"; **Wednesday 20:00 = `python -m shared.open_items`**, code only, read from the database:
+    my holdings, then the stocks I watch, then candidates (a question about a candidate I do not watch drops after 4 weeks, or at
+    once when I write "archive TICKER"), then tags that wait for me (all of them, with the reason), documents wanted for non-US
+    companies, unclear grades, archive reminders, and "Resolved since last time" (compared with the list saved the week before in
+    `Weekly/<day>-open-items.json`). "Nothing open" is sent too. **Messages are not cut any more** (`notify.message(..., cut=False)`):
+    Hermes delivers a long one as several messages with (n/N) labels; the whole text is also saved in Drive. Commands in it are written
+    without the slash. Agent 3's Sunday run no longer sends the missing-figure request (`weekly(ask_missing=False)`; the one-time ask on
+    `analyze` stays). Deviation from the sample, for me to check: the watched stocks have their own section, and "drop COP" is the
+    existing `archive COP` (no new command).
 
 **When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
 cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the

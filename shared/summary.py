@@ -99,6 +99,13 @@ def spend_line(conn) -> str:
     return f"AI spend this month: ${spent:.2f}" + (f" of ${limit}" if limit else "")
 
 
+def _open_items_line(conn) -> str:
+    from shared import open_items          # the list itself comes on Wednesday 20:00 (my decision, 2026-11-01)
+    n = open_items.collect(conn).count()
+    return f"Open items: {n} (missing figures, tags that wait for me, documents wanted). The list comes on Wednesday at 20:00." if n \
+        else "Open items: none."
+
+
 def build(conn, day: str | None = None, portfolio_text: str | None = None, analysis_text: str | None = None,
           errors: list[str] | tuple = ()) -> list[str]:
     day = day or clock.today_local()
@@ -113,11 +120,7 @@ def build(conn, day: str | None = None, portfolio_text: str | None = None, analy
     if analysis_text:
         lines += ["", "Agent 3 this week:", analysis_text]
     lines += _section("Stocks with a card mentioned a lot:", carded)
-    lines += _section("Non-US companies mentioned a lot (no card: the system has no filings for them). For each, please find and send "
-                      "the last annual report, the last interim report and the latest investor presentation:", non_us)
-    lines += _section("Questions for you:", tag_questions(conn))
-    lines += _section("Data still unclear:", unclear_data(conn))
-    lines += _section("Archive reminders:", archive_reminders(conn))
+    lines += ["", _open_items_line(conn)]
     lines += ["", "Portfolio:", portfolio_text or "(the portfolio run did not give a block this week)"]
     lines += ["", spend_line(conn)]
     return lines
@@ -138,4 +141,4 @@ def latest() -> tuple[str, str] | None:
 
 
 def message(lines: list[str]) -> str:
-    return notify.message(lines[0], lines[1:])
+    return notify.message(lines[0], lines[1:], cut=False)      # never cut: Hermes sends a long one in parts (2026-11-01)

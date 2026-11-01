@@ -498,3 +498,4 @@ Kurallar: yol haritası "Morning bulletin"; yapım: `docs/BULLETIN_PLAN.md`.
 
 **Ayarlar (`settings.yaml`):** `bulletin` (`max_searches` · `post_chars` · `market` — `label` / `symbol` / `kind: yield` · `interests` — `topic` / `query`) ·
 `hours.bulletin` · `pricing.deepseek_search_per_call`.
+| açık işler mesajı | `open_items` | Çarşamba 20:00: bekleyen her şey (eksik rakamlar, etiketler, belgeler); `shared/open_items.py` (yol haritası kural 52) |

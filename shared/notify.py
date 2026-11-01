@@ -12,9 +12,10 @@ MAX_LEN = 4096  # Telegram's limit for one message
 CUT_NOTE = "… (cut; the full text is in Drive)"
 
 
-def message(title: str, lines: list[str] | tuple[str, ...] = ()) -> str:
+def message(title: str, lines: list[str] | tuple[str, ...] = (), *, cut: bool = True) -> str:
+    """`cut=False`: a long message is not cut; Hermes delivers it in parts with (n/N) labels (my decision, 2026-11-01)."""
     text = "\n".join([title, *lines])
-    if len(text) > MAX_LEN:
+    if cut and len(text) > MAX_LEN:
         text = text[: MAX_LEN - len(CUT_NOTE) - 1].rstrip() + "\n" + CUT_NOTE
     return text
 

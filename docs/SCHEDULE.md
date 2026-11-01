@@ -15,10 +15,13 @@ Every command is run from the production folder `~/Downloads/investment-agents` 
 | 4 | Alerts | every hour at :05 | `python -m shared.alerts` | only new alerts (grade drop of a holding, new solid, drop alert, auditor disagreement, OpenRouter spend) |
 | 5 | Sunday chain | Sunday 09:00 | `python -m shared.sunday` | the Sunday summary |
 | 6 | Morning bulletin (`docs/BULLETIN_PLAN.md`) | weekdays **08:10** (`10 8 * * 1-5`; it takes about 3.5 minutes, so the text arrives about 08:14) | `python -m shared.bulletin` | the bulletin in Turkish, about 6–9 thousand characters: the scheduler delivers it as 2–3 messages with (n/N) labels, a header and a footer (Air test T1). A second run on the same day prints the saved text again (`--force` builds it anew); a failed writer sends the figures with a warning and saves nothing. About 0.105 $ a day |
+| 7 | Open items | **Wednesday 20:00** (`0 20 * * 3`) | `python -m shared.open_items` | the list of everything that waits for me (my decision, 2026-11-01); code only, no model; "nothing open" is sent too; never cut (Hermes sends a long one in parts) |
 
 **Lengths:** the bulletin about 3–4 minutes (the writer model thinks for about 2.5 of them); the Eye takes up to about 35 minutes (it waits 20–30 seconds between pages); the Sunday chain about 30–60 minutes (Research
 reads and searches for up to 10 stocks, agent 3 asks SEC). The Eye's 07:00 pass ends before 09:00. Do not start the chain by hand while
 another pass of the same job runs.
+
+**Sunday and Wednesday (2026-11-01):** Sunday is the analysis (failures, candidates, card changes, agent 3's notes, mentions, portfolio, spend, one line "Open items: N"); everything that waits for me (missing figures, tags, documents for non-US companies, unclear grades, archive reminders, what was resolved) comes on Wednesday 20:00. Neither message is cut.
 
 **Order inside the Sunday chain:** Counter → Research (agent 2) → Analysis (agent 3, new filings) → Portfolio (agent 4) → the summary. A step
 that fails is named at the top of the summary and the next ones still run. The agents' own messages are not sent separately.
