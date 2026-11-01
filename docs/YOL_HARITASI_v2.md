@@ -857,6 +857,12 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     company tags, which SEC's standard data does not carry; COP's and VLO's quarterly reports do not tag stock pay. Those requests
     stay (a figure SEC's data does not have is asked from me, never counted as zero). An open request closes by itself at the next
     analysis that finds the figure.
+51. **An approximate operating profit is not asked (my approval, 2026-11-01).** When a company prints no operating line, agent 3
+    already uses pre-tax − net interest (interest income − interest expense when no net line), labelled "approximate" on the card.
+    The ledger used to ask me for every year without the printed line as soon as one year had no value at all (SLB: 2024 was asked
+    although its approximate 6.01 bn was on the card). Now only the years with no value are asked. Checked on 34 stocks with live
+    SEC data before merging: only SLB changes (the 2024 question goes; the last-4-quarters question stays, SLB's 10-Qs tag no
+    interest income); no grade or measure changes.
 
 **When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
 cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the

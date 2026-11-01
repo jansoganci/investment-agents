@@ -485,7 +485,10 @@ def analyse(facts: Facts, ticker: str, market: Market | None = None) -> Result:
         wanted.add("interest")
     if any(e not in op for e in window):
         wanted.add("operating")
-    r.missing = [m for m in facts.misses if m["figure"] in wanted and m["end"] in window]
+    # a year whose operating profit is the approximate one (pre-tax − net interest) is not asked: the card already shows it,
+    # labelled "approximate" (my decision, 2026-11-01; Schlumberger 2024). A year with no value at all is still asked.
+    r.missing = [m for m in facts.misses if m["figure"] in wanted and m["end"] in window
+                 and not (m["figure"] == "operating" and m["end"] in op)]
     for e, figs in getattr(facts, "liquid_gaps", {}).items():  # decision 2026-10-05: computed, flagged, asked
         if e not in window:
             continue
