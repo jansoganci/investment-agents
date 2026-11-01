@@ -369,7 +369,7 @@ def latest_filing(subs: dict) -> str | None:
     return None
 
 
-def weekly(conn, sources=None, today: str | None = None, *, use_ai: bool = False, run=None) -> str | None:
+def weekly(conn, sources=None, today: str | None = None, *, use_ai: bool = False, run=None, ask_missing: bool = True) -> str | None:
     """Every watching stock: a new 10-K / 10-Q / 20-F since its last entry → analyze. Archived stocks never.
     Returns a message only when something happened (an analysis or an error)."""
     src = sources or LiveSources()
@@ -391,7 +391,9 @@ def weekly(conn, sources=None, today: str | None = None, *, use_ai: bool = False
             done.append(out.text)
         except Exception as exc:  # noqa: BLE001 — one stock's error must not stop the others
             errors.append(f"{ticker}: {type(exc).__name__}: {exc}")
-    request = ask.request(conn, None, run, plain=use_ai)  # the gaps of this run, in one message (a figure is asked once, reminded once)
+    # the gaps of this run, in one message (a figure is asked once, reminded once); the Sunday chain does not ask: the list of everything
+    # that waits comes on Wednesday (shared.open_items, my decision 2026-11-01)
+    request = ask.request(conn, None, run, plain=use_ai) if ask_missing else None
     if not done and not errors and not request:
         return None
     parts = done + ([notify.message("ANALYSIS · errors", errors)] if errors else []) + ([request] if request else [])

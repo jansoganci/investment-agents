@@ -43,7 +43,7 @@ def run_chain(day: str | None = None, sources=None) -> list[str]:
 
     step("counter", count_step)
     step("research", lambda conn, r: research.weekly(conn, sources, day, r))
-    step("analysis", lambda conn, r: analysis.weekly(conn, sources, day, use_ai=True, run=r))
+    step("analysis", lambda conn, r: analysis.weekly(conn, sources, day, use_ai=True, run=r, ask_missing=False))
     step("portfolio", lambda conn, r: portfolio.weekly(conn, day))
     # Portfolio writes the pending drop-alert signals; agent 3 checks them against the latest filing right after (audit 2026-10-14, #4)
     step("drop_alerts", lambda conn, r: analysis.drop_alerts(conn, sources, day, run=r))

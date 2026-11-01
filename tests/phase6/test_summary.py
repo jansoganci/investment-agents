@@ -41,28 +41,24 @@ def test_grade_changes_and_first_analyses_of_the_week(db, env):
     assert f"- KO: grade mid → solid ({DAY})" in changes and f"- NVDA: first analysis, grade solid ({DAY})" in changes and "GE" not in changes
 
 
-def test_counter_notes_tag_questions_unclear_data_and_archive_reminders(db, env):
+def test_counter_notes_stay_on_sunday_and_everything_that_waits_moves_to_wednesday(db, env):
     run_at = clock.utc_iso()
     db.execute("INSERT INTO counts (run_at, kind, key, label, posts_7d, posts_30d, rank, has_card, points, created_at) VALUES "
                "(?, 'stock', 'KO', 'Coca-Cola', 8, 9, NULL, 1, NULL, ?), (?, 'stock', 'PEP', 'Pepsi', 3, 4, NULL, 1, NULL, ?), "
-               "(?, 'non_us', 'Tencent', 'Tencent', 8, 9, 1, 0, NULL, ?), (?, 'non_us', 'Aramco', 'Aramco', 3, 4, 2, 0, NULL, ?)",
-               (run_at, run_at) * 4)
+               "(?, 'non_us', 'Tencent', 'Tencent', 8, 9, 1, 0, NULL, ?)", (run_at, run_at) * 3)
     tag(db, "Standard Oil", status="waiting")
-    tag(db, "Uranyum", "sector", subsector="other")
     xx = stock(db, "XX", grade="unclear")
-    stock(db, "YY", grade="solid")
-    zz = stock(db, "ZZ", grade="mid")
-    entry(db, zz, "mid"), entry(db, zz, "weak")
-    kept = stock(db, "KEEP", grade="mid", in_portfolio="yes")
-    entry(db, kept, "mid"), entry(db, kept, "weak")
     db.execute("INSERT INTO missing_data (stock_id, figure, status, created_at) VALUES (?, 'interest', 'open', 'x')", (xx,))
     db.commit()
     text = "\n".join(summary.build(db, DAY))
-    assert "- KO (8 posts)" in text and "PEP" not in text and "- Tencent (8 posts)" in text
-    assert "last annual report, the last interim report and the latest investor presentation" in text and "Aramco" not in text    # 3 posts: below the bar
-    assert "1 tag(s) wait for you" in text and "Standard Oil" in text and "fit no approved subsector: Uranyum" in text
-    assert "- grade unclear: XX" in text and "1 missing figure(s) are still open" in text
-    assert "- ZZ: not solid on its last two cards (mid → weak) — archive it? /archive ZZ" in text and "KEEP" not in text.split("Archive reminders:")[1]
+    assert "- KO (8 posts)" in text and "PEP" not in text                                # the stocks mentioned a lot stay on Sunday
+    for moved in ("Tencent", "Standard Oil", "grade unclear", "Archive reminders", "Questions for you", "Data still unclear"):
+        assert moved not in text                                                         # these are Wednesday's now
+    assert "Open items: 4 (missing figures, tags that wait for me, documents wanted). The list comes on Wednesday at 20:00." in text
+
+
+def test_with_nothing_waiting_sunday_says_so(db, env):
+    assert "Open items: none." in summary.build(db, DAY)
 
 
 def test_errors_are_first_and_the_portfolio_and_agent_3_text_are_kept(db, env):
@@ -80,9 +76,9 @@ def test_the_summary_is_saved_in_drive_and_the_command_shows_the_latest(db, env)
     assert (env["drive"] / "Weekly" / "2026-10-11-summary.md").exists()
 
 
-def test_the_message_is_cut_for_telegram_but_the_file_is_whole(db, env):
+def test_the_sunday_message_is_not_cut_and_the_file_is_whole(db, env):
     lines = ["SUNDAY SUMMARY · x"] + ["- " + "word " * 40] * 60
-    assert len(summary.message(lines)) <= 4096
+    assert len(summary.message(lines)) > 4096 and "(cut" not in summary.message(lines)       # Hermes sends a long one in parts
     assert len(summary.save("2026-10-11", lines).read_text()) > 4096
 
 
@@ -149,8 +145,9 @@ def test_a_non_us_name_in_the_ignore_list_is_not_asked_for(db, env, monkeypatch)
                "(?, 'non_us', '2222.SR', 'Aramco', 18, 20, 1, 0, NULL, ?), (?, 'non_us', '0700.HK', 'Tencent', 9, 9, 2, 0, NULL, ?)",
                (run_at, run_at) * 2)
     db.commit()
-    from shared import config
+    from shared import config, open_items
     settings = dict(config.settings(), counter=dict(config.settings().get("counter") or {}, non_us_ignore=["2222.sr"]))
     monkeypatch.setattr(config, "settings", lambda: settings)
-    text = "\n".join(summary.build(db, DAY))
+    text = "\n".join(open_items.build(db, DAY)[0])             # the documents for non-US companies are asked on Wednesday
     assert "- Tencent (9 posts)" in text and "Aramco" not in text
+    assert "Tencent" not in "\n".join(summary.build(db, DAY))

@@ -122,7 +122,8 @@ def chain(db, env, monkeypatch):
     calls = []
     monkeypatch.setattr(count, "count", lambda conn, *a, **k: calls.append("counter"))
     monkeypatch.setattr(research, "weekly", lambda conn, sources, day, r: calls.append("research") or "RESEARCH\nNot researched — ZZZZ: SEC does not know it")
-    monkeypatch.setattr(analysis, "weekly", lambda conn, sources, day, use_ai, run: calls.append("analysis") or "ANALYSIS · NVDA new 10-Q")
+    monkeypatch.setattr(analysis, "weekly", lambda conn, sources, day, use_ai, run, ask_missing=True:
+                        calls.append("analysis" if not ask_missing else "analysis-ASKED") or "ANALYSIS · NVDA new 10-Q")   # Sunday does not ask
     monkeypatch.setattr(portfolio, "weekly", lambda conn, day: calls.append("portfolio") or "PORTFOLIO · $1,596")
     monkeypatch.setattr(analysis, "drop_alerts", lambda conn, sources, day, run=None: calls.append("drop_alerts") or "DROP ALERT · NVDA — thesis intact: fine")
     return calls
