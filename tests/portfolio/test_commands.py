@@ -120,3 +120,32 @@ def test_bes(db, monkeypatch):
     assert "are you sure" not in commands.run(["bes", "8670", "253000"])[1]
     assert do("undo", "1")[0] == 0
     assert db.execute("SELECT void FROM other_assets").fetchone()[0] == 1
+
+
+def test_a_repeated_yes_does_not_record_the_trade_twice(db, env, monkeypatch):
+    """Security audit 2026-11-07, T4: the same --yes line run twice wrote two buy rows."""
+    setup(db, monkeypatch)
+    make_card("KO", "Coca-Cola Co")
+    assert do("bought", "10", "KO", "71", "2026-10-08")[0] == 0
+    code, text = do("bought", "10", "KO", "71", "2026-10-08")
+    assert code == 1 and "looks like a repeat" in text and "change #1" in text
+    assert "bought 10 KO 71 2026-10-08 again" in text
+    assert held(db) == 10
+    code, text = do("bought", "10", "KO", "71", "2026-10-08", "again")  # a second, real trade
+    assert code == 0 and held(db) == 20
+    assert do("bought", "5", "KO", "71", "2026-10-08")[0] == 0  # another quantity is another trade
+    assert do("sold", "4", "KO", "72")[0] == 0
+    code, text = do("sold", "4", "KO", "72")
+    assert code == 1 and "looks like a repeat" in text and held(db) == 21
+    assert do("sold", "4", "KO", "72", "again")[0] == 0 and held(db) == 17
+
+
+def test_the_same_trade_after_ten_minutes_or_after_undo_is_recorded(db, env, monkeypatch):
+    setup(db, monkeypatch)
+    make_card("KO", "Coca-Cola Co")
+    assert do("bought", "10", "KO", "71", "2026-10-08")[0] == 0
+    do("undo")                                                   # a voided row is not a repeat
+    assert do("bought", "10", "KO", "71", "2026-10-08")[0] == 0
+    freeze(monkeypatch, "2026-10-09", hour=13)                   # an hour later
+    assert do("bought", "10", "KO", "71", "2026-10-08")[0] == 0
+    assert held(db) == 20

@@ -126,6 +126,18 @@ def test_data_enters_a_figure_with_a_plausibility_check(db, env):
     assert db.execute("SELECT void FROM financials WHERE source='user'").fetchone()[0] == 1
 
 
+def test_the_same_figure_twice_is_not_written_twice(db, env):
+    """Security audit 2026-11-07, T4: the same --yes line run twice wrote two user rows; a new value is a correction."""
+    run.analyze(db, "RIVN", FixtureSources(), today="2026-10-05")
+    assert do("data", "RIVN", "2024", "debt", "4.4bn")[0] == 0
+    code, text = do("data", "RIVN", "2024", "debt", "4.4bn")
+    assert code == 1 and "Already entered" in text and "change #1" in text
+    assert do("data", "RIVN", "2024", "debt", "4.5bn")[0] == 0  # a correction
+    assert do("data", "RIVN", "2024", "debt", "4.4bn")[0] == 0  # back to the first value: the latest differs
+    rows = db.execute("SELECT value FROM financials WHERE source='user' AND void=0 ORDER BY id").fetchall()
+    assert rows == [(4.4e9,), (4.5e9,), (4.4e9,)]
+
+
 def test_data_refusals(db):
     assert commands.run(["data", "KO", "2025", "debt", "1bn"])[0] == 1  # no such stock yet
     do("watch", "KO")

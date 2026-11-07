@@ -1,7 +1,10 @@
 """Phase 3 commands (roadmap section 10.2): my money.
 
-    /bought 10 KO 85.65 [2026-10-08] [fee]   a `buy` row; on the first buy in_portfolio = yes and a card note
-    /sold 5 KO 92.10 [2026-10-08] [fee]      a `sell` row; never more than I hold; at 0 in_portfolio = no and a card note
+    /bought 10 KO 85.65 [2026-10-08] [fee] [again]   a `buy` row; on the first buy in_portfolio = yes and a card note
+    /sold 5 KO 92.10 [2026-10-08] [fee] [again]      a `sell` row; never more than I hold; at 0 in_portfolio = no and a card note
+
+A repeat is refused: the same trade (kind, ticker, date, quantity, price, fee) entered in the last 10 minutes is taken for a
+second "yes" to the same message, not a second trade (security audit 2026-11-07, T4). Two real, identical trades: add `again`.
     /gold 1 4689                             grams and the TL price per gram (a sale: minus grams) → `other_assets`
     /bes 8670 245000                         this month's BES payment and the BES total (TL) → `other_assets`
     /portfolio                               the portfolio block (information)
@@ -23,6 +26,7 @@ from shared.commands.stocks import _card_note, _stock
 PRICE_GAP = 0.20
 BES_GAP = 0.50
 CLOSE_MAX_GAP_DAYS = 5  # "that day's close": the close of that day, or of the last trading day before it
+REPEAT_MINUTES = 10     # the same trade again within this time is taken for a repeated "yes"
 
 
 def _num(text: str, what: str) -> float:
@@ -35,8 +39,11 @@ def _num(text: str, what: str) -> float:
     return x
 
 
-def _trade_args(name: str, args: list[str]) -> tuple[float, str, float, str, float]:
-    usage = f"/{name} 10 KO 85.65 [YYYY-MM-DD] [fee]"
+def _trade_args(name: str, args: list[str]) -> tuple[float, str, float, str, float, bool]:
+    usage = f"/{name} 10 KO 85.65 [YYYY-MM-DD] [fee] [again]"
+    again = bool(args) and args[-1].lower() == "again"
+    if again:
+        args = args[:-1]
     if not 3 <= len(args) <= 5:
         raise Refused(f"usage: {usage}")
     qty = _num(args[0], "the quantity")
@@ -60,7 +67,21 @@ def _trade_args(name: str, args: list[str]) -> tuple[float, str, float, str, flo
         raise Refused(f"Not a date: {day} (YYYY-MM-DD).") from None
     if day > clock.today_local():
         raise Refused(f"{day} is in the future.")
-    return qty, ticker, price, day, fee
+    return qty, ticker, price, day, fee, again
+
+
+def _repeat_check(conn, name: str, kind: str, stock: dict, day: str, qty: float, price: float, fee: float) -> None:
+    """Refuse the same trade entered in the last REPEAT_MINUTES (a second "yes" to the same message)."""
+    from datetime import timedelta
+
+    since = clock.utc_iso(clock.now_utc() - timedelta(minutes=REPEAT_MINUTES))
+    row = conn.execute("SELECT command_id, created_at FROM holdings WHERE kind=? AND stock_id=? AND date=? AND quantity=? "
+                       "AND price=? AND fee=? AND void=0 AND created_at >= ? ORDER BY id DESC LIMIT 1",
+                       (kind, stock["id"], day, qty, price, fee, since)).fetchone()
+    if row:
+        raise Refused(f"This looks like a repeat: the same {kind} was recorded a moment ago (change #{row[0]}). "
+                      f"Nothing was written. If it is a second, real trade, add the word again: "
+                      f"{name} {qty:g} {stock['ticker']} {price:g} {day} again")
 
 
 def _price_check(conn, ticker: str, day: str, price: float) -> str:
@@ -108,8 +129,10 @@ def _set_in_portfolio(conn, stock: dict, number: int, why: str) -> str:
 
 
 def _bought(conn, args):
-    qty, ticker, price, day, fee = _trade_args("bought", args)
+    qty, ticker, price, day, fee, again = _trade_args("bought", args)
     stock = _known(conn, ticker)
+    if not again:
+        _repeat_check(conn, "bought", "buy", stock, day, qty, price, fee)
     total = qty * price + fee
     preview = [f"a buy row: {qty:g} {ticker} at ${price:,.2f} on {day}" + (f" + fee ${fee:,.2f}" if fee else "")
                + f" = ${total:,.2f}",
@@ -128,8 +151,10 @@ def _bought(conn, args):
 
 
 def _sold(conn, args):
-    qty, ticker, price, day, fee = _trade_args("sold", args)
+    qty, ticker, price, day, fee, again = _trade_args("sold", args)
     stock = _known(conn, ticker)
+    if not again:
+        _repeat_check(conn, "sold", "sell", stock, day, qty, price, fee)
     have = _held(conn, stock["id"], upto=day)
     if qty > have + 1e-9:
         raise Refused(f"You hold {have:g} {ticker} on {day}; a sale of {qty:g} is more than that.")

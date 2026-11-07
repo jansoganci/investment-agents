@@ -873,6 +873,12 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     without the slash. Agent 3's Sunday run no longer sends the missing-figure request (`weekly(ask_missing=False)`; the one-time ask on
     `analyze` stays). Deviation from the sample, for me to check: the watched stocks have their own section, and "drop COP" is the
     existing `archive COP` (no new command).
+53. **A repeated "yes" writes nothing; a non-JSON SEC answer is an SEC error (my approval, 2026-11-07; security audit T3 b/c and T4).**
+    `bought` / `sold`: the same trade (kind, ticker, date, quantity, price, fee) recorded in the last 10 minutes and not undone is refused
+    as a repeat; two real identical trades: add the word `again` at the end. `data`: the same value for the same stock, figure and
+    period as the latest user row is refused ("Already entered"); a different value is a correction and is written. The SEC client
+    turns an answer that is not JSON (an HTML page with status 200, a cut download) into `SecError`. Not done (my decision): a company
+    identity check on `companyfacts` (the URL already names the CIK) · the 3-hour rule for a killed job's `running` row stays as it is.
 
 **When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
 cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the

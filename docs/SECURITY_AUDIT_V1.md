@@ -102,6 +102,22 @@ These failures belong to **trial code**, not a deployed service. The production 
 
 Cases A1, A3, A4, C1–C4, F2–F4 and the combined unanswered-confirmation scenario are `not_tested`: their runtime components do not exist. Whether the finished system pauses unnecessarily or binds confirmations correctly remains unanswered until Hermes and the scheduled agents are implemented.
 
+## Second bounded execution — current main, 2026-11-07
+
+Hermes on the Air, fresh clone of `55a618a` in `~/audit-2026-11-07`, test database and cards, no model keys; production HEAD and `git status` unchanged before and after.
+
+| Test | Observed | Status | Decision |
+|---|---|---|---|
+| T1 pytest | 891 passed | pass | — |
+| T2 golden set, live SEC, numbers only | 10/10 (KO `solid` with the last 4 quarters, as expected) | pass | — |
+| T3a SEC 429 / 500 | `SecError` | pass | — |
+| T3b/c HTML with status 200, cut JSON | `JSONDecodeError`, not `SecError` (the weekly run goes on per stock) | fail | **fixed**: `shared/sec._get` raises `SecError` (roadmap rule 53) |
+| T3d companyfacts of another CIK | accepted | fail | **not fixed** (owner's decision): the request URL names the CIK; no realistic path |
+| T4 repeated `--yes` | `watch` idempotent; `bought` and `data` wrote a second row | fail | **fixed**: repeat guard on `bought` / `sold` (10 min, `again`) and `data` (same value) — roadmap rule 53 |
+| T5 job killed mid-run | card and `card_entries` intact, no duplicate; `runs` row stays `running` | pass (by design) | closed by the next run of the job after 3 hours (`runlog.ABANDONED_AFTER`); Hermes reran at once |
+
+Not tested: C3 (another Telegram user — Hermes' gateway), the combined unanswered-confirmation case (Hermes cannot test its own approval queue), the archived prototype (first execution above).
+
 ## How to run each audit pass
 
 1. Record commit, dirty worktree state, exact paths, and what is still unimplemented.
