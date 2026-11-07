@@ -66,7 +66,13 @@ def _get_bytes(url: str, tries: int = 3) -> bytes:
 
 
 def _get(url: str, tries: int = 3) -> dict:
-    return json.loads(_get_bytes(url, tries))
+    """A body that is not JSON (an HTML error page with status 200, a cut download) is a SecError like any other SEC
+    failure, so callers handle one kind of error (security audit 2026-11-07, T3 b/c)."""
+    body = _get_bytes(url, tries)
+    try:
+        return json.loads(body)
+    except (ValueError, UnicodeDecodeError) as exc:  # json.JSONDecodeError is a ValueError
+        raise SecError(f"SEC answered with something that is not JSON for {url}") from exc
 
 
 def cik10(cik: str | int) -> str:

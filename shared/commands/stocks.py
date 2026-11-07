@@ -383,6 +383,10 @@ def _data(conn, args):
     if figure not in FIGURES:
         raise Refused(f"Unknown figure {figure!r}. Known: {', '.join(FIGURES)}.")
     value = _amount(raw)
+    last = conn.execute("SELECT value, command_id FROM financials WHERE stock_id=? AND figure=? AND period_end=? AND source='user' "
+                        "AND void=0 ORDER BY id DESC LIMIT 1", (stock["id"], figure, year)).fetchone()
+    if last and last[0] == value:  # a second "yes" to the same message (security audit 2026-11-07, T4); a new value is a correction
+        raise Refused(f"Already entered: {ticker} · {figure} · {year} = {value:,.0f} (change #{last[1]}). Nothing was written.")
     others = [v for (v,) in conn.execute(
         "SELECT value FROM financials WHERE stock_id=? AND figure=? AND source='sec' AND void=0 AND value IS NOT NULL",
         (stock["id"], figure))]
