@@ -1255,6 +1255,7 @@ Topic notes:
 - ~~**Agent 4 rules.**~~ ✅ section 3, "Agent 4 rules". No market-filter selling in v1; later idea: shrink the portfolio on a macro reason (e.g. rising rates).
 - ~~**Site terms of use.**~~ ✅ The site owner gave permission (see section 4, Site reading).
 - **HK / A-share data** (⏸ deferred — version 1 is US only). Which figures will be taken from the PDF by hand / by AI. Note: US filings do not need PDF / OCR (SEC figures are a ready table). Most HK / A PDFs contain text → read with a free Python library; OCR only for a scanned (image) PDF, and that too is free on the computer.
+- **PDF reader (2026-11-07) — discussed, not built.** A broker research PDF becomes one email. It is not wired to the card or the 10 measures, and it is not the HK / A-share filing reader in the line above. Full note: `docs/PDF_READER_PLAN.md`.
 
 ## 10. Implementation plan
 
