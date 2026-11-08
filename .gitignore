@@ -10,3 +10,6 @@ __pycache__/
 *.sqlite.tmp
 *.db
 .DS_Store
+
+# Broker research PDFs: local samples only, never committed (docs/PDF_READER_PLAN.md 8.6)
+docs/pdf-samples/
