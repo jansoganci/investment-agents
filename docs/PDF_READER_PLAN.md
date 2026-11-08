@@ -387,7 +387,7 @@ Known limit: a wrong sentence with no figure in it (a side point written as the 
 
 ### 10.4 Still open
 
-- The new wording of fixed rule 5 in `AGENTS.md` (I said it will be revised).
+- ~~Fixed rule 5.~~ Revised in `AGENTS.md` (2026-11-08): a new feature starts when I say so; each piece is built and tried one at a time; nothing half-built reaches the Air. Building can start.
 
 ### 10.5 Settled after locking (2026-11-08)
 
