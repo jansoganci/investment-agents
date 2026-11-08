@@ -106,9 +106,10 @@ Patience is part of the method. One email is not one buy.
 The list of 2026-11-07, as it stands after section 8. Struck lines are decided.
 
 - ~~The model.~~ Decided, 8.1.
-- How the mail is sent. My address is decided (8.2). The kind of Gmail permission is not.
-- Which Drive folder receives the PDFs. The flow is decided (8.3). The folder names are not.
-- The command name. A run picks up a new file (8.3). How often is not decided.
+- ~~How the mail is sent.~~ Decided: my address (8.2), Gmail "send only" (8.7).
+- ~~Which Drive folder receives the PDFs.~~ Decided: `Investing/PDF/New/` (8.7).
+- The command name. A run picks up a new file (8.3), three times a day (8.7). The name is not decided.
+- The PDF reading rules (8.9): the next talk.
 - ~~Where a copy of the email is kept.~~ Decided, 8.4: nowhere.
 - ~~What to do about houses that forbid putting their text into an AI system.~~ Decided, 8.5.
 - ~~Whether `.gitignore` should ignore `docs/pdf-samples/`.~~ Decided and done, 8.6.
@@ -123,12 +124,13 @@ Still no code. Building waits for a separate "yes" and for a fixed-rule-5 except
 4. **No copy:** the content of the mail is not saved anywhere else. The mail is the record. The third folder ("Z", an analysis file next to the PDF) is dropped, because it would hold the same text as the mail.
 5. **Houses that forbid AI use:** ignored, by my decision. What still holds: the PDFs never enter git (the repo is public, 8.6), and the mail goes only to me.
 6. **`.gitignore`:** `docs/pdf-samples/` is ignored. Done in the same commit as this section.
-7. **Claude's proposals, not yet confirmed by me:**
-   - folder names `Investing/PDF/New/` → `Investing/PDF/Done/`; after 3 failed reads → `Investing/PDF/Failed/` and a one-line "could not read" mail;
-   - Hermes looks at `New/` every 30 minutes (an empty folder costs nothing) and waits until Drive has finished syncing a file;
-   - Gmail permission "send only" (the program cannot read my mail; an app password would open the whole mailbox);
-   - the PDF goes to the model with its page images, not as plain text (needed for Goldman's boxes and the charts; `shared/ai` sends only text today, so this is a small addition);
-   - a code check that every figure in the mail appears in the PDF (no model cost; the bulletin already has a similar check).
+7. **Claude's proposals of the morning, settled the same day (my answers):**
+   - **Folders (approved):** `Investing/PDF/New/` (I drop the PDF here) → `Investing/PDF/Done/` (after the mail) · `Investing/PDF/Failed/` (a file that could not be read). How many tries before `Failed/` is part of the reading rules (8.9).
+   - **When (changed by me):** not every 30 minutes. Three looks a day, Turkey time: **10:00, 16:00, 22:00**. A look at an empty folder costs nothing. The look waits until Drive has finished syncing a file.
+   - **Gmail (approved):** the "send only" permission. The program cannot read my mail.
+   - **Reading (approved):** the text **and** the charts are read. The PDF goes to the model with its page images, not as plain text only (Goldman's boxes, Nike's charts, the memory note's point). `shared/ai` sends only text today; this is an addition.
+   - **Figure check (approved):** every figure in the mail is checked against the figures in the PDF.
 8. **Not given yet:** the fixed-rule-5 exception that building needs.
+9. **Next talk (my note, 2026-11-08):** the PDF reading rules. They must be strict, and the system must work properly. Open in that talk: how many tries before `Failed/`, what the figure check does when a figure is not found, and the rules for reading the text and the charts.
 
 Cost estimate (not measured; the first trial measures it): a 7-page PDF a few cents, a 67-page PDF about 0.20–0.40 $. The system spends about 21 $ a month against the 30 $ limit, so about 25–40 large PDFs a month fit.
