@@ -62,6 +62,7 @@ agents/counter/            phase 5 (built early): 1B — count; python -m agents
 agents/research/           phase 5 (built early): agent 2 — health, tailwind, score, reading, news, page, run; python -m agents.research [TICKER]
 agents/eye/                phase 4: agent 1 — sites, http, sitemap, extract, store, run, sentence, inbox, tags, modeltest, session_check, set_cookie;
                            python -m agents.eye [--accept-many] · .session_check emtia|dragonomi · .modeltest
+agents/pdf_reader/   PDF reader steps 1–2 (gate, page sorter): paths, files, registry, gate, visible, pagekind, disclosure, continuation, images, sorter; python -m agents.pdf_reader
 tests/                     uv run pytest -q; sample data in tests/fixtures/ (sec/, yahoo/)
 shared/bulletin/    the morning bulletin (2026-10-28/29): market, gather, write, check, translate, render, run; python -m shared.bulletin [--dry|--force|--show|--market|--gather|--draft]
 shared/search.py    the DeepSeek web search; shared/commands/search.py = the `search` command; shared/prices/mof.py = Japan 10Y
