@@ -1,6 +1,7 @@
 ---
 doc: PDF reader — decision note
 date: 2026-11-07
+updated: 2026-11-08 (section 8)
 status: discussed, not built
 publish: no
 ---
@@ -47,7 +48,7 @@ The six files stay in `docs/pdf-samples/`. They are broker research. They are no
 5. The 10 measures are not computed from the PDF. They run only after I say "track this stock", and they run on the company's own filing, as they do today.
 6. The same five questions are asked of every PDF (section 5). There is no second score.
 7. The email shape in section 4 stays. I said "kalsın" to that shape and to the five questions.
-8. Which model reads the PDF is not chosen. Mail sending does not exist in this project today. Both wait for a later yes.
+8. Which model reads the PDF is not chosen. Mail sending does not exist in this project today. Both wait for a later yes. (2026-11-08: the model is chosen and the mail goes from my own address; see section 8.)
 
 ## 4. The email (approved)
 
@@ -102,10 +103,32 @@ Patience is part of the method. One email is not one buy.
 
 ## 7. Not decided
 
-- The model.
-- How the mail is sent.
-- Which Drive folder receives the PDFs.
-- The command name, and whether a run is by hand or picks up a new file.
-- Where a copy of the email is kept.
-- What to do about houses that forbid putting their text into an AI system.
-- Whether `.gitignore` should ignore `docs/pdf-samples/`. The six samples are not committed. Ignoring that folder is a one-line change and waits for a yes.
+The list of 2026-11-07, as it stands after section 8. Struck lines are decided.
+
+- ~~The model.~~ Decided, 8.1.
+- How the mail is sent. My address is decided (8.2). The kind of Gmail permission is not.
+- Which Drive folder receives the PDFs. The flow is decided (8.3). The folder names are not.
+- The command name. A run picks up a new file (8.3). How often is not decided.
+- ~~Where a copy of the email is kept.~~ Decided, 8.4: nowhere.
+- ~~What to do about houses that forbid putting their text into an AI system.~~ Decided, 8.5.
+- ~~Whether `.gitignore` should ignore `docs/pdf-samples/`.~~ Decided and done, 8.6.
+
+## 8. Decisions of 2026-11-08 (mine)
+
+Still no code. Building waits for a separate "yes" and for a fixed-rule-5 exception (8.8).
+
+1. **Model:** `gpt-6-sol`, the model already in `settings.yaml` and already working. No new model, no new provider.
+2. **Mail:** from my own Gmail address to my own address. I open the access myself.
+3. **Flow:** I drop a PDF into a folder in Drive. The system reads it, sends the mail, and moves the PDF to a second folder. The Air already has Drive as a local folder (`DRIVE_DIR` = `Investing/`, the same way the bulletin and the Sunday summary are written), so no Drive API is needed.
+4. **No copy:** the content of the mail is not saved anywhere else. The mail is the record. The third folder ("Z", an analysis file next to the PDF) is dropped, because it would hold the same text as the mail.
+5. **Houses that forbid AI use:** ignored, by my decision. What still holds: the PDFs never enter git (the repo is public, 8.6), and the mail goes only to me.
+6. **`.gitignore`:** `docs/pdf-samples/` is ignored. Done in the same commit as this section.
+7. **Claude's proposals, not yet confirmed by me:**
+   - folder names `Investing/PDF/New/` → `Investing/PDF/Done/`; after 3 failed reads → `Investing/PDF/Failed/` and a one-line "could not read" mail;
+   - Hermes looks at `New/` every 30 minutes (an empty folder costs nothing) and waits until Drive has finished syncing a file;
+   - Gmail permission "send only" (the program cannot read my mail; an app password would open the whole mailbox);
+   - the PDF goes to the model with its page images, not as plain text (needed for Goldman's boxes and the charts; `shared/ai` sends only text today, so this is a small addition);
+   - a code check that every figure in the mail appears in the PDF (no model cost; the bulletin already has a similar check).
+8. **Not given yet:** the fixed-rule-5 exception that building needs.
+
+Cost estimate (not measured; the first trial measures it): a 7-page PDF a few cents, a 67-page PDF about 0.20–0.40 $. The system spends about 21 $ a month against the 30 $ limit, so about 25–40 large PDFs a month fit.
