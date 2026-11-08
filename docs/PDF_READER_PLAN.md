@@ -398,3 +398,5 @@ Known limit: a wrong sentence with no figure in it (a side point written as the 
 - **Command (Claude's choice):** `python -m agents.pdf_reader`, the same shape as the other agents.
 - **Working files (Claude's choice):** under the Air's data folder, `~/investment-agents-data/pdf_work/<fingerprint>/` (not in Drive). Deleted as soon as the mail is sent. A file that goes to `Failed/` keeps its working files 14 days so the reason can be seen, then they are deleted.
 - **The outside review prompt** is not kept; it was a one-time tool.
+- **Where the code lives (my decision):** in this repo, in its own folder `agents/pdf_reader/`, as a self-contained part: it calls nothing from the other agents and has its own tests, so it can be moved to its own repo later if it ever becomes a product.
+- **Building moves to Cursor on the main Mac (my decision).** Tests use small PDFs made by the tests themselves, never the bank samples (they are not in git). The pieces may reach `main` one by one; Hermes gets no `pdf_reader` job until all seven steps work (fixed rule 5).
