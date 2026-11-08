@@ -338,7 +338,7 @@ Each step is its own module with one job. The steps do not know each other; each
 
 **Step 1, gate**
 1. A PDF is known by its content fingerprint. The same file, even renamed, never gets a second mail.
-2. A file that cannot be opened (broken, password) goes to `Failed/` at once. A read that fails is tried again at the next look; after three looks the file goes to `Failed/` and I get a one-line mail.
+2. A file that Drive is still syncing is left for the next look (decided in 8.7; it was missing here). A file that cannot be opened (broken, password) goes to `Failed/` at once. A read that fails is tried again at the next look; after three looks the file goes to `Failed/` and I get a one-line mail.
 
 **Step 2, page sorter**
 
