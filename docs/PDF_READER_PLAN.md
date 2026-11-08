@@ -280,7 +280,7 @@ PaddleOCR-VL reads on the machine: the page and its text do not leave the Air. I
 - **DeepSeek is not used for reading** (52 / 62).
 - We go on with what we have.
 
-Still to do once: PaddleOCR-VL run on the Air with the network off · confirm Codex was blind in the trial (no answer-key or scoring file in `~/paddle-trial/` while it ran).
+Still to do once: confirm Codex was blind in the trial (no answer-key or scoring file in `~/paddle-trial/` while it ran). The run with the network off is dropped (my decision, 2026-11-08).
 
 ### 9.6 Still open
 
@@ -290,7 +290,7 @@ Still to do once: PaddleOCR-VL run on the Air with the network off · confirm Co
 - How the blind read (rule 14) is cut: the whole page or only the table area.
 - ~~The Mac trial of PaddleOCR-VL and of a blind Codex read (9.6a, Ö6).~~ Done on the Air, 9.6b.
 - ~~The DeepSeek image-reading trial (9.6b).~~ Done, 9.6c: the second reader is PaddleOCR-VL; MinerU 2.5 is the backup.
-- The one-time checks in 9.6c: PaddleOCR-VL with the network off; Codex's blindness in the trial.
+- The one-time check in 9.6c: Codex's blindness in the trial (the network-off run is dropped).
 - Locking the rules: version 2 (9.5) plus 9.6a, after the trial.
 - When the working files are deleted.
 - Where the outside review prompt is kept (it is not in the repo).
