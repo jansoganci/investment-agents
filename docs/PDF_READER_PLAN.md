@@ -315,7 +315,7 @@ My "yes" to gather everything into one list (2026-11-08). Nothing new is decided
 | What is read | **All content pages**, text **and** charts. No page cap. No time limit: slow is fine, wrong is not. |
 | Born-digital page | Read by **code** (pdfplumber): figures come from the PDF's own text. |
 | Main reader (meaning, charts, scanned pages) | **Codex** with my ChatGPT subscription (`sol-6.1` or another ChatGPT model I choose); page images go to it. No API key, no extra cost. |
-| Second reader on scanned pages | **PaddleOCR-VL** (local, free, version 1 locked). Backup: MinerU 2.5, not installed. DeepSeek is not used for reading. |
+| Second reader on scanned pages | **A second, blind Codex read** of the same page (changed 2026-11-08, 10.5). PaddleOCR-VL, MinerU and DeepSeek are not used. |
 | Mail | From my own Gmail to me, Gmail "send only" permission. Shape: section 4. Questions: section 5. |
 | Copies | No copy of the mail is kept; the mail is the record. Working files stay only on the Air's disk and are temporary. |
 | Houses that forbid AI use | Ignored (my decision). The PDFs never enter git (`.gitignore`: `docs/pdf-samples/`). |
@@ -329,7 +329,7 @@ Each step is its own module with one job. The steps do not know each other; each
 | 1. Gate | code | Finds a new PDF in `New/`, knows it by its content, sends a broken or locked file to `Failed/`. | the queue |
 | 2. Page sorter | code | Labels every page (written / scanned, content / disclosure), drops invisible text, spots tables that run over pages, makes page images. | page list + images |
 | 3. Reader | code on written pages; Codex on charts and scanned pages | Only reads, does not judge. Writes every page as plain text and tables, every figure with its owner, period and page. | reading file (Markdown) |
-| 4. Figure checker | code; PaddleOCR-VL on scanned pages | Checks every figure against its page; gives each checked figure a number (F1, F2 …). | checked reading file |
+| 4. Figure checker | code; a second blind Codex read on scanned pages | Checks every figure against its page; gives each checked figure a number (F1, F2 …). | checked reading file |
 | 5. Analyst | Codex | Never sees the PDF, only the checked reading file. Answers the five questions; writes figure numbers, not figures. | answer file |
 | 6. Answer checker | code | Puts the checked figures in place of their numbers, checks quotes and advice words. | approved answer |
 | 7. Mailer | code (fixed template) | Builds and sends the mail, moves the PDF to `Done/`. | the mail |
@@ -361,7 +361,7 @@ Each step is its own module with one job. The steps do not know each other; each
 **Step 4, figure checker**
 
 15. A written page: the figure must appear in that page's text, on the same line or table row as its owner. Format differences count as equal (1,396,000 = 1.396.000).
-16. A scanned page: its old machine-read text is not trusted. PaddleOCR-VL reads the page image on its own, **without being shown the candidate figure**, and code compares the two readings. Same value: the figure passes. Different: the figure is removed.
+16. A scanned page: its old machine-read text is not trusted. Codex reads the page image a second time, in a separate call, **without being shown the first reading or any candidate figure**, and code compares the two readings. Same value: the figure passes. Different: the figure is removed.
 17. Currency and scale are part of a figure (JPY, KRW, $, %, bp, x, mn, bn). Million is never billion; 49,000 JPY is never shortened.
 18. A figure that does not pass is removed and counted. A figure that passes gets a number (F1, F2 …).
 
@@ -387,10 +387,14 @@ Known limit: a wrong sentence with no figure in it (a side point written as the 
 
 ### 10.4 Still open
 
-- The fixed-rule-5 exception (8.8) — building starts only after it.
-- The command name.
-- Codex's real limits: how many page images in one call, how many calls a day, and so how a long PDF is split into calls. Its page-7 log in the trial was 2.3 MB, so it may run helper steps of its own; to measure when building.
-- PaddleOCR-VL reads the whole page (as in the trial); cutting only the table area is looked at only if it misses tables.
-- When MinerU 2.5 is tried: only if PaddleOCR-VL loses many figures in real reads.
-- When the working files are deleted.
-- Where the outside review prompt is kept (it is not in the repo).
+- The new wording of fixed rule 5 in `AGENTS.md` (I said it will be revised).
+
+### 10.5 Settled after locking (2026-11-08)
+
+- **PaddleOCR-VL is dropped (my decision).** The second reader on a scanned page is a second, blind Codex read (rule 16). MinerU is dropped with it. Known limit: both readings come from the same model, so a mistake both make the same way is not caught; in the trial Codex read 62 of 62 cells right.
+- **Codex's limits:** the trial read dense scanned pages right (62 / 62). Each page goes to Codex in its own call, as in the trial. If the subscription's usage limit stops a run, the file simply waits for the next look (rule 2).
+- **Gmail "send only":** set up once on the Air before step 7; Claude gives the steps when step 7 is built. Not asked again.
+- **The mail is Turkish.** The analyst writes Turkish directly.
+- **Command (Claude's choice):** `python -m agents.pdf_reader`, the same shape as the other agents.
+- **Working files (Claude's choice):** under the Air's data folder, `~/investment-agents-data/pdf_work/<fingerprint>/` (not in Drive). Deleted as soon as the mail is sent. A file that goes to `Failed/` keeps its working files 14 days so the reason can be seen, then they are deleted.
+- **The outside review prompt** is not kept; it was a one-time tool.
