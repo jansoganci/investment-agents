@@ -250,13 +250,30 @@ Checked in this session: pdfplumber finds the owner of a figure on its row (memo
 - **Ö5 (yes).** Tables over several pages (J.P. Morgan's Figure 24 runs pages 9–11): code spots a continuation (a page that starts with a table whose columns line up with the last table of the page before, "continued", a repeated header; on a scanned page the reader marks it); the reader sees each page with the bottom of the page before; a continuation page takes its header from the page before and the reading file says so ("header from page 9"); if it is not clear, the figures on that page have no sure owner and are not used (rule 9). Each figure is still checked on its own page.
 - **Ö6 (trial first, then yes or no).** PaddleOCR-VL is tried on the Mac on J.P. Morgan pages 7 and 8 against a small answer key, outside the repo, no code committed. The same pages are also read blind by Codex, so the two readers are compared on the same cells.
 
+### 9.6b The Air trial and the decisions after it (2026-11-08)
+
+Run on the **Air** (not the main Mac), J.P. Morgan pages 7–8, 62 answer-key cells (the key said 50 by mistake; 62 counts the two "-" cells), outside the repo in `~/paddle-trial/`.
+
+| Reader | Right | Wrong | Missing | Time per page (Air) |
+|---|---|---|---|---|
+| Codex (`gpt-6.1-sol`), blind instruction | 62 | 0 | 0 | about 2–3 min |
+| PaddleOCR-VL 1.6 (paddleocr 3.7.0, CPU) | 60 | 2 | 0 | p. 7 about 17 min, p. 8 about 6 min |
+
+PaddleOCR-VL's two wrong cells: −0.6 read as 0.6 (sign lost) and 0.3% read as 10.3%. In the 60 cells where both readers agreed, all 60 were right; the 2 cells where they disagreed would have been removed. So "both agree → use it" let no wrong figure through; the price was 2 correct figures lost. Install about 1.0 GB; one dependency clash fixed by hand (protobuf). Small sample (one file, two pages): it shows a direction, not an error rate. Still to confirm: Codex was truly blind (no answer-key or scoring file in `~/paddle-trial/` while it ran).
+
+**My decisions:**
+- **All pages are read and analyzed** (all content pages; the disclosure rules 4–5 still apply). No page cap.
+- **The main reader is Codex.**
+- **The blind second reader on scanned pages: DeepSeek, if it can.** DeepSeek's image input is to be tried on the same two pages and the same answer key before it is chosen. PaddleOCR-VL stays the known fallback (it let no wrong figure through as a second reader, but it is slow on the Air and wrong 2 times in 62 on its own).
+
 ### 9.6 Still open
 
 - The fixed-rule-5 exception (8.8).
 - The command name.
 - Codex's real limits: how many page images in one call, how many calls a day. A page cap (an outside reviewer suggested 25) is set only after this is measured. The AI report alone has 32 content pages.
 - How the blind read (rule 14) is cut: the whole page or only the table area.
-- The Mac trial of PaddleOCR-VL and of a blind Codex read (9.6a, Ö6); Ö3 is locked only after it.
+- ~~The Mac trial of PaddleOCR-VL and of a blind Codex read (9.6a, Ö6).~~ Done on the Air, 9.6b.
+- The DeepSeek image-reading trial (9.6b); the second reader is locked only after it.
 - Locking the rules: version 2 (9.5) plus 9.6a, after the trial.
 - When the working files are deleted.
 - Where the outside review prompt is kept (it is not in the repo).
