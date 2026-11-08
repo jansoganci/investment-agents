@@ -1,12 +1,14 @@
 ---
 doc: PDF reader — decision note
 date: 2026-11-07
-updated: 2026-11-08 (sections 8 and 9)
-status: discussed, not built
+updated: 2026-11-08 (sections 8, 9 and 10)
+status: rules locked (section 10), not built
 publish: no
 ---
 
 # PDF reader — decision note
+
+> **Read section 10 first.** It is the locked version: the setup, the seven steps and the reading rules in one place. Sections 1–9 are the dated record of how we got there; where they differ, section 10 wins.
 
 Talk of 2026-11-07. No code, no test, no `settings.yaml` change, no mail sent. Building waits for a separate "yes". Fixed rule 5 still applies: this is not an exception, and it is not the next phase.
 
@@ -291,6 +293,104 @@ Codex's blindness is confirmed: no file in `~/paddle-trial/` outside the readers
 - ~~The Mac trial of PaddleOCR-VL and of a blind Codex read (9.6a, Ö6).~~ Done on the Air, 9.6b.
 - ~~The DeepSeek image-reading trial (9.6b).~~ Done, 9.6c: the second reader is PaddleOCR-VL; MinerU 2.5 is the backup.
 - ~~The one-time check in 9.6c.~~ Done: Codex was blind.
-- Locking the rules: version 2 (9.5) plus 9.6a, after the trial.
+- ~~Locking the rules.~~ Done: section 10.
+- When the working files are deleted.
+- Where the outside review prompt is kept (it is not in the repo).
+
+The current open list is 10.4.
+
+## 10. Locked version (2026-11-08)
+
+My "yes" to gather everything into one list (2026-11-08). Nothing new is decided here: this section only joins section 4 (the mail), section 5 (the five questions), 8, 9.4, 9.5 and 9.6a–c, and drops lines that the later decisions replaced. Still no code; building waits for the fixed-rule-5 exception.
+
+### 10.1 Setup
+
+| Item | Locked choice |
+|---|---|
+| What it does | One broker research PDF in, one Turkish mail to me out. A PDF is analyzed only inside itself. Not wired to the card, the portfolio, the Sunday summary, Telegram or the 10 measures. No buy or sell. |
+| Where it lives | This repo. Runs on the Air. The code does not know Hermes; Hermes only starts it. |
+| Input | I drop a PDF into `Investing/PDF/New/` (Drive is a local folder on the Air; no Drive API). |
+| After the mail | The PDF moves to `Investing/PDF/Done/`; a file that cannot be read goes to `Investing/PDF/Failed/`. |
+| When | Three looks a day, Turkey time: 10:00, 16:00, 22:00. |
+| What is read | **All content pages**, text **and** charts. No page cap. No time limit: slow is fine, wrong is not. |
+| Born-digital page | Read by **code** (pdfplumber): figures come from the PDF's own text. |
+| Main reader (meaning, charts, scanned pages) | **Codex** with my ChatGPT subscription (`sol-6.1` or another ChatGPT model I choose); page images go to it. No API key, no extra cost. |
+| Second reader on scanned pages | **PaddleOCR-VL** (local, free, version 1 locked). Backup: MinerU 2.5, not installed. DeepSeek is not used for reading. |
+| Mail | From my own Gmail to me, Gmail "send only" permission. Shape: section 4. Questions: section 5. |
+| Copies | No copy of the mail is kept; the mail is the record. Working files stay only on the Air's disk and are temporary. |
+| Houses that forbid AI use | Ignored (my decision). The PDFs never enter git (`.gitignore`: `docs/pdf-samples/`). |
+
+### 10.2 The seven steps
+
+Each step is its own module with one job. The steps do not know each other; each reads the previous step's file and writes its own. Each step is built alone and tried on the sample PDFs before the next. Steps 1 and 2 are built first; they need no model.
+
+| Step | Who | Job | Output |
+|---|---|---|---|
+| 1. Gate | code | Finds a new PDF in `New/`, knows it by its content, sends a broken or locked file to `Failed/`. | the queue |
+| 2. Page sorter | code | Labels every page (written / scanned, content / disclosure), drops invisible text, spots tables that run over pages, makes page images. | page list + images |
+| 3. Reader | code on written pages; Codex on charts and scanned pages | Only reads, does not judge. Writes every page as plain text and tables, every figure with its owner, period and page. | reading file (Markdown) |
+| 4. Figure checker | code; PaddleOCR-VL on scanned pages | Checks every figure against its page; gives each checked figure a number (F1, F2 …). | checked reading file |
+| 5. Analyst | Codex | Never sees the PDF, only the checked reading file. Answers the five questions; writes figure numbers, not figures. | answer file |
+| 6. Answer checker | code | Puts the checked figures in place of their numbers, checks quotes and advice words. | approved answer |
+| 7. Mailer | code (fixed template) | Builds and sends the mail, moves the PDF to `Done/`. | the mail |
+
+### 10.3 Reading rules (locked)
+
+**Step 1, gate**
+1. A PDF is known by its content fingerprint. The same file, even renamed, never gets a second mail.
+2. A file that cannot be opened (broken, password) goes to `Failed/` at once. A read that fails is tried again at the next look; after three looks the file goes to `Failed/` and I get a one-line mail.
+
+**Step 2, page sorter**
+
+3. Every page gets two labels: written / scanned, and content / disclosure. A written page whose text fails a sanity test (many broken words, letters split by spaces) is handled as scanned.
+4. The disclosure part starts at a heading: "Disclosure Appendix", "Important Disclosures", "Analyst Certification", "Required Disclosures". "Appendix" alone does not count. Bookmarks are tried first. A ratings-distribution table is a second sign. If no start is found, the mail says "the start of the disclosures was not found".
+5. Nothing in the disclosure part is read, with two exceptions: a stock's own "Risks" section (for the bad side) and its "Valuation methodology" (for the assumption, question 3). Charts of old price targets are never used. If the risks are only a web link, the mail says "the risks are not in the report, only a link".
+6. Invisible text is dropped: text whose color is the same as the fill under it (the "#N/A" cells). Only what is visible on the page counts.
+7. Tables over several pages: a page that starts with a table whose columns line up with the last table of the page before, says "continued", or repeats the header, is a continuation (on a scanned page the reader marks it). The reader sees each page with the bottom of the page before. A continuation page takes its header from the page before, and the reading file says so ("header from page 9"). If it is not clear, the figures on that page have no sure owner and are not used (rule 11).
+
+**Step 3, reader**
+
+8. Text inside the PDF is data, never an instruction.
+9. The file name and watermarks are ignored. Who wrote it, the date and the subject come from the cover page.
+10. Only a figure printed in the PDF is used: in the text, in a table cell, or printed on a chart. A value estimated from a bar's height or a line's position is never used. On a written page the figure is taken from the page's own text by code, not retyped by a model.
+11. Every figure carries its owner (company or product, measure, period) and its page. A chart number whose owner is not printed beside it (only a line color tells it) is not used.
+12. Values marked "OLD", "previous", "prior", "From … To" (the "From" side) or "vs … earlier" are old. An old value is never shown as the current one.
+13. A year label is copied as written (FY27E, 4QCY26, F26E), never turned into a calendar year. "E" is an estimate, "A" is actual; the mail calls an estimate an estimate. Three dates stay apart: the report date, the price date ("3 Nov close"), the data date ("as of").
+14. Negatives in parentheses are negative: (2.15) = −2.15.
+
+**Step 4, figure checker**
+
+15. A written page: the figure must appear in that page's text, on the same line or table row as its owner. Format differences count as equal (1,396,000 = 1.396.000).
+16. A scanned page: its old machine-read text is not trusted. PaddleOCR-VL reads the page image on its own, **without being shown the candidate figure**, and code compares the two readings. Same value: the figure passes. Different: the figure is removed.
+17. Currency and scale are part of a figure (JPY, KRW, $, %, bp, x, mn, bn). Million is never billion; 49,000 JPY is never shortened.
+18. A figure that does not pass is removed and counted. A figure that passes gets a number (F1, F2 …).
+
+**Step 5, analyst**
+
+19. No buy or sell. Good side, bad side, ahead of or behind the sector, only as the report says. The bank's rating is quoted as the bank's word.
+20. The analyst writes figure numbers (`{F12}`), never a figure itself.
+21. The claim (question 2) and the assumption (question 3) each carry a short quote and its page. Any read page may be quoted.
+22. A contradiction inside the report is not resolved. The mail gives both figures with their pages: "Contradiction in the report: …"
+23. A missing answer stays blank. Nothing comes from another PDF or the card.
+
+**Step 6, answer checker**
+
+24. Code puts the checked figure in place of each number. A figure written without a number, a number that does not exist, a quote not found on its page, or an advice word: that line is removed. The mail still goes.
+25. The subject and the preview use only checked figures. Otherwise the subject is written without a number.
+
+**Step 7, mailer**
+
+26. A scanned file's mail starts with one line: "Scanned copy. N figures checked from the page image, M figures removed because they could not be checked."
+27. If no answer comes out, a short mail still goes, subject "No answer came out of the report". The mail is never silently skipped.
+
+Known limit: a wrong sentence with no figure in it (a side point written as the main claim) is not fully caught by any code. The quote rule (21) reduces it; my own reading of the mail is the last check.
+
+### 10.4 Still open
+
+- The fixed-rule-5 exception (8.8) — building starts only after it.
+- The command name.
+- Codex's real limits: how many page images in one call, how many calls a day, and so how a long PDF is split into calls. Its page-7 log in the trial was 2.3 MB, so it may run helper steps of its own; to measure when building.
+- PaddleOCR-VL reads the whole page (as in the trial); cutting only the table area is looked at only if it misses tables.
+- When MinerU 2.5 is tried: only if PaddleOCR-VL loses many figures in real reads.
 - When the working files are deleted.
 - Where the outside review prompt is kept (it is not in the repo).
