@@ -233,11 +233,30 @@ Version 1 of 2026-11-08 had 12 rules; version 2 is below, by step. It is fixed a
 
 Known limit: a wrong sentence with no figure in it (a side point written as the main claim) is not fully caught by any code. The quote rule (19) reduces it; my own reading of the mail is the last check.
 
+### 9.6a Literature scan and the decisions after it (2026-11-08)
+
+A Claude Research report (prompt: needs as a filter; GitHub, Reddit, Hacker News, arXiv, benchmarks) found **no ready open tool that does the whole job**, and none made for broker research (disclosures, "OLD" target rows). Parts exist: pdfplumber (MIT) gives every word with its position on a born-digital page; PaddleOCR-VL 1.6 (Apache-2.0, runs on a Mac) ranks near the top for tables on public benchmarks; the paper "Proof-Carrying Numbers" (arXiv 2509.06902) proposes that a model shows only figures proven against the source. People's write-ups agree that vision models misread tables "confidently" (a plausible wrong number, not gibberish). No benchmark measures a 200-dpi scanned finance table.
+
+Checked in this session: pdfplumber finds the owner of a figure on its row (memory report p. 2: "285A.JP (KIOXIA) U JPY 10,735 49,000 …"); the invisible "#N/A" cells are grey text (0.753) on a grey fill (0.749), so code can drop them. PaddleOCR-VL could not be tried here (the cloud machine cannot reach the model download sites).
+
+**My decisions:**
+- **K1.** Rules 22 and 25 stay: a quote or figure that is not found removes its line; the mail still goes, never silence. (The report proposed "no mail"; not taken.)
+- **K2.** Benchmark numbers only show a direction; the choice is made by a trial on our own samples.
+- **K3.** Speed does not matter, accuracy does. No time limit on reading: slow is fine, wrong is not.
+- **Ö1 (yes).** Figure numbers: every checked figure in the reading file gets a number (F12). The analyst writes `{F12}`, never the figure itself; code puts the checked figure in. A model can no longer copy a figure wrong.
+- **Ö2 (yes).** A born-digital page is read by code (pdfplumber): figures come from the PDF's own text. The model is used only for meaning and charts.
+- **Ö3 (yes, locked only after the trial in Ö6).** On a scanned page, the blind second reader is PaddleOCR-VL, a different model family from the first reader, so the two do not share the same blind spots. If the trial fails, the fallback is a blind Codex read.
+- **Ö4 (yes).** Invisible text: text whose color is the same as the fill under it is ignored.
+- **Ö5 (yes).** Tables over several pages (J.P. Morgan's Figure 24 runs pages 9–11): code spots a continuation (a page that starts with a table whose columns line up with the last table of the page before, "continued", a repeated header; on a scanned page the reader marks it); the reader sees each page with the bottom of the page before; a continuation page takes its header from the page before and the reading file says so ("header from page 9"); if it is not clear, the figures on that page have no sure owner and are not used (rule 9). Each figure is still checked on its own page.
+- **Ö6 (trial first, then yes or no).** PaddleOCR-VL is tried on the Mac on J.P. Morgan pages 7 and 8 against a small answer key, outside the repo, no code committed. The same pages are also read blind by Codex, so the two readers are compared on the same cells.
+
 ### 9.6 Still open
 
 - The fixed-rule-5 exception (8.8).
 - The command name.
 - Codex's real limits: how many page images in one call, how many calls a day. A page cap (an outside reviewer suggested 25) is set only after this is measured. The AI report alone has 32 content pages.
 - How the blind read (rule 14) is cut: the whole page or only the table area.
+- The Mac trial of PaddleOCR-VL and of a blind Codex read (9.6a, Ö6); Ö3 is locked only after it.
+- Locking the rules: version 2 (9.5) plus 9.6a, after the trial.
 - When the working files are deleted.
 - Where the outside review prompt is kept (it is not in the repo).
