@@ -266,6 +266,22 @@ PaddleOCR-VL's two wrong cells: −0.6 read as 0.6 (sign lost) and 0.3% read as 
 - **The main reader is Codex.**
 - **The blind second reader on scanned pages: DeepSeek, if it can.** DeepSeek's image input is to be tried on the same two pages and the same answer key before it is chosen. PaddleOCR-VL stays the known fallback (it let no wrong figure through as a second reader, but it is slow on the Air and wrong 2 times in 62 on its own).
 
+### 9.6c The DeepSeek trial and the second reader locked (2026-11-08)
+
+DeepSeek's image input (`deepseek-flash`, V4.1-Flash, thinking off; whole page, not tiled), same two pages, same 62 cells: **52 right, 10 wrong**, 0 missing; about 9–22 s and about 0.2 cent a page. Wrong cells include 8.3% → 38.3%, 4.1% → 14.1%, 12.0 → 20.0 and two lost minus signs. As a second reader it would let no wrong figure through here (Codex was right on all 62), but it would remove 10 of 62 correct figures (PaddleOCR-VL: 2).
+
+Other candidates looked at, not tried: MinerU 2.5 (closest to PaddleOCR-VL on public table scores), Qwen-VL, Gemini (cloud, free tier), Apple's built-in text reader (the J.P. Morgan file's broken text layer was most likely made by it), olmOCR 2 / Chandra / Docling's own model (reported to invent numbers in dense tables).
+
+PaddleOCR-VL reads on the machine: the page and its text do not leave the Air. It may only test its connection to the model download sites when it starts (this can be turned off). A one-time run with the network off confirms it.
+
+**My decisions:**
+- **The blind second reader on scanned pages is PaddleOCR-VL (version 1, locked).** Ö3 is closed.
+- **MinerU 2.5 is the backup**, tried only if PaddleOCR-VL fails the offline run or loses many figures in real reads. It is **not installed now**.
+- **DeepSeek is not used for reading** (52 / 62).
+- We go on with what we have.
+
+Still to do once: PaddleOCR-VL run on the Air with the network off · confirm Codex was blind in the trial (no answer-key or scoring file in `~/paddle-trial/` while it ran).
+
 ### 9.6 Still open
 
 - The fixed-rule-5 exception (8.8).
@@ -273,7 +289,8 @@ PaddleOCR-VL's two wrong cells: −0.6 read as 0.6 (sign lost) and 0.3% read as 
 - Codex's real limits: how many page images in one call, how many calls a day. A page cap (an outside reviewer suggested 25) is set only after this is measured. The AI report alone has 32 content pages.
 - How the blind read (rule 14) is cut: the whole page or only the table area.
 - ~~The Mac trial of PaddleOCR-VL and of a blind Codex read (9.6a, Ö6).~~ Done on the Air, 9.6b.
-- The DeepSeek image-reading trial (9.6b); the second reader is locked only after it.
+- ~~The DeepSeek image-reading trial (9.6b).~~ Done, 9.6c: the second reader is PaddleOCR-VL; MinerU 2.5 is the backup.
+- The one-time checks in 9.6c: PaddleOCR-VL with the network off; Codex's blindness in the trial.
 - Locking the rules: version 2 (9.5) plus 9.6a, after the trial.
 - When the working files are deleted.
 - Where the outside review prompt is kept (it is not in the repo).
