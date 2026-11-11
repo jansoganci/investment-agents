@@ -21,7 +21,7 @@ WHEN = ("today", "tomorrow", "week", "later")
 GROUPS = ("ai_infrastructure", "other")
 CAPS = {"calendar": 8, "macro": 8, "interests": 10, "per_stock": 3}      # items; the model orders by importance
 MAX_ITEM_CHARS = 600
-WRITER_TOKENS = 16000
+WRITER_TOKENS = 64000   # 16000 cut DeepSeek V4 Pro's bulletin twice (my decision, 2026-11-11)
 
 SYSTEM = """You write the facts section of a morning bulletin for one private investor who reads English, from numbered source pieces.
 The bulletin is information only. It is read in five minutes, so it is short and made of single facts.
