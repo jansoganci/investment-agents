@@ -148,8 +148,8 @@ ai:
   excerpt_chars: 12000             # at most this much of a filing goes to a model per call
   row_chars: 4000                  # of that, the figure audit's rows found by our figures' values (roadmap rule 41)
   min_quote_chars: 20              # a shorter quote proves nothing and is not accepted
-  max_tokens: 16000                # one answer (the model's thinking counts too)
-  timeout_s: 180
+  max_tokens: 64000                # one answer (the model's thinking counts too); 16000 cut DeepSeek V4 Pro's thesis, audit and bulletin (my decision, 2026-11-11)
+  timeout_s: 1200                  # 20 min: a long answer takes longer to write (my decision, 2026-11-11)
   audit_sample: 5                  # a random 1 in 5 routine updates is audited
 
 # Price per million tokens in dollars, by model name (input = the full input price: cheaper cache reads are not assumed, so the

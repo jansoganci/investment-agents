@@ -879,6 +879,12 @@ sent to the figure audit, Microsoft's figure items mostly `not_found` (cause not
     period as the latest user row is refused ("Already entered"); a different value is a correction and is written. The SEC client
     turns an answer that is not JSON (an HTML page with status 200, a cut download) into `SecError`. Not done (my decision): a company
     identity check on `companyfacts` (the URL already names the CIK) · the 3-hour rule for a killed job's `running` row stays as it is.
+54. **Longer model answers (my decision, 2026-11-11).** DeepSeek V4 Pro (a thinking model; its thinking counts against the limit)
+    was cut at 16,000 tokens on NEM's thesis and audit and on two bulletin drafts, and the fallbacks answered 401. `ai.max_tokens`
+    64,000 (the default for every call that names no limit: strong, auditor, the bulletin's translation, `search`), the bulletin
+    writer 64,000, `ai.timeout_s` 1,200 s. DeepSeek's own page lists 384K as the maximum output. Only used tokens are billed; a
+    cut call was billed and gave nothing. Calls with their own smaller limit (sentence, companies, tags, reading, news) unchanged.
+    The code's models stay DeepSeek-first (my API key); Hermes' chat runs on my ChatGPT subscription (separate, not the code).
 
 **When agent 3's acceptance test counts as passed (my decision, 2026-10-09).** Each round of real data finds a few new small
 cases, so without a line the polishing never ends and the next agents wait (fixed rule 5). Round 2 (fresh `~/uat3-data`, the
