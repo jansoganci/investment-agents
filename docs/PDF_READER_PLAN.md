@@ -400,3 +400,15 @@ Known limit: a wrong sentence with no figure in it (a side point written as the 
 - **The outside review prompt** is not kept; it was a one-time tool.
 - **Where the code lives (my decision):** in this repo, in its own folder `agents/pdf_reader/`, as a self-contained part: it calls nothing from the other agents and has its own tests, so it can be moved to its own repo later if it ever becomes a product.
 - **Building moves to Cursor on the main Mac (my decision).** Tests use small PDFs made by the tests themselves, never the bank samples (they are not in git). The pieces may reach `main` one by one; Hermes gets no `pdf_reader` job until all seven steps work (fixed rule 5).
+
+### 10.6 Full dry run on the Air (2026-11-11) — result and pause
+
+Run in a separate clone `~/pdf-dryrun/` (branch `feat/pdf-reader-steps-1-2`), memory / jpm / aiinfra; steps 1–2 by code, steps 3–7 by hand with Codex. Report: `~/pdf-dryrun/out/report.md` on the Air.
+
+- **Steps 1–2 on real PDFs: 13 of 13 checks passed** (disclosure starts, "#N/A" dropped on memory p. 6 — 192 characters, "Appendix" trap, both "only link" notes, copy test).
+- **Stopped as NOT ACCEPTED:** both blind Codex reads of jpm p. 7 read Insurance FY2026 1M as −0.2; the page says 0.2 (checked again on the page image: the dashed zero line and the small bar drawn in the cell look like a minus sign). Two reads by the same model agreed on a wrong figure — the risk named when PaddleOCR-VL was dropped (10.5). PaddleOCR-VL read this cell right in 9.6b.
+- **Codex:** model name `gpt-6.1-sol` (`sol-6.1` refused); 70 calls, about 1.5–4.5 minutes a page on average, up to 15 minutes (calls ran in parallel); no usage-limit message, but one ChatGPT account's 5-hour allowance fell to 16 %. The Codex command seems signed in with a different ChatGPT account than Hermes (to check with `codex login status`).
+- **Written pages:** most of Codex's figures are in the page text, but their owner is often not on the same line (360 on memory, 1,504 on part of aiinfra) — table owners sit in row and column headers. Decision Ö2 (code reads the figures of written pages from tables) already answers this; the dry run asked Codex instead.
+- **Small items:** the quote check was too strict (line breaks); the analyst's preview line repeated itself (needs a length cap and a repeat check); no mail was sent because the Gmail token was not in `~/investment-agents-data/secrets/` (where the set-up put it is to be found).
+- **Talked through, not decided:** PaddleOCR-VL costs no money, only time (the Air has no graphics card; any free local reader is slow there). A way to keep it: no second reader on born-digital PDFs, and on scanned PDFs only the figures used in the mail are checked, on small cuts of the page. Not tried.
+- **Open question:** how many of the daily PDFs are scanned is not known. **My decision: pause here and think.** Nothing of this touches the running system.
