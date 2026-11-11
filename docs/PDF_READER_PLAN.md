@@ -393,7 +393,7 @@ Known limit: a wrong sentence with no figure in it (a side point written as the 
 
 - **PaddleOCR-VL is dropped (my decision).** The second reader on a scanned page is a second, blind Codex read (rule 16). MinerU is dropped with it. Known limit: both readings come from the same model, so a mistake both make the same way is not caught; in the trial Codex read 62 of 62 cells right.
 - **Codex's limits:** the trial read dense scanned pages right (62 / 62). Each page goes to Codex in its own call, as in the trial. If the subscription's usage limit stops a run, the file simply waits for the next look (rule 2).
-- **Gmail "send only":** set up once on the Air before step 7; Claude gives the steps when step 7 is built. Not asked again.
+- **Gmail "send only":** set up once on the Air before step 7. **Done 2026-11-11:** Google Cloud project with the Gmail API, scope `gmail.send` only, app published "In production" (a "Testing" app loses its sign-in every 7 days), Desktop client; client and token in `~/investment-agents-data/secrets/` (outside the repo and Drive); a test mail reached my inbox.
 - **The mail is Turkish.** The analyst writes Turkish directly.
 - **Command (Claude's choice):** `python -m agents.pdf_reader`, the same shape as the other agents.
 - **Working files (Claude's choice):** under the Air's data folder, `~/investment-agents-data/pdf_work/<fingerprint>/` (not in Drive). Deleted as soon as the mail is sent. A file that goes to `Failed/` keeps its working files 14 days so the reason can be seen, then they are deleted.
