@@ -46,7 +46,12 @@ SYNONYMS: dict[str, dict[str, list[str]]] = {
         "leases": ["OperatingLeaseLiability"],
     },
     "ifrs-full": {
-        "revenue": ["Revenue"],
+        # Names added 2026-11-19 (my approval, "1A"): each is last in its list, so a company that has an earlier name keeps it.
+        # Tried on 60 companies first: only empty years fill, no figure changes. Left out on purpose: BHP's bank-loan interest
+        # line (Unilever's interest would be ~10× too small), `FinanceCosts` (Eni's holds exchange losses), Shell's
+        # "other long-term assets" capex line (Canadian Natural 2020 = 0).
+        # `RevenueFromContractsWithCustomers`: TotalEnergies ("Sales", excise taxes included), ArcelorMittal, Teck, Suncor
+        "revenue": ["Revenue", "RevenueFromContractsWithCustomers"],
         "cost": ["CostOfSales"],
         "gross": ["GrossProfit"],
         "operating": ["ProfitLossFromOperatingActivities"],
@@ -57,8 +62,12 @@ SYNONYMS: dict[str, dict[str, list[str]]] = {
         "net_interest_income": [],
         "interest_income": ["InterestRevenueCalculatedUsingEffectiveInterestMethod", "FinanceIncome"],
         "op_cash": ["CashFlowsFromUsedInOperatingActivities"],
-        "capex": ["PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"],
-        "stock_comp": ["AdjustmentsForSharebasedPayments", "ExpenseFromSharebasedPaymentTransactionsWithEmployees"],
+        # Rio Tinto, BP, ArcelorMittal: property, plant and equipment and intangibles bought, in one line
+        "capex": ["PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+                  "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets"],
+        "stock_comp": ["AdjustmentsForSharebasedPayments", "ExpenseFromSharebasedPaymentTransactionsWithEmployees",
+                       # Rio Tinto
+                       "ExpenseFromSharebasedPaymentTransactionsInWhichGoodsOrServicesReceivedDidNotQualifyForRecognitionAsAssets"],
         "dividends": ["DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid"],
         "eps": ["DilutedEarningsLossPerShare"],
         "shares": ["AdjustedWeightedAverageShares", "WeightedAverageShares"],
@@ -69,7 +78,9 @@ SYNONYMS: dict[str, dict[str, list[str]]] = {
         "marketable_securities": ["CurrentFinancialAssetsAtFairValueThroughProfitOrLoss"],
         "short_term_investments_partial": [],
         "assets": ["Assets"],
-        "current_liabilities": ["CurrentLiabilities"],
+        # Rio Tinto 2020–2022, Sanofi: current liabilities without those of assets held for sale
+        "current_liabilities": ["CurrentLiabilities",
+                                "CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale"],
         "liabilities": ["Liabilities"],
         "leases": ["LeaseLiabilities"],
     },

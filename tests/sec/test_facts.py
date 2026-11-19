@@ -44,6 +44,54 @@ def test_a_balance_sheet_line_named_only_cash_is_found():
     assert "Cash" in after.parts and after.value == pytest.approx(before.value)
 
 
+IFRS_NEW_NAMES = {  # 2026-11-19 ("1A"): the name a figure had in the sample → the other IFRS name that must find it
+    "revenue": ("Revenue", "RevenueFromContractsWithCustomers"),
+    "capex": ("PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+              "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets"),
+    "stock_comp": ("AdjustmentsForSharebasedPayments",
+                   "ExpenseFromSharebasedPaymentTransactionsInWhichGoodsOrServicesReceivedDidNotQualifyForRecognitionAsAssets"),
+    "current_liabilities": ("CurrentLiabilities",
+                            "CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale"),
+}
+
+
+@pytest.mark.parametrize("figure", sorted(IFRS_NEW_NAMES))
+def test_ifrs_figures_under_the_other_names_are_found(figure):
+    # TotalEnergies' revenue, Rio Tinto's capex, stock comp and current liabilities: the Wednesday list asked me for figures SEC has
+    old, new = IFRS_NEW_NAMES[figure]
+    raw = sec_facts("NVO")
+    ifrs = raw["facts"]["ifrs-full"]
+    ifrs[new] = ifrs.pop(old)
+    if figure == "stock_comp":
+        ifrs.pop("ExpenseFromSharebasedPaymentTransactionsWithEmployees", None)
+    before = facts("NVO").annual(figure)
+    after = Facts(raw, sec_submissions("NVO")).annual(figure)
+    assert after and {e: v.value for e, v in after.items()} == {e: v.value for e, v in before.items()}
+    assert {v.tag for v in after.values()} == {new}
+
+
+def test_an_earlier_ifrs_name_wins_over_a_new_one():
+    raw = sec_facts("NVO")
+    ifrs = raw["facts"]["ifrs-full"]
+    ifrs["RevenueFromContractsWithCustomers"] = {"units": {cur: [dict(r, val=r["val"] * 2) for r in rows]
+                                                           for cur, rows in ifrs["Revenue"]["units"].items()}}
+    after = Facts(raw, sec_submissions("NVO")).annual("revenue")
+    assert {v.tag for v in after.values()} == {"Revenue"}
+
+
+def test_a_negative_capex_is_not_used_and_is_asked():
+    # Petrobras' 2021 20-F gives its 2019 capex as −8.556 bn (8.556 in the 2019 and 2020 20-Fs): a sign error, never a number
+    raw = sec_facts("KO")
+    rows = raw["facts"]["us-gaap"]["PaymentsToAcquirePropertyPlantAndEquipment"]["units"]["USD"]
+    for r in rows:
+        if r["end"] == "2024-12-31":
+            r["val"] = -abs(r["val"])
+    f = Facts(raw, sec_submissions("KO"), quarters=False)
+    capex = f.annual("capex")
+    assert "2024-12-31" not in capex and "2023-12-31" in capex
+    assert any(m["figure"] == "capex" and m["year"] == "2024" for m in f.misses)
+
+
 def test_marketable_securities_with_a_noncurrent_line_is_not_current():
     raw = sec_facts("KO")
     rows = raw["facts"]["us-gaap"]["MarketableSecurities"]["units"]["USD"]

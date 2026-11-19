@@ -207,6 +207,8 @@ class Facts:
                 v = self._shares(tag, unit, end)
             else:
                 v = self._flow(tag, unit, end)
+            if figure == "capex" and v is not None and v.value < 0:
+                continue  # a negative capex is a sign error in SEC's data (Petrobras 2019 in its 2021 20-F): not used, asked instead
             if v is not None:
                 return v
         return None
