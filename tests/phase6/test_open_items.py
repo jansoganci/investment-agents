@@ -1,13 +1,14 @@
 """The Wednesday message (my decision, 2026-11-01): what waits for me, in the order holdings → watched → candidates."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 from shared import clock, drive, notify, open_items
 
-from .helpers import NOW, stock, tag
+from .helpers import stock, tag
 
 DAY = "2026-11-04"
-OLD = (NOW - timedelta(days=40)).isoformat()
+# 40 days before DAY, not before today: tied to today, it fell inside the 4-week window from 2026-11-16 on and two tests failed
+OLD = f"{(date.fromisoformat(DAY) - timedelta(days=40)).isoformat()}T12:00:00Z"
 
 
 def missing(db, sid, figure="operating", year="2024", created="x", status="open"):
